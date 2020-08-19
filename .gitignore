@@ -2,5 +2,9 @@
 /dist
 /node_modules
 
+# editor artifacts
 *.swp
 *~
+
+# OS artifacts
+.DS_Store

@@ -19,6 +19,30 @@ if (urlParams.has('access-token')) {
   console.error('specify a Mapbox access token to access-token parameter')
 }
 
+// generates random points.
+function generatePoints (params) {
+  const {
+    numPoints,
+    minLongitude,
+    maxLongitude,
+    minLatitude,
+    maxLatitude
+  } = params
+  const longitudinalExtent = maxLongitude - minLongitude
+  const latitudinalExtent = maxLatitude - minLatitude
+  const points = []
+  for (let i = 0; i < numPoints; ++i) {
+    const longitude = (longitudinalExtent * Math.random()) + minLongitude
+    const latitude = (latitudinalExtent * Math.random()) + minLatitude
+    points.push([
+      longitude,
+      latitude
+    ])
+  }
+  console.log(points)
+  return points
+}
+
 export default {
   name: 'MapPane',
   mounted () {
@@ -57,11 +81,12 @@ export default {
         console.log('coords', latitude, longitude, accuracy)
       }
       const viewRange = 10 * accuracy
-      const EARTH_CIRCUMFERENCE =40075 * 1000
+      const EARTH_CIRCUMFERENCE = 40075 * 1000
       const zoom = Math.log2(EARTH_CIRCUMFERENCE / viewRange)
       if (process.env.NODE_ENV !== 'production') {
         console.log('zoom', zoom)
       }
+      const scatterRange = 360.0 * (300 / (40075 * 1000)) // scatters around 300 meters
       const map = new mapboxgl.Map({
         container: this.$refs['mapbox-container'],
         style: 'mapbox://styles/mapbox/streets-v11',
@@ -70,6 +95,54 @@ export default {
           latitude
         ],
         zoom
+      })
+      map.on('load', () => {
+        map.loadImage(
+          './assets/images/poo.png',
+          (error, image) => {
+            if (error) {
+              console.error('failed to load image', error)
+              throw error
+            }
+            map.addImage('poo', image)
+            map.addSource('point', {
+              type: 'geojson',
+              data: {
+                type: 'FeatureCollection',
+                features: generatePoints({
+                  numPoints: 20,
+                  minLongitude: longitude - scatterRange,
+                  maxLongitude: longitude + scatterRange,
+                  minLatitude: latitude - scatterRange,
+                  maxLatitude: latitude + scatterRange
+                }).map((p, i) => {
+                  return {
+                    type: 'Feature',
+                    properties: {
+                      name: `poo-${i}`
+                    },
+                    geometry: {
+                      type: 'Point',
+                      coordinates: p
+                    }
+                  }
+                })
+              }
+            })
+            map.addLayer({
+              id: 'poo-spots',
+              type: 'symbol',
+              source: 'point',
+              layout: {
+                'icon-image': 'poo',
+                'icon-size': 0.5
+              }
+            })
+            map.on('click', 'poo-spots', event => {
+              console.log(event)
+              console.log(`you stepped in ${event.features[0].properties.name}`)
+            })
+          })
       })
       const marker = new mapboxgl.Marker()
       marker.setLngLat([

@@ -1,4 +1,5 @@
 const path = require('path')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 
@@ -47,6 +48,15 @@ module.exports = {
   },
   plugins: [
     new VueLoaderPlugin(),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: '**/*',
+          to: 'assets',
+          context: path.resolve(__dirname, 'assets')
+        }
+      ]
+    }),
     new HtmlWebpackPlugin({
       title: "Dog's Business"
     })
