@@ -1,10 +1,8 @@
 <template>
-  <div class="map-pane">
-    <div
-      ref="mapbox-container"
-      class="mapbox-container"
-    />
-  </div>
+  <div
+    ref="mapbox-container"
+    class="mapbox-container"
+  />
 </template>
 
 <script>
@@ -43,6 +41,15 @@ function generatePoints (params) {
   return points
 }
 
+/**
+ * Vue component that displays a map.
+ *
+ * The map fills the parent element.
+ *
+ * @namespace MapPane
+ *
+ * @memberof module:components
+ */
 export default {
   name: 'MapPane',
   mounted () {
@@ -110,7 +117,7 @@ export default {
               data: {
                 type: 'FeatureCollection',
                 features: generatePoints({
-                  numPoints: 20,
+                  numPoints: 1,
                   minLongitude: longitude - scatterRange,
                   maxLongitude: longitude + scatterRange,
                   minLatitude: latitude - scatterRange,
@@ -157,7 +164,7 @@ export default {
 
 <style lang="scss" scoped>
 .mapbox-container {
-  width: 400px;
-  height: 400px;
+  width: 100%;
+  height: 100%;
 }
 </style>
