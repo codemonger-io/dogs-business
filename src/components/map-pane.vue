@@ -1,12 +1,45 @@
 <template>
-  <div
-    ref="mapbox-container"
-    class="mapbox-container"
-  />
+  <div class="map-pane">
+    <div
+      ref="mapbox-container"
+      class="mapbox-container"
+    />
+    <!-- popup elements -->
+    <div
+      ref="event-popup"
+      class="mapbox-popup"
+    >
+      <p>Here your dog did</p>
+      <div class="level">
+        <p class="level-item">
+          <button class="button circle-button">
+            <span class="icon">
+              <img
+                class="image is-24x24"
+                src="@assets/images/pee.svg"
+              />
+            </span>
+          </button>
+        </p>
+        <p class="level-item">
+          <button class="button circle-button">
+            <span class="icon">
+              <img
+                class="image is-24x24"
+                src="@assets/images/poo.svg"
+              />
+            </span>
+          </button>
+        </p>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
 import mapboxgl from 'mapbox-gl'
+
+import pooPngPath from '@assets/images/poo.png'
 
 // obtains the access token from the URL
 const paramString = window.location.search
@@ -105,7 +138,7 @@ export default {
       })
       map.on('load', () => {
         map.loadImage(
-          './assets/images/poo.png',
+          pooPngPath,
           (error, image) => {
             if (error) {
               console.error('failed to load image', error)
@@ -142,7 +175,7 @@ export default {
               source: 'point',
               layout: {
                 'icon-image': 'poo',
-                'icon-size': 0.5
+                'icon-size': 0.375
               }
             })
             map.on('click', 'poo-spots', event => {
@@ -157,14 +190,29 @@ export default {
         latitude
       ])
       marker.addTo(map)
+      const eventPopup = new mapboxgl.Popup()
+      eventPopup.setDOMContent(this.$refs['event-popup'])
+      marker.setPopup(eventPopup)
+      marker.togglePopup() // should open the popup
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.mapbox-container {
+.map-pane {
   width: 100%;
   height: 100%;
+
+  .mapbox-container {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.button {
+  &.circle-button {
+    border-radius: 50%;
+  }
 }
 </style>

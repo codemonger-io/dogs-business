@@ -32,11 +32,22 @@ module.exports = {
           'style-loader',
           'css-loader'
         ]
+      },
+      {
+        test: /\.(jpg|png|svg)$/,
+        loader: 'file-loader',
+        options: {
+          name: '[path][name]-[contenthash].[ext]',
+          // src of img element is not resolved without `esModule: false`
+          // https://github.com/vuejs/vue-loader/issues/1612#issuecomment-614542603
+          esModule: false
+        }
       }
     ]
   },
   resolve: {
     alias: {
+      '@assets': path.resolve(__dirname, './assets'),
       '@components': path.resolve(__dirname, './src/components')
     },
     extensions: [
@@ -51,8 +62,8 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         {
-          from: '**/*',
-          to: 'assets',
+          from: 'images/favicon.ico',
+          to: 'assets/images',
           context: path.resolve(__dirname, 'assets')
         }
       ]

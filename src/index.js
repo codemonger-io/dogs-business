@@ -4,6 +4,7 @@
 
 import Vue from 'vue'
 
+import 'bulma/css/bulma.min.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 import App from '@components/app'
