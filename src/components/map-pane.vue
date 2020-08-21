@@ -22,7 +22,10 @@
           </button>
         </p>
         <p class="level-item">
-          <button class="button circle-button">
+          <button
+            class="button circle-button"
+            @click="onPooButtonClicked"
+          >
             <span class="icon">
               <img
                 class="image is-24x24"
@@ -50,28 +53,39 @@ if (urlParams.has('access-token')) {
   console.error('specify a Mapbox access token to access-token parameter')
 }
 
-// generates random points.
-function generatePoints (params) {
+// generates a random point that fits in give ranges.
+function generatePoint (ranges) {
   const {
-    numPoints,
     minLongitude,
     maxLongitude,
     minLatitude,
     maxLatitude
-  } = params
+  } = ranges
   const longitudinalExtent = maxLongitude - minLongitude
   const latitudinalExtent = maxLatitude - minLatitude
-  const points = []
-  for (let i = 0; i < numPoints; ++i) {
-    const longitude = (longitudinalExtent * Math.random()) + minLongitude
-    const latitude = (latitudinalExtent * Math.random()) + minLatitude
-    points.push([
-      longitude,
-      latitude
-    ])
-  }
-  console.log(points)
-  return points
+  const longitude = (longitudinalExtent * Math.random()) + minLongitude
+  const latitude = (latitudinalExtent * Math.random()) + minLatitude
+  return [
+    longitude,
+    latitude
+  ]
+}
+
+/**
+ * Creates a function that returns a non-reactive object.
+ *
+ * @function makeNonReactive
+ *
+ * @param {object} obj
+ *
+ *   Object to be non-reactive.
+ *
+ * @return {function}
+ *
+ *   A function that returns `obj`.
+ */
+function makeNonReactive (obj) {
+  return () => obj
 }
 
 /**
@@ -85,6 +99,19 @@ function generatePoints (params) {
  */
 export default {
   name: 'MapPane',
+  data () {
+    return {
+      pooSpotsData: {
+        type: 'FeatureCollection',
+        features: []
+      },
+      // Mapbox objects should not become reactive.
+      getNonReactive: makeNonReactive({
+        map: null,
+        marker: null
+      })
+    }
+  },
   mounted () {
     if (process.env.NODE_ENV !== 'production') {
       console.log('MapPane', 'mounted')
@@ -126,7 +153,6 @@ export default {
       if (process.env.NODE_ENV !== 'production') {
         console.log('zoom', zoom)
       }
-      const scatterRange = 360.0 * (300 / (40075 * 1000)) // scatters around 300 meters
       const map = new mapboxgl.Map({
         container: this.$refs['mapbox-container'],
         style: 'mapbox://styles/mapbox/streets-v11',
@@ -145,34 +171,14 @@ export default {
               throw error
             }
             map.addImage('poo', image)
-            map.addSource('point', {
+            map.addSource('poo-spots', {
               type: 'geojson',
-              data: {
-                type: 'FeatureCollection',
-                features: generatePoints({
-                  numPoints: 1,
-                  minLongitude: longitude - scatterRange,
-                  maxLongitude: longitude + scatterRange,
-                  minLatitude: latitude - scatterRange,
-                  maxLatitude: latitude + scatterRange
-                }).map((p, i) => {
-                  return {
-                    type: 'Feature',
-                    properties: {
-                      name: `poo-${i}`
-                    },
-                    geometry: {
-                      type: 'Point',
-                      coordinates: p
-                    }
-                  }
-                })
-              }
+              data: this.pooSpotsData
             })
             map.addLayer({
               id: 'poo-spots',
               type: 'symbol',
-              source: 'point',
+              source: 'poo-spots',
               layout: {
                 'icon-image': 'poo',
                 'icon-size': 0.375
@@ -194,6 +200,42 @@ export default {
       eventPopup.setDOMContent(this.$refs['event-popup'])
       marker.setPopup(eventPopup)
       marker.togglePopup() // should open the popup
+      // saves map and marker in the non-reactive object
+      const nonReactive = this.getNonReactive()
+      nonReactive.map = map
+      nonReactive.marker = marker
+    },
+    onPooButtonClicked () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('poo button clicked')
+      }
+      const {
+        map,
+        marker
+      } = this.getNonReactive()
+      const {
+        lng,
+        lat
+      } = marker.getLngLat()
+      const range = 360.0 * (300 / (40075 * 1000)) // scatters around 300 meters
+      const point = generatePoint({
+        minLongitude: lng - range,
+        maxLongitude: lng + range,
+        minLatitude: lat - range,
+        maxLatitude: lat + range
+      })
+      this.pooSpotsData.features.push({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: point
+        },
+        properties: {
+          name: `poo-${this.pooSpotsData.features.length}`
+        }
+      })
+      map.getSource('poo-spots')
+        .setData(this.pooSpotsData)
     }
   }
 }
