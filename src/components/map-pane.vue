@@ -7,9 +7,9 @@
     <!-- popup elements -->
     <div
       ref="event-popup"
-      class="mapbox-popup"
+      class="mapbox-popup dogs-business-body"
     >
-      <p>Here your dog did</p>
+      <p>What is his/her business here?</p>
       <div class="level">
         <p class="level-item">
           <button
