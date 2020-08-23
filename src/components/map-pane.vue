@@ -12,7 +12,10 @@
       <p>Here your dog did</p>
       <div class="level">
         <p class="level-item">
-          <button class="button circle-button">
+          <button
+            class="button circle-button"
+            @click="onPeeButtonClicked"
+          >
             <span class="icon">
               <img
                 class="image is-24x24"
@@ -111,7 +114,7 @@ export default {
   name: 'MapPane',
   data () {
     return {
-      pooSpotsData: {
+      eventsData: {
         type: 'FeatureCollection',
         features: []
       },
@@ -187,20 +190,20 @@ export default {
             images.forEach((image, i) => {
               map.addImage(imagesToLoad[i].name, image)
             })
-            map.addSource('poo-spots', {
+            map.addSource('events', {
               type: 'geojson',
-              data: this.pooSpotsData
+              data: this.eventsData
             })
             map.addLayer({
-              id: 'poo-spots',
+              id: 'events',
               type: 'symbol',
-              source: 'poo-spots',
+              source: 'events',
               layout: {
                 'icon-image': ['get', 'type'],
                 'icon-size': 0.375
               }
             })
-            map.on('click', 'poo-spots', event => {
+            map.on('click', 'events', event => {
               console.log(event)
               console.log(`you stepped in ${event.features[0].properties.name}`)
             })
@@ -228,6 +231,15 @@ export default {
       if (process.env.NODE_ENV !== 'production') {
         console.log('poo button clicked')
       }
+      this.addEvent('poo')
+    },
+    onPeeButtonClicked () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('pee button clicked')
+      }
+      this.addEvent('pee')
+    },
+    addEvent (type) {
       const {
         map,
         marker
@@ -236,26 +248,28 @@ export default {
         lng,
         lat
       } = marker.getLngLat()
-      const range = 360.0 * (300 / circumferenceAtLatitude(lat)) // scatters around 300 meters
+      // scatters around 300 meters
+      const lngRange = 360.0 * (300 / circumferenceAtLatitude(lat))
+      const latRange = 360.0 * (300 / EARTH_CIRCUMFERENCE)
       const point = generatePoint({
-        minLongitude: lng - range,
-        maxLongitude: lng + range,
-        minLatitude: lat - range,
-        maxLatitude: lat + range
+        minLongitude: lng - lngRange,
+        maxLongitude: lng + lngRange,
+        minLatitude: lat - latRange,
+        maxLatitude: lat + latRange
       })
-      this.pooSpotsData.features.push({
+      this.eventsData.features.push({
         type: 'Feature',
         geometry: {
           type: 'Point',
           coordinates: point
         },
         properties: {
-          type: 'poo',
-          name: `poo-${this.pooSpotsData.features.length}`
+          type,
+          name: `${type}-${this.eventsData.features.length}`
         }
       })
-      map.getSource('poo-spots')
-        .setData(this.pooSpotsData)
+      map.getSource('events')
+        .setData(this.eventsData)
     }
   }
 }
