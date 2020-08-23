@@ -1,0 +1,5 @@
+/**
+ * Provides utilities.
+ *
+ * @module utils
+ */
