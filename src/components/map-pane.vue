@@ -66,24 +66,6 @@ if (urlParams.has('access-token')) {
   console.error('specify a Mapbox access token to access-token parameter')
 }
 
-// generates a random point that fits in give ranges.
-function generatePoint (ranges) {
-  const {
-    minLongitude,
-    maxLongitude,
-    minLatitude,
-    maxLatitude
-  } = ranges
-  const longitudinalExtent = maxLongitude - minLongitude
-  const latitudinalExtent = maxLatitude - minLatitude
-  const longitude = (longitudinalExtent * Math.random()) + minLongitude
-  const latitude = (latitudinalExtent * Math.random()) + minLatitude
-  return [
-    longitude,
-    latitude
-  ]
-}
-
 /**
  * Creates a function that returns a non-reactive object.
  *
@@ -285,15 +267,10 @@ export default {
         lng,
         lat
       } = marker.getLngLat()
-      // scatters around 300 meters
-      const lngRange = 360.0 * (300 / circumferenceAtLatitude(lat))
-      const latRange = 360.0 * (300 / EARTH_CIRCUMFERENCE)
-      const point = generatePoint({
-        minLongitude: lng - lngRange,
-        maxLongitude: lng + lngRange,
-        minLatitude: lat - latRange,
-        maxLatitude: lat + latRange
-      })
+      const point = [
+        lng,
+        lat
+      ]
       this.eventsData.features.push({
         type: 'Feature',
         geometry: {
