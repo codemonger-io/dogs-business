@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="level app-title">
+    <div class="level is-mobile app-title">
       <div class="level-left">
         <div class="level-item">
           <img

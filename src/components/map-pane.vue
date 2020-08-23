@@ -10,7 +10,7 @@
       class="mapbox-popup dogs-business-body"
     >
       <p>What is his/her business here?</p>
-      <div class="level">
+      <div class="level is-mobile">
         <p class="level-item">
           <button
             class="button circle-button"
