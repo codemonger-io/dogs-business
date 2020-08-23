@@ -14,7 +14,7 @@
         <p class="level-item">
           <button
             class="button circle-button"
-            @click="onPeeButtonClicked"
+            @click="onEventButtonClicked('pee')"
           >
             <span class="icon">
               <img
@@ -27,7 +27,7 @@
         <p class="level-item">
           <button
             class="button circle-button"
-            @click="onPooButtonClicked"
+            @click="onEventButtonClicked('poo')"
           >
             <span class="icon">
               <img
@@ -268,17 +268,13 @@ export default {
         latitude
       ])
     },
-    onPooButtonClicked () {
+    onEventButtonClicked (type) {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('poo button clicked')
+        console.log('event button clicked', type)
       }
-      this.addEvent('poo')
-    },
-    onPeeButtonClicked () {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('pee button clicked')
-      }
-      this.addEvent('pee')
+      this.addEvent(type)
+      const { marker } = this.getNonReactive()
+      marker.togglePopup() // should close the popup
     },
     addEvent (type) {
       const {
