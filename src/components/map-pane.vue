@@ -114,6 +114,7 @@ export default {
   name: 'MapPane',
   data () {
     return {
+      locationWatcherId: undefined,
       eventsData: {
         type: 'FeatureCollection',
         features: []
@@ -137,6 +138,8 @@ export default {
           console.log('obtained location', position)
         }
         this.initializeMap(position)
+        // keeps tracking the location
+        this.registerLocationWatcher()
       },
       // error
       err => {
@@ -149,6 +152,11 @@ export default {
         maximumAge: 0
       }
     )
+  },
+  beforeDestroy () {
+    if (this.locationWatcherId !== undefined) {
+      navigator.geolocation.clearWatch(this.locationWatcherId)
+    }
   },
   methods: {
     initializeMap ({ coords }) {
@@ -226,6 +234,39 @@ export default {
       const nonReactive = this.getNonReactive()
       nonReactive.map = map
       nonReactive.marker = marker
+    },
+    registerLocationWatcher (locationOptions) {
+      this.locationWatcherId = navigator.geolocation.watchPosition(
+        // success
+        position => {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('updating the location', position)
+          }
+          this.updateLocation(position)
+        },
+        // error
+        error => {
+          console.error('failed to get the location', error)
+        },
+        // options
+        // TODO: test on a mobile device
+        {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 1000
+        }
+      )
+    },
+    updateLocation ({ coords }) {
+      const {
+        latitude,
+        longitude
+      } = coords
+      const { marker } = this.getNonReactive()
+      marker.setLngLat([
+        longitude,
+        latitude
+      ])
     },
     onPooButtonClicked () {
       if (process.env.NODE_ENV !== 'production') {
