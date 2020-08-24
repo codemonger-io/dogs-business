@@ -4,8 +4,10 @@
 @import "~bulma";
 @import "~buefy/src/scss/buefy";
 
-// common button width
-$common-button-width: 6em;
+// common width of buttons shown on a modal
+$modal-button-width: 6em;
 .button {
-  min-width: $common-button-width;
+  &.modal-button {
+    min-width: $modal-button-width;
+  }
 }

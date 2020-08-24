@@ -29,6 +29,10 @@
 </template>
 
 <script>
+import {
+  mapMutations
+} from 'vuex'
+
 import MapPane from '@components/map-pane'
 import DogRegistrationModal from '@components/dog-registration-modal'
 
@@ -52,6 +56,9 @@ export default {
     this.showDogRegistrationModal()
   },
   methods: {
+    ...mapMutations('user', [
+      'updateDogInformation'
+    ]),
     showDogRegistrationModal () {
       this.$refs['dog-registration-modal'].show()
     },
@@ -62,6 +69,7 @@ export default {
       if (process.env.NODE_ENV !== 'production') {
         console.log('registering dog', dog)
       }
+      this.updateDogInformation(dog)
       this.hideDogRegistrationModal()
     },
     onRegistrationOmitted () {

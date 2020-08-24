@@ -11,8 +11,11 @@ import '@mdi/font/css/materialdesignicons.min.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import '@scss'
 
+import store from '@store'
+
 import App from '@components/app'
 
 new Vue({
-  render: h => h(App)
+  render: h => h(App),
+  store
 }).$mount('#app')

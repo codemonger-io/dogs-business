@@ -54,6 +54,7 @@ module.exports = {
       '@assets': path.resolve(__dirname, './assets'),
       '@components': path.resolve(__dirname, './src/components'),
       '@scss': path.resolve(__dirname, './src/scss'),
+      '@store': path.resolve(__dirname, './src/store'),
       '@utils': path.resolve(__dirname, './src/utils')
     },
     extensions: [

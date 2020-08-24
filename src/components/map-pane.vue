@@ -9,7 +9,7 @@
       ref="event-popup"
       class="mapbox-popup dogs-business-body"
     >
-      <p>What is his/her business here?</p>
+      <p>What is {{ possessiveFormOfDog }} business here?</p>
       <div class="level is-mobile">
         <p class="level-item">
           <button
@@ -44,6 +44,9 @@
 
 <script>
 import mapboxgl from 'mapbox-gl'
+import {
+  mapGetters
+} from 'vuex'
 
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
@@ -107,6 +110,11 @@ export default {
         marker: null
       })
     }
+  },
+  computed: {
+    ...mapGetters('user', [
+      'possessiveFormOfDog'
+    ])
   },
   mounted () {
     if (process.env.NODE_ENV !== 'production') {

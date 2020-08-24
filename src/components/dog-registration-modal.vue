@@ -75,13 +75,13 @@
       </section>
       <footer class="modal-card-foot modal-card-foot-pulled-right">
         <button
-          class="button is-primary"
+          class="button modal-button is-primary"
           @click="onRegisterClicked"
         >
           Register
         </button>
         <button
-          class="button"
+          class="button modal-button"
           @click="onOmitClicked"
         >
           Omit
