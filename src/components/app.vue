@@ -20,16 +20,56 @@
     >
       <map-pane />
     </div>
+    <dog-registration-modal
+      ref="dog-registration-modal"
+      @registering-dog="onRegisteringDog"
+      @registration-omitted="onRegistrationOmitted"
+    />
   </div>
 </template>
 
 <script>
 import MapPane from '@components/map-pane'
+import DogRegistrationModal from '@components/dog-registration-modal'
 
+/**
+ * Application component.
+ *
+ * @namespace App
+ *
+ * @memberof module:components
+ */
 export default {
   name: 'App',
   components: {
-    MapPane
+    MapPane,
+    DogRegistrationModal
+  },
+  mounted () {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('App', 'mounted')
+    }
+    this.showDogRegistrationModal()
+  },
+  methods: {
+    showDogRegistrationModal () {
+      this.$refs['dog-registration-modal'].show()
+    },
+    hideDogRegistrationModal () {
+      this.$refs['dog-registration-modal'].hide()
+    },
+    onRegisteringDog (dog) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('registering dog', dog)
+      }
+      this.hideDogRegistrationModal()
+    },
+    onRegistrationOmitted () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('registration omitted')
+      }
+      this.hideDogRegistrationModal()
+    }
   }
 }
 </script>

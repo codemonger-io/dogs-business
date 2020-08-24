@@ -42,6 +42,10 @@ module.exports = {
           // https://github.com/vuejs/vue-loader/issues/1612#issuecomment-614542603
           esModule: false
         }
+      },
+      {
+        test: /\.(woff|woff2|eot|ttf|otf)$/,
+        loader: 'file-loader'
       }
     ]
   },

@@ -3,8 +3,11 @@
  */
 
 import Vue from 'vue'
+import Buefy from 'buefy'
 
-import 'bulma/css/bulma.min.css'
+Vue.use(Buefy)
+
+import '@mdi/font/css/materialdesignicons.min.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import '@scss'
 

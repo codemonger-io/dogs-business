@@ -1,0 +1,11 @@
+// loads the default Bulma theme.
+@import "~bulma/sass/utilities/_all";
+
+@import "~bulma";
+@import "~buefy/src/scss/buefy";
+
+// common button width
+$common-button-width: 6em;
+.button {
+  min-width: $common-button-width;
+}
