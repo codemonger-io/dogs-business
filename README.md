@@ -20,3 +20,5 @@ Please refer to [scenarios.md](scenarios.md).
 - Body
     - [Open Sans](https://fonts.google.com/specimen/Open+Sans?sidebar.open=true&query=open)
     - TBD: [Noto Sans JP (ja)](https://fonts.google.com/specimen/Noto+Sans+JP?sidebar.open=true&subset=japanese)
+- Icons
+    - [Material Design Icons](https://materialdesignicons.com)
