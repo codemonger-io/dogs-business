@@ -105,8 +105,83 @@ export const mutations = {
   }
 }
 
-export default {
-  state,
-  getters,
-  mutations
+/**
+ * Creates Vuex Actions for user information.
+ *
+ * @function createActions
+ *
+ * @memberof module:store/user
+ *
+ * @param {Database} db
+ *
+ *   Database to be bound to Vuex Actions.
+ *
+ * @return {module:store/user.actions}
+ *
+ *   Vuex Actions for user information, that is bound to `db`.
+ */
+function createActions (db) {
+  /**
+   * Vuex Actions for user information.
+   *
+   * Bound to a database.
+   *
+   * @namespace actions
+   *
+   * @memberof module:store/user
+   */
+  return {
+    /**
+     * Loads data from the database.
+     *
+     * @function loadData
+     *
+     * @memberof module:store/user.actions
+     *
+     * @param {object} context
+     *
+     *   Vuex context.
+     *
+     * @return {Promise}
+     *
+     *   Resolved when the data is loaded from the database.
+     */
+    loadData ({ commit }) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('loading data')
+      }
+      return db.loadDogInformation()
+        .then(dog => {
+          commit('updateDogInformation', dog)
+        })
+    }
+  }
 }
+
+/**
+ * Creates a user store that is bound to a given database.
+ *
+ * @function createStore
+ *
+ * @memberof module:store/user
+ *
+ * @param {Database} db
+ *
+ *   Database to be bound to a store.
+ *
+ * @return {object}
+ *
+ *   The user Vuex store bound to `db`.
+ */
+export function createStore (db) {
+  // TODO: do actual binding
+  const actions = createActions(db)
+  return {
+    state,
+    getters,
+    mutations,
+    actions
+  }
+}
+
+export default createStore

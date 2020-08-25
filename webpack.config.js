@@ -15,6 +15,11 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.js$/,
+        loader: 'babel-loader'
+        // see .babelrc.js for configurations
+      },
+      {
         test: /\.vue$/,
         loader: 'vue-loader'
       },
@@ -53,6 +58,7 @@ module.exports = {
     alias: {
       '@assets': path.resolve(__dirname, './assets'),
       '@components': path.resolve(__dirname, './src/components'),
+      '@indexed-db': path.resolve(__dirname, './src/indexed-db'),
       '@scss': path.resolve(__dirname, './src/scss'),
       '@store': path.resolve(__dirname, './src/store'),
       '@utils': path.resolve(__dirname, './src/utils')
