@@ -7,26 +7,57 @@
 /**
  * Vuex State for user information.
  *
- * Has the following fields,
- * - `dog`: {`object`}
- *   Information about user's dog.
- *   Has the following fields,
- *     - `name`: {`string`} name of the dog.
- *     - `sex`: {`string`}
- *       sex of the dog.
- *       'female', 'male' or 'n/a'.
- *     - `dateOfBirth`: {`Date`}
- *       Date of birth of the dog.
- *       `null` if no date of birth is specified.
- *
- * @member {object} state
+ * @namespace state
  */
 export const state = {
-  dog: {
-    name: '',
-    sex: 'n/a',
-    dateOfBirth: null
-  }
+  /**
+   * Whether data is loaded.
+   *
+   * @member {boolean} isLoaded
+   *
+   * @memberof module:store/user.state
+   */
+  isLoaded: false,
+  /**
+   * Information of dogs.
+   *
+   * Each element has the following fields,
+   * - `dogId`: {`number`} ID of the dog.
+   * - `name`: {`string`} name of the dog.
+   * - `sex`: {`string`}
+   *   sex of the dog.
+   *   'female', 'male' or 'n/a'.
+   * - `dateOfBirth`: {`Date`}
+   *   Date of birth of the dog.
+   *   `null` if no date of birth is specified.
+   *
+   * @member {array<object>} dogs
+   *
+   * @memberof module:store/user.state
+   */
+  dogs: []
+}
+
+/**
+ * Finds a dog associated with a given ID.
+ *
+ * @function findDogById
+ *
+ * @param {object} state
+ *
+ *   Vuex State where a dog is to be found.
+ *
+ * @param {number} dogId
+ *
+ *   ID of the dog to be found.
+ *
+ * @return {object}
+ *
+ *   Dog associated with `dogId`.
+ *   `null` if no dog is associated with `dogId`.
+ */
+function findDogById ({ dogs }, dogId) {
+  return dogs.find(d => d.dogId === dogId) || null
 }
 
 /**
@@ -36,9 +67,11 @@ export const state = {
  */
 export const getters = {
   /**
-   * Possessive form of the dog.
+   * Obtains the number of dogs.
    *
-   * @function possessiveFormOfDog
+   * @function dogCount
+   *
+   * @instance
    *
    * @memberof module:store/user.getters
    *
@@ -46,24 +79,63 @@ export const getters = {
    *
    *   Vuex State.
    *
+   * @return {number}
+   *
+   *   Number of dogs.
+   *   May be invalid if data has not been loaded yet.
+   */
+  dogCount ({ dogs }) {
+    return dogs.length
+  },
+  /**
+   * Obtains the dog information associated with a given ID.
+   *
+   * @function dogOfId
+   *
+   * @memberof module:store/user.getters
+   *
+   * @param {number} dogId
+   *
+   *   ID of the dog whose information is to be obtained.
+   *   See {@linkcode module:store/user.state.dogs} for more details.
+   *
+   * @return {object}
+   *
+   *   Dog information associated with `dogId`.
+   *   `null` if no dog information is associated with `dogId`.
+   */
+  dogOfId: state => findDogById.bind(null, state),
+  /**
+   * Possessive form of the dog.
+   *
+   * @function possessiveFormOfDog
+   *
+   * @memberof module:store/user.getters
+   *
+   * @param {number} dogId
+   *
+   :   ID of the dog whose possessive form is to be obtained.
+   *
    * @return {string}
    *
    *   Possessive form of the dog.
    *   Precedence: `name`+'s > `sex`(her/his).
    */
   possessiveFormOfDog (state) {
-    const {
-      name,
-      sex
-    } = state.dog
-    if (name) {
-      return name + "'s"
-    } else if (sex === 'female') {
-      return 'her'
-    } else if (sex === 'male') {
-      return 'his'
-    } else {
-      return 'her/his'
+    return dogId => {
+      const {
+        name,
+        sex
+      } = (findDogById(state, dogId) || {})
+      if (name) {
+        return name + "'s"
+      } else if (sex === 'female') {
+        return 'her'
+      } else if (sex === 'male') {
+        return 'his'
+      } else {
+        return 'her/his'
+      }
     }
   }
 }
@@ -71,37 +143,88 @@ export const getters = {
 /**
  * Vuex Mutations for user information.
  *
+ * Mutations are basically for internal use.
+ * Use Actions instead.
+ *
  * @namespace mutations
  */
 export const mutations = {
   /**
-   * Updates the information about user's dog.
+   * Sets whether data is loaded.
    *
-   * @function updateDogInformation
+   * @function _setLoaded
    *
    * @memberof module:store/user.mutations
    *
    * @param {object} state
    *
    *   Vuex State to be updated.
-   *   The field `dog` is updated.
+   *   The field `isLoaded` is updated.
+   *
+   * @param {boolean} isLoaded
+   *
+   *   Whether data is loaded.
+   */
+  _setLoaded (state, isLoaded) {
+    state.isLoaded = isLoaded
+  },
+  /**
+   * Replaces the information of dogs.
+   *
+   * @function _replaceDogs
+   *
+   * @memberof module:store/user.mutations
+   *
+   * @param {object} state
+   *
+   *   Vuex State to be updated.
+   *   The field `dogs` is replaced.
+   *
+   * @param {array<object>} newDogs
+   *
+   *   New information of dogs.
+   *   Each element must have the following fields,
+   *   - `dogId`: {`number`} ID of the dog.
+   *   - `name`: {`string`} name of the dog.
+   *   - `sex`: {`string`} sex of the dog. 'female', 'male' or 'n/a'.
+   *   - `dateOfBirth`: {`Date`}
+   *     Date of birth of the dog.
+   *     `null` if no date of birth is given.
+   */
+  _replaceDogs (state, newDogs) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('_replaceDogs', newDogs)
+    }
+    state.dogs = newDogs
+  },
+  /**
+   * Appends the information of a dog.
+   *
+   * @function _appendDog
+   *
+   * @memberof module:store/user.mutations
+   *
+   * @param {object} state
+   *
+   *   Vuex State to be updated.
+   *   The field `dogs` is updated.
    *
    * @param {object} newDog
    *
-   *   New information about user's dog.
+   *   New information of a dog.
    *   Must have the following fields,
+   *   - `dogId`: {`number`} ID of the dog.
    *   - `name`: {`string`} name of the dog.
-   *   - `sex`: {`string`}
-   *     sex of the dog.
-   *     'female', 'male' or 'n/a'.
+   *   - `sex`: {`string`} sex of the dog. 'female', 'male' or 'n/a'.
    *   - `dateOfBirth`: {`Date`}
    *     Date of birth of the dog.
-   *     `null` if no date of birth is specified.
+   *     May be `null` if no date of birth is given.
    */
-  updateDogInformation ({ dog }, newDog) {
-    dog.name = newDog.name
-    dog.sex = newDog.sex
-    dog.dateOfBirth = newDog.dateOfBirth
+  _appendDog ({ dogs }, newDog) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('appending a dog', dogs, newDog)
+    }
+    dogs.push(newDog)
   }
 }
 
@@ -134,6 +257,10 @@ function createActions (db) {
     /**
      * Loads data from the database.
      *
+     * This function invokes
+     * [Database.loadDogs]{@linkcode module:indexed-db.Database#loadDogs}
+     * of the bound database.
+     *
      * @function loadData
      *
      * @memberof module:store/user.actions
@@ -150,9 +277,47 @@ function createActions (db) {
       if (process.env.NODE_ENV !== 'production') {
         console.log('loading data')
       }
-      return db.loadDogInformation()
-        .then(dog => {
-          commit('updateDogInformation', dog)
+      commit('_setLoaded', false)
+      return db.loadDogs()
+        .then(dogs => commit('_replaceDogs', dogs))
+        .finally(() => commit('_setLoaded', true))
+    },
+    /**
+     * Appends a given dog to the database.
+     *
+     * This function invokes
+     * [Database.putDog]{@linkcode module:indexed-db.Database#putDog}
+     * of the bound database.
+     *
+     * @function appendDog
+     *
+     * @memberof module:store/user.actions
+     *
+     * @param {object} context
+     *
+     *   Vuex context.
+     *
+     * @param {object} newDog
+     *
+     *   Information of a dog to be appended to the database.
+     *   Must have the following fields,
+     *   - `name`: {`string`} name of the dog.
+     *   - `sex`: {`string`} sex of the dog. 'female', 'male' or 'n/a'.
+     *   - `dateOfBirth`: {`Date`}
+     *     Date of birth of the dog.
+     *     May be `null` if no date of birth is given.
+     *
+     * @return {Promise}
+     *
+     *   Resolved when appending the dog to the database finishes.
+     */
+    appendDog ({ commit }, newDog) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('appending a dog', newDog)
+      }
+      return db.putDog(newDog)
+        .then(newDog => {
+          commit('_appendDog', newDog)
         })
     }
   }
@@ -174,7 +339,6 @@ function createActions (db) {
  *   The user Vuex store bound to `db`.
  */
 export function createStore (db) {
-  // TODO: do actual binding
   const actions = createActions(db)
   return {
     state,

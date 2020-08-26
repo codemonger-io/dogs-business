@@ -30,7 +30,9 @@
 
 <script>
 import {
-  mapMutations
+  mapActions,
+  mapGetters,
+  mapState
 } from 'vuex'
 
 import MapPane from '@components/map-pane'
@@ -49,16 +51,51 @@ export default {
     MapPane,
     DogRegistrationModal
   },
+  computed: {
+    ...mapState('user', [
+      'isLoaded'
+    ]),
+    ...mapGetters('user', [
+      'dogCount'
+    ])
+  },
   mounted () {
     if (process.env.NODE_ENV !== 'production') {
       console.log('App', 'mounted')
     }
-    this.showDogRegistrationModal()
+    // shows a dog registration modal if no dog is registered
+    this.promiseLoaded()
+      .then(() => {
+        if (this.dogCount === 0) {
+          this.showDogRegistrationModal()
+        }
+      })
   },
   methods: {
-    ...mapMutations('user', [
-      'updateDogInformation'
+    ...mapActions('user', [
+      'appendDog'
     ]),
+    promiseLoaded () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('waiting for data loaded', this.isLoaded)
+      }
+      if (this.isLoaded) {
+        return Promise.resolve(true)
+      } else {
+        // waits until `isLoaded` turns into true
+        // makes sure unwatching `isLoaded`
+        let unwatch
+        return new Promise(resolve => {
+          unwatch = this.$watch('isLoaded', isLoaded => {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('data loaded', isLoaded)
+            }
+            resolve(isLoaded)
+          })
+        })
+          .finally(unwatch)
+      }
+    },
     showDogRegistrationModal () {
       this.$refs['dog-registration-modal'].show()
     },
@@ -69,8 +106,9 @@ export default {
       if (process.env.NODE_ENV !== 'production') {
         console.log('registering dog', dog)
       }
-      this.updateDogInformation(dog)
-      this.hideDogRegistrationModal()
+      this.appendDog(dog)
+        .catch(err => console.log(err))
+        .finally(() => this.hideDogRegistrationModal())
     },
     onRegistrationOmitted () {
       if (process.env.NODE_ENV !== 'production') {

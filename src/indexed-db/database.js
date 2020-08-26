@@ -95,49 +95,107 @@ export class Database {
       keyPath: 'dogId',
       autoIncrement: true
     })
-    // adds a default dog
-    const request = store.add({
-      name: '',
-      sex: 'n/a',
-      dateOfBirth: null
-    })
-    request.onsuccess = event => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('IDBObjectStore.add', 'success', event)
-      }
-    }
-    request.onerror = event => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('IDBObjectStore.add', 'error', event)
-      }
-    }
   }
 
-  async loadDogInformation () {
+  /**
+   * Loads dogs from the database.
+   *
+   * @function loadDogs
+   *
+   * @instance
+   *
+   * @memberof module:indexed-db.Database
+   *
+   * @return {Promise< array<object> >}
+   *
+   *   Resolves to an array of dogs when dogs are loaded from the datbase.
+   *   Each element has the following fields,
+   *   - `dogId`: {`number`} ID of the dog.
+   *   - `name`: {`string`} Name of the dog.
+   *   - `sex`: {`string`} Sex of the dog. 'female', 'male' or 'n/a'.
+   *   - `dateOfBirth`: {`Date`}:
+   *     Date of birth of the dog. `null` if it is not given.
+   */
+  async loadDogs () {
     if (process.env.NODE_ENV !== 'production') {
-      console.log('loading dog information')
+      console.log('loading dogs from the database')
     }
     return this.#promisedDb
       .then(db => {
         return new Promise((resolve, reject) => {
           if (process.env.NODE_ENV !== 'production') {
-            console.log('requesting the dog #1')
+            console.log('starting transaction: request dogs')
           }
           const transaction = db.transaction(DOG_STORE_NAME, 'readonly')
           const store = transaction.objectStore(DOG_STORE_NAME)
-          const request = store.get(1)
+          const request = store.getAll()
           request.onsuccess = event => {
             if (process.env.NODE_ENV !== 'production') {
-              console.log('loadDogInformation', 'success', event)
+              console.log('loadDogs', 'success', event)
             }
-            const dog = event.target.result
-            resolve(dog)
+            const dogs = event.target.result
+            resolve(dogs)
           }
           request.onerror = event => {
+            console.error('loadDogs', 'error', event)
+            reject(new Error('failed to load dogs from the database'))
+          }
+        })
+      })
+  }
+
+  /**
+   * Puts a given dog into the database.
+   *
+   * @function putDog
+   *
+   * @instance
+   *
+   * @memberof module:indexed-db.Database
+   *
+   * @param {object} newDog
+   *
+   *   Information of the dog to be put.
+   *   Must have the following fields,
+   *   - `name`: {`string`} name of the dog.
+   *   - `sex`: {`string`} sex of the dog. 'female', 'male' or 'n/a'.
+   *   - `dateOfBirth`: {`Date`}
+   *     Date of birth of the dog.
+   *     May be `null` if no date of birth is given.
+   *
+   * @return {Promise<object>}
+   *
+   *   Resolves to a dog when a dog is put to the database.
+   *   A result has the following field in addition to those of `newDog`,
+   *   - `dogId`: {`number`} ID of the dog.
+   */
+  async putDog (newDog) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('putting dog to the database', newDog)
+    }
+    return this.#promisedDb
+      .then(db => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('starting transaction: put dog')
+        }
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction(DOG_STORE_NAME, 'readwrite')
+          const store = transaction.objectStore(DOG_STORE_NAME)
+          const request = store.put(newDog)
+          request.onsuccess = event => {
             if (process.env.NODE_ENV !== 'production') {
-              console.log('loadDogInformation', 'error', event)
+              console.log('putDog', 'success', event)
             }
-            reject(new Error('no dog is associated with #1'))
+            const key = event.target.result
+            // TODO: should I retrieve the object from the database?
+            resolve({
+              ...newDog,
+              dogId: key
+            })
+          }
+          request.onerror = event => {
+            console.error('putDog', 'error', event)
+            reject(new Error('failed to put a new dog to the database'))
           }
         })
       })

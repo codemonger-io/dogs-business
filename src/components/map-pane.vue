@@ -9,7 +9,7 @@
       ref="event-popup"
       class="mapbox-popup dogs-business-body"
     >
-      <p>What is {{ possessiveFormOfDog }} business here?</p>
+      <p>What is {{ possessiveFormOfDog(1) }} business here?</p>
       <div class="level is-mobile">
         <p class="level-item">
           <button
