@@ -23,7 +23,16 @@ export const DATABASE_VERSION = 1
  *
  * @memberof module:db
  */
-export const DOG_STORE_NAME = 'dog'
+export const DOG_STORE_NAME = 'Dog'
+
+/**
+ * Name of the business record store.
+ *
+ * @member {string} BUSINESS_RECORD_STORE_NAME
+ *
+ * @memberof module:db
+ */
+export const BUSINESS_RECORD_STORE_NAME = 'BusinessRecord'
 
 /**
  * Database backed by IndexedDB.
@@ -91,10 +100,19 @@ export class Database {
     if (process.env.NODE_ENV !== 'production') {
       console.log('populating stores')
     }
-    const store = db.createObjectStore(DOG_STORE_NAME, {
+    // store for dogs
+    db.createObjectStore(DOG_STORE_NAME, {
       keyPath: 'dogId',
       autoIncrement: true
     })
+    // store for businness records
+    const recordStore = db.createObjectStore(BUSINESS_RECORD_STORE_NAME, {
+      keyPath: 'recordId',
+      autoIncrement: true
+    })
+    recordStore.createIndex('dogId', 'dogId', { unique: false })
+    recordStore.createIndex('type', 'type', { unique: false })
+    recordStore.createIndex('date', 'date', { unique: false })
   }
 
   /**
@@ -196,6 +214,58 @@ export class Database {
           request.onerror = event => {
             console.error('putDog', 'error', event)
             reject(new Error('failed to put a new dog to the database'))
+          }
+        })
+      })
+  }
+
+  /**
+   * Loads business records from the database.
+   *
+   * @function loadBusinessRecords
+   *
+   * @instance
+   *
+   * @memberof module:db.Database
+   *
+   * @return {Promise< array<object> >}
+   *
+   *   Resolves to an array of business records when they are loaded from
+   *   the database.
+   *   Each element has the following fields,
+   *   - `recordId`: {`number`} ID of the business record.
+   *   - `dogId`: {`number`} ID of the dog that had the business.
+   *   - `type`: {`string`} type of the business.
+   *   - `location`: {`object`}
+   *     Location where the business happened.
+   *     Has the following fields,
+   *       - `longitude`: {`number`} longitude of the location.
+   *       - `latitude`: {`number`} latitude of the location.
+   *   - `date`: {`string`} date when the business happened.
+   */
+  loadBusinessRecords () {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('loading business records from the database')
+    }
+    return this.#promisedDb
+      .then(db => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('starting transaction: request business records')
+        }
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction(BUSINESS_RECORD_STORE_NAME, 'readonly')
+          const store = transaction.objectStore(BUSINESS_RECORD_STORE_NAME)
+          const request = store.getAll()
+          request.onsuccess = event => {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('loadBusinessRecords', 'success', event)
+            }
+            const records = event.target.result
+            resolve(records)
+          }
+          request.onerror = event => {
+            console.error('loadBusinessRecords', 'error', event)
+            reject(new Error('failed to load business records from the database'))
           }
         })
       })

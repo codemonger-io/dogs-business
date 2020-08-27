@@ -35,7 +35,26 @@ export const state = {
    *
    * @memberof module:store/user.state
    */
-  dogs: []
+  dogs: [],
+  /**
+   * Business records.
+   *
+   * Each element has the following fields,
+   * - `recordId`: {`number`} ID of the business record.
+   * - `dogId`: {`number`} ID of the dog that had the business.
+   * - `type`: {`string`} type of the business. 'pee' or 'poo'.
+   * - `location`: {`object`}
+   *   location where the business happened.
+   *   Has the following fields,
+   *     - `longitude`: {`number`} longitude of the location.
+   *     - `latitude`: {`number`} latitude of the location.
+   * - `date`: {`string`} date when the business happened.
+   *
+   * @member {array<object>} businessRecords
+   *
+   * @memberof module:store/user.state
+   */
+  businessRecords: []
 }
 
 /**
@@ -225,6 +244,37 @@ export const mutations = {
       console.log('appending a dog', dogs, newDog)
     }
     dogs.push(newDog)
+  },
+  /**
+   * Replaces business records.
+   *
+   * @function _replaceBusinessRecords
+   *
+   * @memberof module:store/user.mutations
+   *
+   * @param {object} state
+   *
+   *   Vuex State to be updated.
+   *
+   * @param {array<object>} newRecords
+   *
+   *   New business records.
+   *   Each element must have the following fields,
+   *   - `recordId`: {`number`} ID of the business record.
+   *   - `dogId`: {`number`} ID of the dog that had the business.
+   *   - `type`: {`string`} type of the business.
+   *   - `location`: {`object`}
+   *     location where the business happened.
+   *     Must have the following fields,
+   *       - `longitude`: {`number`} longitude of the location.
+   *       - `latitude`: {`number`} latitude of the location.
+   *   - `date`: {`string`} date when the business happened.
+   */
+  _replaceBusinessRecords (state, newRecords) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('replacing business records', newRecords)
+    }
+    state.businessRecords = newRecords
   }
 }
 
@@ -278,8 +328,12 @@ function createActions (db) {
         console.log('loading data')
       }
       commit('_setLoaded', false)
-      return db.loadDogs()
-        .then(dogs => commit('_replaceDogs', dogs))
+      return Promise.all([
+        db.loadDogs()
+          .then(dogs => commit('_replaceDogs', dogs)),
+        db.loadBusinessRecords()
+          .then(records => commit('_replaceBusinessRecords', records))
+      ])
         .finally(() => commit('_setLoaded', true))
     },
     /**
