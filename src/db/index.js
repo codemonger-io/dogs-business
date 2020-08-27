@@ -1,7 +1,7 @@
 /**
  * Manages IndexedDB.
  *
- * @module indexed-db
+ * @module db
  */
 
 import Database from './database'

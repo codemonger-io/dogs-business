@@ -58,7 +58,7 @@ module.exports = {
     alias: {
       '@assets': path.resolve(__dirname, './assets'),
       '@components': path.resolve(__dirname, './src/components'),
-      '@indexed-db': path.resolve(__dirname, './src/indexed-db'),
+      '@db': path.resolve(__dirname, './src/db'),
       '@scss': path.resolve(__dirname, './src/scss'),
       '@store': path.resolve(__dirname, './src/store'),
       '@utils': path.resolve(__dirname, './src/utils')

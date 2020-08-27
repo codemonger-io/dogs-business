@@ -258,7 +258,7 @@ function createActions (db) {
      * Loads data from the database.
      *
      * This function invokes
-     * [Database.loadDogs]{@linkcode module:indexed-db.Database#loadDogs}
+     * [Database.loadDogs]{@linkcode module:db.Database#loadDogs}
      * of the bound database.
      *
      * @function loadData
@@ -286,7 +286,7 @@ function createActions (db) {
      * Appends a given dog to the database.
      *
      * This function invokes
-     * [Database.putDog]{@linkcode module:indexed-db.Database#putDog}
+     * [Database.putDog]{@linkcode module:db.Database#putDog}
      * of the bound database.
      *
      * @function appendDog

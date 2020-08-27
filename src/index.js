@@ -13,7 +13,7 @@ import '@scss'
 
 import {
   openDatabase
-} from '@indexed-db'
+} from '@db'
 import createStore from '@store'
 
 import App from '@components/app'

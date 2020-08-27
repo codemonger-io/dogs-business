@@ -3,7 +3,7 @@
  *
  * @member {string} DATABASE_NAME
  *
- * @memberof module:indexed-db
+ * @memberof module:db
  */
 export const DATABASE_NAME = 'DogsBusinessDb'
 
@@ -12,7 +12,7 @@ export const DATABASE_NAME = 'DogsBusinessDb'
  *
  * @member {number} DATABASE_VERSION
  *
- * @memberof module:indexed-db
+ * @memberof module:db
  */
 export const DATABASE_VERSION = 1
 
@@ -21,7 +21,7 @@ export const DATABASE_VERSION = 1
  *
  * @member {string} DOG_STORE_NAME
  *
- * @memberof module:indexed-db
+ * @memberof module:db
  */
 export const DOG_STORE_NAME = 'dog'
 
@@ -30,7 +30,7 @@ export const DOG_STORE_NAME = 'dog'
  *
  * @class Database
  *
- * @memberof module:indexed-db
+ * @memberof module:db
  *
  * @throws Error
  *
@@ -104,7 +104,7 @@ export class Database {
    *
    * @instance
    *
-   * @memberof module:indexed-db.Database
+   * @memberof module:db.Database
    *
    * @return {Promise< array<object> >}
    *
@@ -151,7 +151,7 @@ export class Database {
    *
    * @instance
    *
-   * @memberof module:indexed-db.Database
+   * @memberof module:db.Database
    *
    * @param {object} newDog
    *
