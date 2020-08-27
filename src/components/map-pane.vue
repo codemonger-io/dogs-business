@@ -4,6 +4,14 @@
       ref="mapbox-container"
       class="mapbox-container"
     />
+    <!-- icon buttons shown bottom right -->
+    <div class="map-overlay map-overlay-bottom-right">
+      <div class="map-overlay-contents">
+        <map-controller
+          @centering-current-location="centerCurrentLocation"
+        />
+      </div>
+    </div>
     <!-- popup elements -->
     <div
       ref="event-popup"
@@ -49,6 +57,8 @@ import {
 } from 'vuex'
 
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
+
+import MapController from './map-controller'
 
 import peePngPath from '@assets/images/pee.png'
 import pooPngPath from '@assets/images/poo.png'
@@ -97,6 +107,9 @@ function makeNonReactive (obj) {
  */
 export default {
   name: 'MapPane',
+  components: {
+    MapController
+  },
   data () {
     return {
       locationWatcherId: undefined,
@@ -258,6 +271,30 @@ export default {
         latitude
       ])
     },
+    // centers the current location on the map.
+    // opens a business popup if it is closed after centering.
+    centerCurrentLocation () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('cetering current location')
+      }
+      const {
+        map,
+        marker
+      } = this.getNonReactive()
+      const {
+        lng,
+        lat
+      } = marker.getLngLat()
+      map.flyTo({
+        center: [lng, lat],
+        curve: 0
+      })
+      map.on('moveend', () => {
+        if (!marker.getPopup().isOpen()) {
+          marker.togglePopup()
+        }
+      })
+    },
     onEventButtonClicked (type) {
       if (process.env.NODE_ENV !== 'production') {
         console.log('event button clicked', type)
@@ -306,11 +343,22 @@ export default {
     width: 100%;
     height: 100%;
   }
-}
 
-.button {
-  &.circle-button {
-    border-radius: 50%;
+  .map-overlay {
+    position: absolute;
+
+    &.map-overlay-bottom-right {
+      bottom: 0;
+      right: 0;
+
+      .map-overlay-contents {
+        padding-bottom: 3.0em;
+      }
+    }
+
+    .map-overlay-contents {
+      padding: 0.75em;
+    }
   }
 }
 </style>

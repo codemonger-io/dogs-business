@@ -15,9 +15,7 @@
         </div>
       </div>
     </div>
-    <div
-      class="map-container"
-    >
+    <div class="map-container">
       <map-pane />
     </div>
     <dog-registration-modal
