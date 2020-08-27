@@ -6,7 +6,7 @@
     <div class="modal-background" />
     <div class="modal-card">
       <header class="modal-card-head">
-        Tell us about your dog
+        Tell me about your dog
       </header>
       <section class="modal-card-body">
         <b-field label="Name">
