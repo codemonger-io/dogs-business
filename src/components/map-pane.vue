@@ -17,35 +17,10 @@
       ref="event-popup"
       class="mapbox-popup dogs-business-body"
     >
-      <p>What is {{ possessiveFormOfDog(1) }} business here?</p>
-      <div class="level is-mobile">
-        <p class="level-item">
-          <button
-            class="button circle-button"
-            @click="onEventButtonClicked('pee')"
-          >
-            <span class="icon">
-              <img
-                class="image is-24x24"
-                src="@assets/images/pee.png"
-              />
-            </span>
-          </button>
-        </p>
-        <p class="level-item">
-          <button
-            class="button circle-button"
-            @click="onEventButtonClicked('poo')"
-          >
-            <span class="icon">
-              <img
-                class="image is-24x24"
-                src="@assets/images/poo.png"
-              />
-            </span>
-          </button>
-        </p>
-      </div>
+      <business-record-input
+        :dog="currentDog"
+        @adding-business-record="onAddingBusinessRecord"
+      />
     </div>
   </div>
 </template>
@@ -53,11 +28,12 @@
 <script>
 import mapboxgl from 'mapbox-gl'
 import {
-  mapGetters
+  mapState
 } from 'vuex'
 
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
+import BusinessRecordInput from './business-record-input'
 import MapController from './map-controller'
 
 import peePngPath from '@assets/images/pee.png'
@@ -108,6 +84,7 @@ function makeNonReactive (obj) {
 export default {
   name: 'MapPane',
   components: {
+    BusinessRecordInput,
     MapController
   },
   data () {
@@ -125,9 +102,12 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('user', [
-      'possessiveFormOfDog'
-    ])
+    ...mapState('user', [
+      'dogs'
+    ]),
+    currentDog () {
+      return (this.dogs.length > 0) ? this.dogs[0] : {}
+    }
   },
   mounted () {
     if (process.env.NODE_ENV !== 'production') {
@@ -238,6 +218,12 @@ export default {
       nonReactive.map = map
       nonReactive.marker = marker
     },
+    setPopupOpen (isOpen) {
+      const { marker } = this.getNonReactive()
+      if (marker.getPopup().isOpen() !== isOpen) {
+        marker.togglePopup()
+      }
+    },
     registerLocationWatcher (locationOptions) {
       this.locationWatcherId = navigator.geolocation.watchPosition(
         // success
@@ -290,20 +276,17 @@ export default {
         curve: 0
       })
       map.on('moveend', () => {
-        if (!marker.getPopup().isOpen()) {
-          marker.togglePopup()
-        }
+        this.setPopupOpen(true)
       })
     },
-    onEventButtonClicked (type) {
+    onAddingBusinessRecord (type) {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('event button clicked', type)
+        console.log('adding a business record', type)
       }
-      this.addEvent(type)
-      const { marker } = this.getNonReactive()
-      marker.togglePopup() // should close the popup
+      this.addBusinessRecord(type)
+      this.setPopupOpen(false)
     },
-    addEvent (type) {
+    addBusinessRecord (type) {
       const {
         map,
         marker
