@@ -255,6 +255,7 @@ export const mutations = {
    * @param {object} state
    *
    *   Vuex State to be updated.
+   *   The field `businessRecords` is updated.
    *
    * @param {array<object>} newRecords
    *
@@ -264,7 +265,7 @@ export const mutations = {
    *   - `dogId`: {`number`} ID of the dog that had the business.
    *   - `type`: {`string`} type of the business.
    *   - `location`: {`object`}
-   *     location where the business happened.
+   *     Location where the business happened.
    *     Must have the following fields,
    *       - `longitude`: {`number`} longitude of the location.
    *       - `latitude`: {`number`} latitude of the location.
@@ -275,6 +276,38 @@ export const mutations = {
       console.log('replacing business records', newRecords)
     }
     state.businessRecords = newRecords
+  },
+  /**
+   * Appends a given business record.
+   *
+   * @function _appendBusinessRecord
+   *
+   * @memberof module:store/user.mutations
+   *
+   * @param {object} state
+   *
+   *   Vuex State to be updated.
+   *   The field `businessRecords` is updated.
+   *
+   * @param {object} newRecord
+   *
+   *   New business record to be appended.
+   *   Must have the following fields,
+   *   - `recordId`: {`number`} ID of the business record.
+   *   - `dogId`: {`number`} ID of the dog that had the business.
+   *   - `type`: {`string`} type of the business.
+   *   - `location`: {`object`}
+   *     Location where the business happened.
+   *     Must have the following fields,
+   *       - `longitude`: {`number`} longitude of the location.
+   *       - `latitude`: {`number`} latitude of the location.
+   *   - `date`: {`string`} date when the business happened.
+   */
+  _appendBusinessRecord ({ businessRecords }, newRecord) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('appending a business record', businessRecords, newRecord)
+    }
+    businessRecords.push(newRecord)
   }
 }
 
@@ -372,6 +405,48 @@ function createActions (db) {
       return db.putDog(newDog)
         .then(newDog => {
           commit('_appendDog', newDog)
+        })
+    },
+    /**
+     * Appends a given business record to the database.
+     *
+     * This function invokes
+     * [Database.putBusinessRecord]{@linkcode module:db.Database#putBusinessRecord}
+     * of the bound database.
+     *
+     * @function appendBusinessRecord
+     *
+     * @memberof module:store/user.actions
+     *
+     * @param {object} context
+     *
+     *   Vuex context.
+     *
+     * @param {object} newRecord
+     *
+     *   Business record to be appended to the database.
+     *   Must have the following fields,
+     *   - `recordId`: {`number`} ID of the business record.
+     *   - `dogId`: {`number`} ID of the dog that had the business.
+     *   - `type`: {`string`} type of the business.
+     *   - `location`: {`object`}
+     *     Location where the business happened.
+     *     Must have the following field,
+     *       - `longitude`: {`number`} longitude of the location.
+     *       - `latitude`: {`number`} latitude of the location.
+     *   - `date`: {`string`} date when the business happened.
+     *
+     * @return {Promise}
+     *
+     *   Resolved when appending the business record to the database finishes.
+     */
+    appendBusinessRecord ({ commit }, newRecord) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('appending a business record', newRecord)
+      }
+      return db.putBusinessRecord(newRecord)
+        .then(newRecord => {
+          commit('_appendBusinessRecord', newRecord)
         })
     }
   }

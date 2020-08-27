@@ -28,9 +28,12 @@
 <script>
 import mapboxgl from 'mapbox-gl'
 import {
+  mapActions,
+  mapGetters,
   mapState
 } from 'vuex'
 
+import { formatDate } from '@db/types/date'
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
 import BusinessRecordInput from './business-record-input'
@@ -90,10 +93,7 @@ export default {
   data () {
     return {
       locationWatcherId: undefined,
-      eventsData: {
-        type: 'FeatureCollection',
-        features: []
-      },
+      isMapInitialized: false,
       // Mapbox objects should not become reactive.
       getNonReactive: makeNonReactive({
         map: null,
@@ -103,10 +103,62 @@ export default {
   },
   computed: {
     ...mapState('user', [
+      'businessRecords',
       'dogs'
+    ]),
+    ...mapGetters('user', [
+      'dogOfId'
     ]),
     currentDog () {
       return (this.dogs.length > 0) ? this.dogs[0] : {}
+    },
+    currentDogId () {
+      return this.currentDog.dogId
+    },
+    // TODO: make it more efficient
+    mappedBusinessRecords () {
+      return {
+        type: 'FeatureCollection',
+        features: this.businessRecords.map(record => {
+          const {
+            date,
+            dogId,
+            location,
+            recordId,
+            type
+          } = record
+          const {
+            longitude,
+            latitude
+          } = location
+          return {
+            type: 'Feature',
+            properties: {
+              recordId,
+              dogId,
+              type,
+              date
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [
+                longitude,
+                latitude
+              ]
+            }
+          }
+        })
+      }
+    }
+  },
+  watch: {
+    mappedBusinessRecords (newRecords) {
+      this.promiseMapInitialized()
+        .then(() => {
+          const { map } = this.getNonReactive()
+          map.getSource('business-records')
+            .setData(newRecords)
+        })
     }
   },
   mounted () {
@@ -142,6 +194,9 @@ export default {
     }
   },
   methods: {
+    ...mapActions('user', [
+      'appendBusinessRecord'
+    ]),
     initializeMap ({ coords }) {
       const {
         latitude,
@@ -181,23 +236,31 @@ export default {
             images.forEach((image, i) => {
               map.addImage(imagesToLoad[i].name, image)
             })
-            map.addSource('events', {
+            map.addSource('business-records', {
               type: 'geojson',
-              data: this.eventsData
+              data: this.mappedBusinessRecords
             })
             map.addLayer({
-              id: 'events',
+              id: 'business-records',
               type: 'symbol',
-              source: 'events',
+              source: 'business-records',
               layout: {
                 'icon-image': ['get', 'type'],
                 'icon-size': 0.375
               }
             })
-            map.on('click', 'events', event => {
-              console.log(event)
-              console.log(`you stepped in ${event.features[0].properties.name}`)
+            map.on('click', 'business-records', record => {
+              console.log(record)
+              const {
+                recordId,
+                dogId,
+                type,
+                date
+              } = record.features[0].properties
+              console.log(`you stepped in ${type}-${recordId} made by ${this.dogOfId(dogId).name} on ${date}`)
             })
+            // notifies that the map is initialized.
+            this.isMapInitialized = true
           })
           .catch(error => {
             console.error('failed to load images', error)
@@ -217,6 +280,23 @@ export default {
       const nonReactive = this.getNonReactive()
       nonReactive.map = map
       nonReactive.marker = marker
+    },
+    // makes sure that initialization of the map has finished.
+    // returns a Promise that
+    // resolves immediately if the map has been initialized at the call
+    // otherwise waits until the map is initialized.
+    promiseMapInitialized () {
+      if (this.isMapInitialized) {
+        return Promise.resolve(true)
+      } else {
+        let unwatch
+        return new Promise(resolve => {
+          unwatch = this.$watch('isMapInitialized', flag => {
+            resolve(flag)
+          })
+        })
+          .finally(unwatch)
+      }
     },
     setPopupOpen (isOpen) {
       const { marker } = this.getNonReactive()
@@ -287,31 +367,27 @@ export default {
       this.setPopupOpen(false)
     },
     addBusinessRecord (type) {
+      const { marker } = this.getNonReactive()
       const {
-        map,
-        marker
-      } = this.getNonReactive()
-      const {
-        lng,
-        lat
+        lng: longitude,
+        lat: latitude
       } = marker.getLngLat()
-      const point = [
-        lng,
-        lat
-      ]
-      this.eventsData.features.push({
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: point
-        },
-        properties: {
-          type,
-          name: `${type}-${this.eventsData.features.length}`
-        }
+      const location = {
+        longitude,
+        latitude
+      }
+      const date = formatDate(new Date())
+      this.appendBusinessRecord({
+        dogId: this.currentDogId,
+        type,
+        location,
+        date
       })
-      map.getSource('events')
-        .setData(this.eventsData)
+        .then(() => {
+          // TODO: show "Please clean up after your dog" message.
+          console.log('please clean up after your dog!')
+        })
+        .catch(err => console.error(err))
     }
   }
 }

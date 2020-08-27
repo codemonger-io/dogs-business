@@ -185,7 +185,7 @@ export class Database {
    *
    *   Resolves to a dog when a dog is put to the database.
    *   A result has the following field in addition to those of `newDog`,
-   *   - `dogId`: {`number`} ID of the dog.
+   *   - `dogId`: {`number`} dog ID assigned by the database.
    */
   async putDog (newDog) {
     if (process.env.NODE_ENV !== 'production') {
@@ -253,7 +253,9 @@ export class Database {
           console.log('starting transaction: request business records')
         }
         return new Promise((resolve, reject) => {
-          const transaction = db.transaction(BUSINESS_RECORD_STORE_NAME, 'readonly')
+          const transaction = db.transaction(
+            BUSINESS_RECORD_STORE_NAME,
+            'readonly')
           const store = transaction.objectStore(BUSINESS_RECORD_STORE_NAME)
           const request = store.getAll()
           request.onsuccess = event => {
@@ -266,6 +268,69 @@ export class Database {
           request.onerror = event => {
             console.error('loadBusinessRecords', 'error', event)
             reject(new Error('failed to load business records from the database'))
+          }
+        })
+      })
+  }
+
+  /**
+   * Puts a given business record into the database.
+   *
+   * @function putBusinessRecord
+   *
+   * @instance
+   *
+   * @memberof module:db.Database
+   *
+   * @param {object} newRecord
+   *
+   *   Business record to be put into the database.
+   *   Must have the following fields,
+   *   - `dogId`: {`number`} ID of the dog that had the business.
+   *   - `type`: {`string`} type of the business.
+   *   - `location`: {`object`}
+   *     Location where the business happened.
+   *     Must have the following fields,
+   *       - `longitude`: {`number`} longitude of the location.
+   *       - `latitude`: {`number`} latitude of the location.
+   *   - `date`: {`string`} date when the business happened.
+   *
+   * @return {Promise<object>}
+   *
+   *   Resolves to a business record when a business record is put into
+   *   the Database.
+   *   A resolved value has the following field in addition to those of
+   *   `newRecord`.
+   *   - `recordId`: {`number`} business record ID assigned by the database.
+   */
+  putBusinessRecord (newRecord) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('putting a business record into the database', newRecord)
+    }
+    return this.#promisedDb
+      .then(db => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('starting transaction: put business record')
+        }
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction(
+            BUSINESS_RECORD_STORE_NAME,
+            'readwrite')
+          const store = transaction.objectStore(BUSINESS_RECORD_STORE_NAME)
+          const request = store.put(newRecord)
+          request.onsuccess = event => {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('putBusinessRecord', 'success', event)
+            }
+            const key = event.target.result
+            resolve({
+              ...newRecord,
+              recordId: key
+            })
+          }
+          request.onerror = event => {
+            console.error('putBusinessRecord', 'error', event)
+            reject(new Error('failed to put a new business record into the database'))
           }
         })
       })
