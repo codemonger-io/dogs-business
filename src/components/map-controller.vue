@@ -3,7 +3,7 @@
     <!-- current location -->
     <div>
       <button
-        class="button circle-button"
+        class="button circle-button button-with-shadow"
         @click.stop="onCurrentLocationButtonClicked"
       >
         <span class="icon is-small">
@@ -38,3 +38,11 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.button {
+  &.button-with-shadow {
+    box-shadow: 0 0 3px 1px gray;
+  }
+}
+</style>
