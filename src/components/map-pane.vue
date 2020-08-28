@@ -341,7 +341,7 @@ export default {
     // opens a business popup if it is closed after centering.
     centerCurrentLocation () {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('cetering current location')
+        console.log('centering current location')
       }
       const {
         map,

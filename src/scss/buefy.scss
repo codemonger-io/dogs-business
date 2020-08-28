@@ -1,13 +1,5 @@
-// loads the default Bulma theme.
+/* loads the default Bulma theme. */
 @import "~bulma/sass/utilities/_all";
 
 @import "~bulma";
 @import "~buefy/src/scss/buefy";
-
-// common width of buttons shown on a modal
-$modal-button-width: 6em;
-.button {
-  &.modal-button {
-    min-width: $modal-button-width;
-  }
-}
