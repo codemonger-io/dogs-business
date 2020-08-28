@@ -2,7 +2,7 @@
 
 ![Dog's Business](assets/images/dogs-business.svg)
 
-Track and share where your dog did his/her business; i.e., 💦 and 💩.
+Track and share where your dog did her/his business; i.e., 💦 and 💩.
 
 Enjoy it and **CLEAN UP AFTER YOUR DOG.**
 
@@ -12,6 +12,10 @@ Powered by [Mapbox](https://www.mapbox.com).
 
 Please refer to [scenarios.md](scenarios.md).
 
+## Database
+
+Please refer to [database.md](database.md).
+
 ## Fonts
 
 - Title
@@ -19,6 +23,6 @@ Please refer to [scenarios.md](scenarios.md).
     - TBD: [Kosugi Maru (ja)](https://fonts.google.com/specimen/Kosugi+Maru?sidebar.open=true&query=kosugi#pairings)
 - Body
     - [Open Sans](https://fonts.google.com/specimen/Open+Sans?sidebar.open=true&query=open)
-    - TBD: [Noto Sans JP (ja)](https://fonts.google.com/specimen/Noto+Sans+JP?sidebar.open=true&subset=japanese)
+    - [Noto Sans JP (ja)](https://fonts.google.com/specimen/Noto+Sans+JP?sidebar.open=true&subset=japanese)
 - Icons
     - [Material Design Icons](https://materialdesignicons.com)
