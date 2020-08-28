@@ -411,7 +411,7 @@ export default {
       right: 0;
 
       .map-overlay-contents {
-        padding-bottom: 3.0em;
+        padding-bottom: 6.0em;
       }
     }
 
