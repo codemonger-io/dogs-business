@@ -15,6 +15,11 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.js$/,
+        loader: 'babel-loader'
+        // see .babelrc.js for configurations
+      },
+      {
         test: /\.vue$/,
         loader: 'vue-loader'
       },
@@ -42,6 +47,10 @@ module.exports = {
           // https://github.com/vuejs/vue-loader/issues/1612#issuecomment-614542603
           esModule: false
         }
+      },
+      {
+        test: /\.(woff|woff2|eot|ttf|otf)$/,
+        loader: 'file-loader'
       }
     ]
   },
@@ -49,7 +58,9 @@ module.exports = {
     alias: {
       '@assets': path.resolve(__dirname, './assets'),
       '@components': path.resolve(__dirname, './src/components'),
+      '@db': path.resolve(__dirname, './src/db'),
       '@scss': path.resolve(__dirname, './src/scss'),
+      '@store': path.resolve(__dirname, './src/store'),
       '@utils': path.resolve(__dirname, './src/utils')
     },
     extensions: [

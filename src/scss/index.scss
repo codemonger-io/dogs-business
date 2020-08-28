@@ -1,11 +1,32 @@
-body {
-  font-family: 'Open Sans', sans-serif;
+@import './buefy';
+
+html {
+  /* hides the vertical scroll bar enabled by Bulma. */
+  overflow-y: auto;
 }
 
+/* basic font configurations. */
+body {
+  font-family: 'Open Sans', 'Noto Sans JP', sans-serif;
+}
 .dogs-business-title {
   font-family: 'Montserrat', sans-serif;
 }
-
 .dogs-business-body {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Open Sans', 'Noto Sans JP', sans-serif;
+}
+
+/* circle(eillipse)-shaped button. */
+.button {
+  &.circle-button {
+    border-radius: 50%;
+  }
+}
+
+/* common width of buttons shown on a modal. */
+$modal-button-width: 6em;
+.button {
+  &.modal-button {
+    min-width: $modal-button-width;
+  }
 }

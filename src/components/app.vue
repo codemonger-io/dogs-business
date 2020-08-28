@@ -15,21 +15,105 @@
         </div>
       </div>
     </div>
-    <div
-      class="map-container"
-    >
+    <div class="map-container">
       <map-pane />
     </div>
+    <dog-registration-modal
+      ref="dog-registration-modal"
+      @registering-dog="onRegisteringDog"
+      @registration-omitted="onRegistrationOmitted"
+    />
   </div>
 </template>
 
 <script>
-import MapPane from '@components/map-pane'
+import {
+  mapActions,
+  mapGetters,
+  mapState
+} from 'vuex'
 
+import MapPane from '@components/map-pane'
+import DogRegistrationModal from '@components/dog-registration-modal'
+
+/**
+ * Application component.
+ *
+ * @namespace App
+ *
+ * @memberof module:components
+ */
 export default {
   name: 'App',
   components: {
-    MapPane
+    MapPane,
+    DogRegistrationModal
+  },
+  computed: {
+    ...mapState('user', [
+      'isLoaded'
+    ]),
+    ...mapGetters('user', [
+      'dogCount'
+    ])
+  },
+  mounted () {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('App', 'mounted')
+    }
+    // shows a dog registration modal if no dog is registered
+    this.promiseLoaded()
+      .then(() => {
+        if (this.dogCount === 0) {
+          this.showDogRegistrationModal()
+        }
+      })
+  },
+  methods: {
+    ...mapActions('user', [
+      'appendDog'
+    ]),
+    promiseLoaded () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('waiting for data loaded', this.isLoaded)
+      }
+      if (this.isLoaded) {
+        return Promise.resolve(true)
+      } else {
+        // waits until `isLoaded` turns into true
+        // makes sure unwatching `isLoaded`
+        let unwatch
+        return new Promise(resolve => {
+          unwatch = this.$watch('isLoaded', isLoaded => {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('data loaded', isLoaded)
+            }
+            resolve(isLoaded)
+          })
+        })
+          .finally(unwatch)
+      }
+    },
+    showDogRegistrationModal () {
+      this.$refs['dog-registration-modal'].show()
+    },
+    hideDogRegistrationModal () {
+      this.$refs['dog-registration-modal'].hide()
+    },
+    onRegisteringDog (dog) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('registering dog', dog)
+      }
+      this.appendDog(dog)
+        .catch(err => console.log(err))
+        .finally(() => this.hideDogRegistrationModal())
+    },
+    onRegistrationOmitted () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('registration omitted')
+      }
+      this.hideDogRegistrationModal()
+    }
   }
 }
 </script>
