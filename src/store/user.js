@@ -27,9 +27,10 @@ export const state = {
    * - `sex`: {`string`}
    *   sex of the dog.
    *   'female', 'male' or 'n/a'.
-   * - `dateOfBirth`: {`Date`}
+   * - `dateOfBirth`: {`string`}
    *   Date of birth of the dog.
-   *   `null` if no date of birth is specified.
+   *   Format is `YYYY-MM-DD`.
+   *   `undefined` if no date of birth is specified.
    *
    * @member {array<object>} dogs
    *
@@ -206,9 +207,10 @@ export const mutations = {
    *   - `dogId`: {`number`} ID of the dog.
    *   - `name`: {`string`} name of the dog.
    *   - `sex`: {`string`} sex of the dog. 'female', 'male' or 'n/a'.
-   *   - `dateOfBirth`: {`Date`}
+   *   - `dateOfBirth`: {`string`}
    *     Date of birth of the dog.
-   *     `null` if no date of birth is given.
+   *     Its format is `YYYY-MM-DD`.
+   *     `undefined` if no date of birth is given.
    */
   _replaceDogs (state, newDogs) {
     if (process.env.NODE_ENV !== 'production') {
@@ -235,9 +237,10 @@ export const mutations = {
    *   - `dogId`: {`number`} ID of the dog.
    *   - `name`: {`string`} name of the dog.
    *   - `sex`: {`string`} sex of the dog. 'female', 'male' or 'n/a'.
-   *   - `dateOfBirth`: {`Date`}
+   *   - `dateOfBirth`: {`string`}
    *     Date of birth of the dog.
-   *     May be `null` if no date of birth is given.
+   *     Its format is `YYYY-MM-DD`.
+   *     May be `undefined` if no date of birth is given.
    */
   _appendDog ({ dogs }, newDog) {
     if (process.env.NODE_ENV !== 'production') {
@@ -390,9 +393,10 @@ function createActions (db) {
      *   Must have the following fields,
      *   - `name`: {`string`} name of the dog.
      *   - `sex`: {`string`} sex of the dog. 'female', 'male' or 'n/a'.
-     *   - `dateOfBirth`: {`Date`}
+     *   - `dateOfBirth`: {`string`}
      *     Date of birth of the dog.
-     *     May be `null` if no date of birth is given.
+     *     Format is `YYYY-MM-DD`.
+     *     May be `undefined` if no date of birth is given.
      *
      * @return {Promise}
      *

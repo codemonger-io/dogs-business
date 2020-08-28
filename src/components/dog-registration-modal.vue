@@ -92,6 +92,8 @@
 </template>
 
 <script>
+import { formatDate } from '@db/types/date'
+
 /**
  * Modal to register a dog.
  *
@@ -106,9 +108,10 @@
  *   - `name`: {`string`} name of the dog.
  *   - `sex`: {`string`}
  *     sex of the dog. 'female', 'male' or 'n/a'.
- *   - `dateOfBirth`: {`Date`}
+ *   - `dateOfBirth`: {`string`}
  *     Date of birth (DoB) of the dog.
- *     `null` if no DoB is given.
+ *     Format is `YYYY-MM-DD`.
+ *     `undefined` if no DoB is given.
  *
  * @vue-event {nothing} registration-omitted
  *
@@ -171,7 +174,7 @@ export default {
       this.$emit('registering-dog', {
         name,
         sex,
-        dateOfBirth: omitsDateOfBirth ? null : dateOfBirth
+        dateOfBirth: omitsDateOfBirth ? undefined : formatDate(dateOfBirth)
       })
     },
     onOmitClicked () {

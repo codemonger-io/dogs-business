@@ -131,8 +131,10 @@ export class Database {
    *   - `dogId`: {`number`} ID of the dog.
    *   - `name`: {`string`} Name of the dog.
    *   - `sex`: {`string`} Sex of the dog. 'female', 'male' or 'n/a'.
-   *   - `dateOfBirth`: {`Date`}:
-   *     Date of birth of the dog. `null` if it is not given.
+   *   - `dateOfBirth`: {`string`}:
+   *     Date of birth of the dog.
+   *     Format is `YYYY-MM-DD`.
+   *     `undefined` if it is not given.
    */
   async loadDogs () {
     if (process.env.NODE_ENV !== 'production') {
@@ -177,9 +179,10 @@ export class Database {
    *   Must have the following fields,
    *   - `name`: {`string`} name of the dog.
    *   - `sex`: {`string`} sex of the dog. 'female', 'male' or 'n/a'.
-   *   - `dateOfBirth`: {`Date`}
+   *   - `dateOfBirth`: {`string`}
    *     Date of birth of the dog.
-   *     May be `null` if no date of birth is given.
+   *     Format is `YYYY-MM-DD`.
+   *     May be `undefined` if no date of birth is given.
    *
    * @return {Promise<object>}
    *
