@@ -1,4 +1,4 @@
-import chai from 'chai'
+import chai from '@test/setup-chai'
 
 import { formatDate } from '@db/types/date'
 
