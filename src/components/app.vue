@@ -15,7 +15,10 @@
         </div>
       </div>
     </div>
-    <div class="map-container">
+    <div
+      ref="map-container"
+      class="map-container"
+    >
       <map-pane />
     </div>
     <dog-registration-modal
@@ -61,6 +64,11 @@ export default {
     if (process.env.NODE_ENV !== 'production') {
       console.log('App', 'mounted')
     }
+    // makes the map exactly fill the window.
+    // this is necessary because `100vh` may include the height of
+    // a navigation bar on a mobile device.
+    this.resizeMapContainer()
+    window.addEventListener('resize', () => this.resizeMapContainer())
     // shows a dog registration modal if no dog is registered
     this.promiseLoaded()
       .then(() => {
@@ -93,6 +101,14 @@ export default {
         })
           .finally(unwatch)
       }
+    },
+    resizeMapContainer () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('resizing the map container')
+      }
+      const mapContainer = this.$refs['map-container']
+      const { innerHeight } = window
+      mapContainer.style.height = `${innerHeight}px`
     },
     showDogRegistrationModal () {
       this.$refs['dog-registration-modal'].show()
@@ -127,7 +143,7 @@ export default {
 }
 
 .map-container {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100vw;
