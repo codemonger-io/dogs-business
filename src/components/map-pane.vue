@@ -355,7 +355,7 @@ export default {
         center: [lng, lat],
         curve: 0
       })
-      map.on('moveend', () => {
+      map.once('moveend', () => {
         this.setPopupOpen(true)
       })
     },
