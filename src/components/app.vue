@@ -38,6 +38,7 @@ import {
 
 import MapPane from '@components/map-pane'
 import DogRegistrationModal from '@components/dog-registration-modal'
+import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-listener-on-destroy'
 
 /**
  * Application component.
@@ -48,6 +49,9 @@ import DogRegistrationModal from '@components/dog-registration-modal'
  */
 export default {
   name: 'App',
+  mixins: [
+    ReleaseEventListenerOnDestroy
+  ],
   components: {
     MapPane,
     DogRegistrationModal
@@ -68,7 +72,10 @@ export default {
     // this is necessary because `100vh` may include the height of
     // a navigation bar on a mobile device.
     this.resizeMapContainer()
-    window.addEventListener('resize', () => this.resizeMapContainer())
+    this.registerEventListener(
+      window,
+      'resize',
+      () => this.resizeMapContainer())
     // shows a dog registration modal if no dog is registered
     this.promiseLoaded()
       .then(() => {
