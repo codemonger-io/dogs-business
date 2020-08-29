@@ -45,23 +45,31 @@
     1. [Initializing an offline user account](#initializing-an-offline-user-account)
     2. Start from the step 2 of the main scenario.
 
+## Updating the current location
+
+1. [Starting an app](#starting-an-app)
+2. The `app` periodically obtains the `current location` of the `user`.
+3. The `app` moves the `location marker` to the `current location` on the `map`.
+
 ## Placing a poo
 
 1. [Starting an app](#starting-an-app)
-2. The `user` presses the `poo button` on the `business menu`.
+2. The `user` clicks the `poo button` on the `business menu`.
 3. The `app` places a `poo` at the `current location` of the `user`.
 4. The `app` appends the `poo` to the `business records`.
 5. The `app` hides the `business menu`.
    Similar to the step 3 of the scenario [Hiding a business menu](#hiding-a-business-menu).
+6. The `app` shows a 'please clean up after your dog' message for a few seconds.
 
 ## Placing a pee
 
 1. [Starting an app](#starting-an-app)
-2. The `user` presses a `pee button` on the `business menu`.
+2. The `user` clicks a `pee button` on the `business menu`.
 3. The `app` places a `pee` at the `current location` of the `user`.
 4. The `app` appends the `pee` to the `business records`.
 5. The `app` hides the `business menu`.
    Similar to the step 3 of the scenario [Hiding a business menu](#hiding-a-business-menu).
+6. The `app` shows a 'please clean up after your dog' message for a few seconds.
 
 ## Hiding a business menu
 
@@ -81,3 +89,10 @@
 2. The `user` clicks the `location marker` on the `map`.
 3. The `app` shows the `business menu` again.
 4. Similar to the step 8 of the scenario [Starting an app](#starting-an-app).
+
+## Centering the current location
+
+1. [Starting an app](#starting-an-app)
+2. The `user` clicks the `centering button` on the `map`.
+3. The `app` obtains the `current location` of the `user`.
+4. The `app` centers the `current location` on the `map`.
