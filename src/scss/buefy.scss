@@ -1,5 +1,8 @@
 /* loads the default Bulma theme. */
 @import "~bulma/sass/utilities/_all";
 
+/* customizes a toast. */
+$toast-border-radius: 0.25rem;
+
 @import "~bulma";
 @import "~buefy/src/scss/buefy";

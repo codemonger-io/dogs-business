@@ -1,7 +1,7 @@
 /**
  * Defines a date type.
  *
- * @module db.types.date
+ * @module db/types/date
  */
 
 /**

@@ -34,6 +34,7 @@ import {
 } from 'vuex'
 
 import { formatDate } from '@db/types/date'
+import { getObjectiveFormOfDog } from '@db/types/dog'
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
 import BusinessRecordInput from './business-record-input'
@@ -114,6 +115,9 @@ export default {
     },
     currentDogId () {
       return this.currentDog.dogId
+    },
+    objectiveFormOfCurrentDog () {
+      return getObjectiveFormOfDog(this.currentDog)
     },
     // TODO: make it more efficient
     mappedBusinessRecords () {
@@ -364,8 +368,11 @@ export default {
         console.log('adding a business record', type)
       }
       this.addBusinessRecord(type)
+        .then(() => this.showCleanUpMessage())
       this.setPopupOpen(false)
     },
+    // returns Promise that resolves
+    // when a business record is successfully appended.
     addBusinessRecord (type) {
       const { marker } = this.getNonReactive()
       const {
@@ -377,17 +384,24 @@ export default {
         latitude
       }
       const date = formatDate(new Date())
-      this.appendBusinessRecord({
+      return this.appendBusinessRecord({
         dogId: this.currentDogId,
         type,
         location,
         date
       })
-        .then(() => {
-          // TODO: show "Please clean up after your dog" message.
-          console.log('please clean up after your dog!')
-        })
         .catch(err => console.error(err))
+    },
+    showCleanUpMessage () {
+      this.$buefy.toast.open({
+        type: 'is-info',
+        position: 'is-top',
+        duration: 2000, // 2s
+        // TODO: how to directly specify an element for a toast message?
+        //       if I could directly use BToast, I could specifiy its slot.
+        //       but it seems that buefy does not expose BToast.
+        message: `<span style="font-weight:bold;">Clean up after ${getObjectiveFormOfDog(this.currentDog)}.</span>`
+      })
     }
   }
 }
