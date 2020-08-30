@@ -188,9 +188,7 @@ export default {
         this.registerLocationWatcher()
         this.startTrackingLocation()
       })
-      .catch(err => {
-        console.error(err)
-      })
+      .catch(err => console.error(err))
   },
   beforeDestroy () {
     if (this.locationWatcherId !== undefined) {
@@ -343,6 +341,24 @@ export default {
       locationTracker.addEventListener('location-error', event => {
         if (process.env.NODE_ENV !== 'production') {
           console.log('MapPane', 'location-error', event)
+        }
+      })
+      // toggles location tracking when the visibility changes.
+      // - stops location tracking when the application is hidden.
+      // - starts location tracking when the application is shown again.
+      this.registerEventListener(document, 'visibilitychange', event => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('visibilitychange', event, document.hidden)
+        }
+        if (document.hidden) {
+          locationTracker.stopTracking()
+        } else {
+          locationTracker.getCurrentPosition()
+            .then(position => {
+              this.updateLocation(position)
+              locationTracker.startTracking()
+            })
+            .catch(err => console.error(err))
         }
       })
     },
