@@ -8,6 +8,8 @@
     <div class="map-overlay map-overlay-bottom-right">
       <div class="map-overlay-contents">
         <map-controller
+          :is-tracking-location="isTrackingLocation"
+          @toggling-location-tracking="toggleLocationTracking"
           @centering-current-location="centerCurrentLocation"
         />
       </div>
@@ -98,8 +100,8 @@ export default {
   },
   data () {
     return {
-      locationWatcherId: undefined,
       isMapInitialized: false,
+      isTrackingLocation: false,
       // Mapbox objects should not become reactive.
       getNonReactive: makeNonReactive({
         locationTracker: null,
@@ -190,10 +192,10 @@ export default {
       })
       .catch(err => console.error(err))
   },
+  // makes sure that location tracking is stopped.
   beforeDestroy () {
-    if (this.locationWatcherId !== undefined) {
-      navigator.geolocation.clearWatch(this.locationWatcherId)
-    }
+    const { locationTracker } = this.getNonReactive()
+    locationTracker.stopTracking()
   },
   methods: {
     ...mapActions('user', [
@@ -326,11 +328,13 @@ export default {
         if (process.env.NODE_ENV !== 'production') {
           console.log('MapPane', 'tracking-started', event)
         }
+        this.isTrackingLocation = true
       })
       locationTracker.addEventListener('tracking-stopped', event => {
         if (process.env.NODE_ENV !== 'production') {
           console.log('MapPane', 'tracking-stopped', event)
         }
+        this.isTrackingLocation = false
       })
       locationTracker.addEventListener('location-updated', event => {
         if (process.env.NODE_ENV !== 'production') {
@@ -346,6 +350,7 @@ export default {
       // toggles location tracking when the visibility changes.
       // - stops location tracking when the application is hidden.
       // - starts location tracking when the application is shown again.
+      //   and centers the current location.
       this.registerEventListener(document, 'visibilitychange', event => {
         if (process.env.NODE_ENV !== 'production') {
           console.log('visibilitychange', event, document.hidden)
@@ -356,6 +361,7 @@ export default {
           locationTracker.getCurrentPosition()
             .then(position => {
               this.updateLocation(position)
+              this.centerCurrentLocation()
               locationTracker.startTracking()
             })
             .catch(err => console.error(err))
@@ -386,6 +392,14 @@ export default {
         longitude,
         latitude
       ])
+    },
+    toggleLocationTracking () {
+      const { locationTracker } = this.getNonReactive()
+      if (this.isTrackingLocation) {
+        this.stopTrackingLocation()
+      } else {
+        this.startTrackingLocation()
+      }
     },
     // centers the current location on the map.
     // opens a business popup if it is closed after centering.
