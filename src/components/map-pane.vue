@@ -35,10 +35,12 @@ import {
 
 import { formatDate } from '@db/types/date'
 import { getObjectiveFormOfDog } from '@db/types/dog'
+import GeolocationTracker from '@utils/geolocation-tracker'
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
 import BusinessRecordInput from './business-record-input'
 import MapController from './map-controller'
+import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-listener-on-destroy'
 
 import peePngPath from '@assets/images/pee.png'
 import pooPngPath from '@assets/images/poo.png'
@@ -87,6 +89,9 @@ function makeNonReactive (obj) {
  */
 export default {
   name: 'MapPane',
+  mixins: [
+    ReleaseEventListenerOnDestroy
+  ],
   components: {
     BusinessRecordInput,
     MapController
@@ -97,6 +102,7 @@ export default {
       isMapInitialized: false,
       // Mapbox objects should not become reactive.
       getNonReactive: makeNonReactive({
+        locationTracker: null,
         map: null,
         marker: null
       })
@@ -169,28 +175,22 @@ export default {
     if (process.env.NODE_ENV !== 'production') {
       console.log('MapPane', 'mounted')
     }
-    // tests the Geolocation API
-    navigator.geolocation.getCurrentPosition(
-      // success
-      position => {
+    // initializes a geolocation tracker
+    this.initializeLocationTracker()
+    const { locationTracker } = this.getNonReactive()
+    locationTracker.getCurrentPosition()
+      .then(position => {
         if (process.env.NODE_ENV !== 'production') {
           console.log('obtained location', position)
         }
         this.initializeMap(position)
         // keeps tracking the location
         this.registerLocationWatcher()
-      },
-      // error
-      err => {
+        this.startTrackingLocation()
+      })
+      .catch(err => {
         console.error(err)
-      },
-      // options
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-      }
-    )
+      })
   },
   beforeDestroy () {
     if (this.locationWatcherId !== undefined) {
@@ -308,27 +308,57 @@ export default {
         marker.togglePopup()
       }
     },
-    registerLocationWatcher (locationOptions) {
-      this.locationWatcherId = navigator.geolocation.watchPosition(
-        // success
-        position => {
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('updating the location', position)
-          }
-          this.updateLocation(position)
-        },
-        // error
-        error => {
-          console.error('failed to get the location', error)
-        },
-        // options
-        // TODO: test on a mobile device
-        {
-          enableHighAccuracy: false,
-          timeout: 5000,
-          maximumAge: 1000
+    initializeLocationTracker () {
+      const tracker = new GeolocationTracker({
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 1000,
+        retryCount: 3
+      })
+      const nonReactive = this.getNonReactive()
+      nonReactive.locationTracker = tracker
+    },
+    registerLocationWatcher () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('registering location watcher')
+      }
+      const { locationTracker } = this.getNonReactive()
+      console.log(locationTracker)
+      locationTracker.addEventListener('tracking-started', event => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('MapPane', 'tracking-started', event)
         }
-      )
+      })
+      locationTracker.addEventListener('tracking-stopped', event => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('MapPane', 'tracking-stopped', event)
+        }
+      })
+      locationTracker.addEventListener('location-updated', event => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('MapPane', 'location-updated', event)
+        }
+        this.updateLocation(event.position)
+      })
+      locationTracker.addEventListener('location-error', event => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('MapPane', 'location-error', event)
+        }
+      })
+    },
+    startTrackingLocation () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('start tracking location')
+      }
+      const { locationTracker } = this.getNonReactive()
+      locationTracker.startTracking()
+    },
+    stopTrackingLocation () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('stop tracking location')
+      }
+      const { locationTracker } = this.getNonReactive()
+      locationTracker.stopTracking()
     },
     updateLocation ({ coords }) {
       const {
