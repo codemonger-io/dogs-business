@@ -1,19 +1,36 @@
 <template>
-  <div class="level is-mobile app-title">
-    <div class="level-left">
-      <div class="level-item">
-        <img
-          class="image is-48x48"
-          src="@assets/images/dogs-business.svg"
-        />
-      </div>
-      <div class="level-item">
-        <h1 class="title is-5 dogs-business-title">
+  <nav
+    class="navbar dogs-business-navbar"
+    role="navigation"
+    aria-label="main navigation"
+  >
+    <div class="navbar-brand">
+      <a
+        class="navbar-item"
+        href="#"
+      >
+        <img src="@assets/images/dogs-business.svg" />
+      </a>
+      <a
+        class="navbar-item dogs-business-title"
+        href="#"
+      >
+        <h1 class="title is-5">
           Dog's Business
         </h1>
-      </div>
+      </a>
+      <a
+        role="button"
+        class="navbar-burger"
+        aria-label="menu"
+        aria-expanded="false"
+      >
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
+      </a>
     </div>
-  </div>
+  </nav>
 </template>
 
 <script>
@@ -28,12 +45,3 @@ export default {
   name: 'NavigationBar'
 }
 </script>
-
-<style lang="scss" scoped>
-.app-title {
-  display: inline-block;
-  padding: 0.5em 1.0em;
-  background-color: #299250;
-  box-shadow: 0 0 2px 1px gray;
-}
-</style>
