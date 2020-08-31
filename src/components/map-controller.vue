@@ -3,7 +3,7 @@
     <!-- location tracking state -->
     <div class="button-container">
       <button
-        class="button circle-button button-with-shadow"
+        class="button circle-button"
         @click.stop="onLocationTrackingButtonClicked"
       >
         <span class="icon is-small">
@@ -17,7 +17,7 @@
     <!-- current location -->
     <div class="button-container">
       <button
-        class="button circle-button button-with-shadow"
+        class="button circle-button"
         @click.stop="onCurrentLocationButtonClicked"
       >
         <span class="icon is-small">
@@ -85,12 +85,6 @@ export default {
 .button-container {
   &:not(:last-child) {
     margin-bottom: 1.5em;
-  }
-
-  .button {
-    &.button-with-shadow {
-      box-shadow: 0 0 3px 1px gray;
-    }
   }
 }
 </style>
