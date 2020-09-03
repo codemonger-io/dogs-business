@@ -38,6 +38,10 @@ import {
 import { formatDate } from '@db/types/date'
 import { getObjectiveFormOfDog } from '@db/types/dog'
 import GeolocationTracker from '@utils/geolocation-tracker'
+import {
+  boxesIntersect,
+  collectCollisionBoxesAndFeatures
+} from '@utils/mapbox/collision-boxes'
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
 import BusinessRecordInput from './business-record-input'
@@ -224,6 +228,8 @@ export default {
         ],
         zoom
       })
+      // DEBUG
+      map.showCollisionBoxes = true
       map.on('load', () => {
         const imagesToLoad = [
           {
@@ -254,14 +260,22 @@ export default {
               }
             })
             map.on('click', 'business-records', record => {
-              console.log(record)
-              const {
-                recordId,
-                dogId,
-                type,
-                date
-              } = record.features[0].properties
-              console.log(`you stepped in ${type}-${recordId} made by ${this.dogOfId(dogId).name} on ${date}`)
+              if (process.env.NODE_ENV !== 'production') {
+                console.log('MapPane', 'click', record)
+              }
+              const { recordId } = record.features[0].properties
+              // collects collision boxes and features
+              const collisionBoxes = collectCollisionBoxesAndFeatures(
+                map,
+                'business-records')
+              // locates the clicked collision box
+              // and collects boxes intersecting it
+              const clickedBox = collisionBoxes
+                .find(box => box.feature.properties.recordId === recordId)
+              const groupedBoxes = collisionBoxes.filter(box => {
+                return boxesIntersect(clickedBox.collisionBox, box.collisionBox)
+              })
+              console.log('grouped boxes', groupedBoxes)
             })
             // notifies that the map is initialized.
             this.isMapInitialized = true
