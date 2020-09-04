@@ -24,6 +24,14 @@
         @adding-business-record="onAddingBusinessRecord"
       />
     </div>
+    <div
+      ref="business-statistics-popup"
+      class="mapbox-popup dogs-business-body"
+    >
+      <business-statistics
+        :business-records="selectedBusinessRecords"
+      />
+    </div>
   </div>
 </template>
 
@@ -45,6 +53,7 @@ import {
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
 import BusinessRecordInput from './business-record-input'
+import BusinessStatistics from './business-statistics'
 import MapController from './map-controller'
 import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-listener-on-destroy'
 
@@ -100,17 +109,20 @@ export default {
   ],
   components: {
     BusinessRecordInput,
+    BusinessStatistics,
     MapController
   },
   data () {
     return {
       isMapInitialized: false,
       isTrackingLocation: false,
+      selectedBusinessRecords: [],
       // Mapbox objects should not become reactive.
       getNonReactive: makeNonReactive({
         locationTracker: null,
         map: null,
-        marker: null
+        marker: null,
+        statisticsPopup: null
       })
     }
   },
@@ -276,6 +288,15 @@ export default {
                 return boxesIntersect(clickedBox.collisionBox, box.collisionBox)
               })
               console.log('grouped boxes', groupedBoxes)
+              this.selectedBusinessRecords = groupedBoxes.map(box => {
+                const {
+                  recordId
+                } = box.feature.properties
+                return this.businessRecords.find(r => r.recordId === recordId)
+              })
+              // shows a stats popup
+              const point = clickedBox.feature.geometry.coordinates
+              this.showBusinessStatisticsPopup(point)
             })
             // notifies that the map is initialized.
             this.isMapInitialized = true
@@ -294,10 +315,20 @@ export default {
       inputPopup.setDOMContent(this.$refs['business-record-input-popup'])
       marker.setPopup(inputPopup)
       marker.togglePopup() // should open the popup
-      // saves map and marker in the non-reactive object
+      // saves Mapbox related instances in the non-reactive object
       const nonReactive = this.getNonReactive()
       nonReactive.map = map
       nonReactive.marker = marker
+      // initializes a business statistics popup
+      this.initializeBusinessStatisticsPopup()
+    },
+    initializeBusinessStatisticsPopup () {
+      const popup = new mapboxgl.Popup({
+        closeOnMove: true
+      })
+      popup.setDOMContent(this.$refs['business-statistics-popup'])
+      const nonReactive = this.getNonReactive()
+      nonReactive.statisticsPopup = popup
     },
     // makes sure that initialization of the map has finished.
     // returns a Promise that
@@ -321,6 +352,15 @@ export default {
       if (marker.getPopup().isOpen() !== isOpen) {
         marker.togglePopup()
       }
+    },
+    showBusinessStatisticsPopup (position) {
+      const {
+        map,
+        statisticsPopup
+      } = this.getNonReactive()
+      statisticsPopup
+        .setLngLat(position)
+        .addTo(map)
     },
     initializeLocationTracker () {
       const tracker = new GeolocationTracker({
