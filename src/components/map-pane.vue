@@ -16,7 +16,7 @@
     </div>
     <!-- popup elements -->
     <div
-      ref="event-popup"
+      ref="business-record-input-popup"
       class="mapbox-popup dogs-business-body"
     >
       <business-record-input
@@ -290,9 +290,9 @@ export default {
         latitude
       ])
       marker.addTo(map)
-      const eventPopup = new mapboxgl.Popup()
-      eventPopup.setDOMContent(this.$refs['event-popup'])
-      marker.setPopup(eventPopup)
+      const inputPopup = new mapboxgl.Popup()
+      inputPopup.setDOMContent(this.$refs['business-record-input-popup'])
+      marker.setPopup(inputPopup)
       marker.togglePopup() // should open the popup
       // saves map and marker in the non-reactive object
       const nonReactive = this.getNonReactive()
