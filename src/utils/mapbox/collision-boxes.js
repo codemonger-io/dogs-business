@@ -1,6 +1,19 @@
 import EXTENT from 'mapbox-gl/src/data/extent'
 
 /**
+ * Viewport padding included in a collision box.
+ *
+ * According to https://github.com/mapbox/mapbox-gl-js/blob/38f0072d4dd8122b1f12337468c592cc60938e2c/src/symbol/collision_index.js#L28
+ *
+ * @member {number} VIEWPORT_PADDING
+ *
+ * @static
+ *
+ * @memberof module:utils/mapbox
+ */
+export const VIEWPORT_PADDING = 100
+
+/**
  * Collects collision boxes and features of a given source.
  *
  * Symbols with icon are supposed so far.
@@ -111,10 +124,10 @@ export function collectCollisionBoxesAndFeatures (map, sourceName) {
             anchorPointX,
             anchorPointY)
           const tileToViewport = textPixelRatio * projectedPoint.perspectiveRatio
-          const tlX = (x1 * tileToViewport) + projectedPoint.point.x
-          const tlY = (y1 * tileToViewport) + projectedPoint.point.y
-          const brX = (x2 * tileToViewport) + projectedPoint.point.x
-          const brY = (y2 * tileToViewport) + projectedPoint.point.y
+          const tlX = ((x1 * tileToViewport) + projectedPoint.point.x) - VIEWPORT_PADDING
+          const tlY = ((y1 * tileToViewport) + projectedPoint.point.y) - VIEWPORT_PADDING
+          const brX = ((x2 * tileToViewport) + projectedPoint.point.x) - VIEWPORT_PADDING
+          const brY = ((y2 * tileToViewport) + projectedPoint.point.y) - VIEWPORT_PADDING
           const queryData = Object.values(retainedQueryData)
             .find(q => q.bucketIndex === bucketIndex)
           const bucketSymbols = queryData.featureIndex.lookupSymbolFeatures(
