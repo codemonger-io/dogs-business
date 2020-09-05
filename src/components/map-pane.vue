@@ -4,6 +4,28 @@
       ref="mapbox-container"
       class="mapbox-container"
     />
+    <!-- DEBUG -->
+    <svg
+      v-if="debugMode"
+      xmlns:svg="http://www.w3.org/2000/svg"
+      ref="debug-pane"
+      class="debug-pane"
+      :class="debugPaneClass"
+      :width="debugPane.width"
+      :height="debugPane.height"
+      @click="showsDebugPane = false"
+    >
+      <g class="debug-pane-contents" />
+      <text
+        x="10"
+        y="80"
+        font-size="18"
+        fill="red"
+        font-weight="bold"
+      >
+        DEBUG PANE IS SHOWN. Click to hide.
+      </text>
+    </svg>
     <!-- icon buttons shown bottom right -->
     <div class="map-overlay map-overlay-bottom-right">
       <div class="map-overlay-contents">
@@ -37,6 +59,9 @@
 </template>
 
 <script>
+import {
+  select as d3Select
+} from 'd3-selection'
 import mapboxgl from 'mapbox-gl'
 import {
   mapActions,
@@ -131,7 +156,13 @@ export default {
         map: null,
         marker: null,
         statisticsPopup: null
-      })
+      }),
+      debugMode: debugMode,
+      showsDebugPane: debugMode,
+      debugPane: {
+        width: 100,
+        height: 100
+      }
     }
   },
   computed: {
@@ -205,6 +236,11 @@ export default {
           }
         })
       }
+    },
+    debugPaneClass () {
+      return {
+        'is-active': this.showsDebugPane
+      }
     }
   },
   watch: {
@@ -235,6 +271,13 @@ export default {
         this.startTrackingLocation()
       })
       .catch(err => console.error(err))
+    // initializes the debug pane
+    if (this.debugMode) {
+      this.resizeDebugPane()
+      this.registerEventListener(window, 'resize', () => {
+        this.resizeDebugPane()
+      })
+    }
   },
   // makes sure that location tracking is stopped.
   beforeDestroy () {
@@ -268,8 +311,7 @@ export default {
         ],
         zoom
       })
-      if (debugMode || (process.env.NODE_ENV !== 'production')) {
-        // DEBUG
+      if (this.debugMode) {
         map.showCollisionBoxes = true
       }
       map.on('load', () => {
@@ -330,6 +372,22 @@ export default {
                       .find(r => r.recordId === recordId)
                   })
                   this.selectedBusinessRecordsReady = true
+                  // visualizes collision boxes in the debug mode
+                  if (this.debugMode) {
+                    const svg = d3Select(this.$refs['debug-pane'])
+                    const contents = svg.select('g.debug-pane-contents')
+                    contents.selectAll('rect').remove()
+                    contents.selectAll('rect')
+                      .data(groupedBoxes)
+                      .join('rect')
+                        .attr('x', b => b.collisionBox.x1)
+                        .attr('y', b => b.collisionBox.y1)
+                        .attr('width', b => b.collisionBox.x2 - b.collisionBox.x1)
+                        .attr('height', b => b.collisionBox.y2 - b.collisionBox.y1)
+                        .attr('fill-opacity', 0.25)
+                        .attr('fill', 'red')
+                    this.showsDebugPane = true
+                  }
                 })
                 .catch(err => console.error(err))
               // shows a stats popup anyway
@@ -554,6 +612,16 @@ export default {
         //       but it seems that buefy does not expose BToast.
         message: `<span style="font-weight:bold;">Clean up after ${getObjectiveFormOfDog(this.currentDog)}.</span>`
       })
+    },
+    // DEBUG
+    resizeDebugPane () {
+      const mapContainer = this.$refs['mapbox-container']
+      const {
+        width,
+        height
+      } = mapContainer.getBoundingClientRect()
+      this.debugPane.width = width
+      this.debugPane.height = height
     }
   }
 }
@@ -561,8 +629,20 @@ export default {
 
 <style lang="scss" scoped>
 .map-pane {
+  position: relative;
   width: 100%;
   height: 100%;
+
+  .debug-pane {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    &.is-active {
+      display: block;
+    }
+  }
 
   .mapbox-container {
     width: 100%;
