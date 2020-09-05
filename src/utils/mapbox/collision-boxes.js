@@ -5,6 +5,9 @@ import EXTENT from 'mapbox-gl/src/data/extent'
  *
  * Symbols with icon are supposed so far.
  *
+ * This function returns a `Promise` because the placement of symbols currently
+ * running may not be done; i.e., `placement.stale === true`.
+ *
  * **Depends on the internal structure of Mapbox Map instance.**
  *
  * @function collectCollisionBoxesAndFeatures
@@ -21,9 +24,10 @@ import EXTENT from 'mapbox-gl/src/data/extent'
  *
  *   Name of the source where collision boxes and features are to be collected.
  *
- * @return {array<object>}
+ * @return {Promise< array<object> >}
  *
- *   Collected collision boxes.
+ *   Resolves to collected collision boxes when the placement of symbols
+ *   currently running is done.
  *   Each element has the following fields,
  *   - `collisionBox`: {`object`}
  *     Collision box projected to the viewport.
@@ -38,74 +42,107 @@ import EXTENT from 'mapbox-gl/src/data/extent'
  *     Feature associated with the collision box.
  */
 export function collectCollisionBoxesAndFeatures (map, sourceName) {
+  const POLLING_INTERVAL = 100
+  const POLLING_TIMEOUT = 50 // # of iterations
   const { style } = map
-  const { placement } = style
-  const {
-    collisionIndex,
-    retainedQueryData,
-    transform
-  } = placement
-  const sourceCache = style.sourceCaches[sourceName]
-  const { _tiles } = sourceCache
-  const results = []
-  for (let tileName in _tiles) {
-    const tile = _tiles[tileName]
-    const {
-      buckets,
-      collisionBoxArray
-    } = tile
-    const posMat = transform.calculatePosMatrix(tile.tileID.toUnwrapped())
-    const textPixelRatio = tile.tileSize / EXTENT
-    const tileResults = []
-    for (let i = 0; i < collisionBoxArray.length; ++i) {
-      const collisionBox = collisionBoxArray.get(i)
-      const {
-        x1,
-        y1,
-        x2,
-        y2,
-        anchorPointX,
-        anchorPointY,
-        featureIndex,
-        bucketIndex,
-        sourceLayerIndex
-      } = collisionBox
-      const projectedPoint = collisionIndex.projectAndGetPerspectiveRatio(
-        posMat,
-        anchorPointX,
-        anchorPointY)
-      const tileToViewport = textPixelRatio * projectedPoint.perspectiveRatio
-      const tlX = (x1 * tileToViewport) + projectedPoint.point.x
-      const tlY = (y1 * tileToViewport) + projectedPoint.point.y
-      const brX = (x2 * tileToViewport) + projectedPoint.point.x
-      const brY = (y2 * tileToViewport) + projectedPoint.point.y
-      const queryData = Object.values(retainedQueryData)
-        .find(q => q.bucketIndex === bucketIndex)
-      const bucketSymbols = queryData.featureIndex.lookupSymbolFeatures(
-        [featureIndex],
-        map.style._serializedLayers,
-        bucketIndex,
-        sourceLayerIndex,
-        null, // filterSpec
-        null, // filterLayerIDs
-        map.style._availableImages,
-        map.style._layers)
-      const { feature } = bucketSymbols[sourceName][0]
-      tileResults.push({
-        collisionBox: {
-          x1: tlX,
-          y1: tlY,
-          x2: brX,
-          y2: brY
+  // makes sure that the placement currently running is done; i.e., not stale
+  function promiseReady () {
+    let iteration = 0
+    let timerId
+    return new Promise((resolve, reject) => {
+      timerId = setInterval(
+        () => {
+          const { placement } = style
+          if (!placement.stale) {
+            resolve(placement)
+          } else {
+            ++iteration
+            if (iteration >= POLLING_TIMEOUT) {
+              reject(new Error('placement stale timed out'))
+            }
+          }
         },
-        featureIndex,
-        feature
-      })
-    }
-    results.push(tileResults)
+        POLLING_INTERVAL)
+    }).finally(() => clearInterval(timerId))
   }
-  // flattens the results
-  return Array.prototype.concat.apply([], results)
+  return promiseReady()
+    .then(placement => {
+      const {
+        collisionIndex,
+        retainedQueryData,
+        transform
+      } = placement
+      const sourceCache = style.sourceCaches[sourceName]
+      const { _tiles } = sourceCache
+      const results = []
+      for (let tileName in _tiles) {
+        const tile = _tiles[tileName]
+        const {
+          buckets,
+          collisionBoxArray
+        } = tile
+        if (!collisionBoxArray) {
+          // sometimes waiting for placement.stale turning to false
+          // is not enough and collisionBoxArray does not exist.
+          // this situation resolves after waiting for a while.
+          // but I could not figure out how long I have to wait.
+          // just ignores it and it looks benign so far.
+          console.warn('collisionBoxArray is not defined yet')
+          continue
+        }
+        const posMat = transform.calculatePosMatrix(tile.tileID.toUnwrapped())
+        const textPixelRatio = tile.tileSize / EXTENT
+        const tileResults = []
+        for (let i = 0; i < collisionBoxArray.length; ++i) {
+          const collisionBox = collisionBoxArray.get(i)
+          const {
+            x1,
+            y1,
+            x2,
+            y2,
+            anchorPointX,
+            anchorPointY,
+            featureIndex,
+            bucketIndex,
+            sourceLayerIndex
+          } = collisionBox
+          const projectedPoint = collisionIndex.projectAndGetPerspectiveRatio(
+            posMat,
+            anchorPointX,
+            anchorPointY)
+          const tileToViewport = textPixelRatio * projectedPoint.perspectiveRatio
+          const tlX = (x1 * tileToViewport) + projectedPoint.point.x
+          const tlY = (y1 * tileToViewport) + projectedPoint.point.y
+          const brX = (x2 * tileToViewport) + projectedPoint.point.x
+          const brY = (y2 * tileToViewport) + projectedPoint.point.y
+          const queryData = Object.values(retainedQueryData)
+            .find(q => q.bucketIndex === bucketIndex)
+          const bucketSymbols = queryData.featureIndex.lookupSymbolFeatures(
+            [featureIndex],
+            map.style._serializedLayers,
+            bucketIndex,
+            sourceLayerIndex,
+            null, // filterSpec
+            null, // filterLayerIDs
+            map.style._availableImages,
+            map.style._layers)
+          const { feature } = bucketSymbols[sourceName][0]
+          tileResults.push({
+            collisionBox: {
+              x1: tlX,
+              y1: tlY,
+              x2: brX,
+              y2: brY
+            },
+            featureIndex,
+            feature
+          })
+        }
+        results.push(tileResults)
+      }
+      // flattens the results
+      return Array.prototype.concat.apply([], results)
+    })
 }
 
 /**

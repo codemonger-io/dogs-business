@@ -30,6 +30,7 @@
     >
       <business-statistics
         :business-records="selectedBusinessRecords"
+        :business-records-ready="selectedBusinessRecordsReady"
       />
     </div>
   </div>
@@ -117,6 +118,7 @@ export default {
       isMapInitialized: false,
       isTrackingLocation: false,
       selectedBusinessRecords: [],
+      selectedBusinessRecordsReady: true,
       // Mapbox objects should not become reactive.
       getNonReactive: makeNonReactive({
         locationTracker: null,
@@ -143,11 +145,24 @@ export default {
     objectiveFormOfCurrentDog () {
       return getObjectiveFormOfDog(this.currentDog)
     },
+    // sorts the business records by date in descending order
+    // TODO: make it more efficient
+    businessRecordsSortedByDate () {
+      return this.businessRecords.sort((r1, r2) => {
+        if (r1.date < r2.date) {
+          return 1
+        } else if (r1.date > r2.date) {
+          return -1
+        } else {
+          return 0
+        }
+      })
+    },
     // TODO: make it more efficient
     mappedBusinessRecords () {
       return {
         type: 'FeatureCollection',
-        features: this.businessRecords.map(record => {
+        features: this.businessRecordsSortedByDate.map(record => {
           const {
             date,
             dogId,
@@ -240,8 +255,10 @@ export default {
         ],
         zoom
       })
-      // DEBUG
-      map.showCollisionBoxes = true
+      if (process.env.NODE_ENV !== 'production') {
+        // DEBUG
+        map.showCollisionBoxes = true
+      }
       map.on('load', () => {
         const imagesToLoad = [
           {
@@ -276,27 +293,38 @@ export default {
                 console.log('MapPane', 'click', record)
               }
               const { recordId } = record.features[0].properties
-              // collects collision boxes and features
-              const collisionBoxes = collectCollisionBoxesAndFeatures(
+              // selects records hidden by the clicked icon
+              this.selectedBusinessRecords = []
+              this.selectedBusinessRecordsReady = false
+              collectCollisionBoxesAndFeatures(
                 map,
                 'business-records')
-              // locates the clicked collision box
-              // and collects boxes intersecting it
-              const clickedBox = collisionBoxes
-                .find(box => box.feature.properties.recordId === recordId)
-              const groupedBoxes = collisionBoxes.filter(box => {
-                return boxesIntersect(clickedBox.collisionBox, box.collisionBox)
-              })
-              console.log('grouped boxes', groupedBoxes)
-              this.selectedBusinessRecords = groupedBoxes.map(box => {
-                const {
-                  recordId
-                } = box.feature.properties
-                return this.businessRecords.find(r => r.recordId === recordId)
-              })
-              // shows a stats popup
-              const point = clickedBox.feature.geometry.coordinates
-              this.showBusinessStatisticsPopup(point)
+                .then(collisionBoxes => {
+                  // locates the clicked collision box
+                  // and collects boxes intersecting it
+                  const clickedBox = collisionBoxes
+                    .find(box => box.feature.properties.recordId === recordId)
+                  const groupedBoxes = collisionBoxes.filter(box => {
+                    return boxesIntersect(
+                      clickedBox.collisionBox,
+                      box.collisionBox)
+                  })
+                  this.selectedBusinessRecords = groupedBoxes.map(box => {
+                    const {
+                      recordId
+                    } = box.feature.properties
+                    return this.businessRecords
+                      .find(r => r.recordId === recordId)
+                  })
+                  this.selectedBusinessRecordsReady = true
+                })
+                .catch(err => console.error(err))
+              // shows a stats popup anyway
+              const {
+                lng,
+                lat
+              } = record.lngLat
+              this.showBusinessStatisticsPopup([lng, lat])
             })
             // notifies that the map is initialized.
             this.isMapInitialized = true

@@ -27,11 +27,15 @@
       Out of <strong>{{businessRecords.length}}</strong> records
     </p>
     </p>
-      From <strong>{{startDate.toLocaleDateString()}}</strong>
+      From <strong>{{startDateString}}</strong>
     </p>
     <p>
-      To <strong>{{stopDate.toLocaleDateString()}}</strong>
+      To <strong>{{stopDateString}}</strong>
     </p>
+    <b-loading
+      :active="!businessRecordsReady"
+      :is-full-page="false"
+    />
   </div>
 </template>
 
@@ -71,6 +75,10 @@ const TYPED_ICON_PATHS = {
  *
  *   Business records from which the statistics are to be derived.
  *
+ * @vue-prop {Boolean} business-records-ready
+ *
+ *   Whether the business records are ready to be used.
+ *
  * @vue-prop {Number} [svg-width=200]
  *
  *   Width of the SVG element that renders statistics.
@@ -84,6 +92,10 @@ export default {
   props: {
     businessRecords: {
       type: Array,
+      required: true
+    },
+    businessRecordsReady: {
+      type: Boolean,
       required: true
     },
     svgWidth: {
@@ -127,10 +139,16 @@ export default {
       return this.businessRecords.map(r => new Date(r.date))
     },
     startDate () {
-      return d3Min(this.dates) || new Date()
+      return d3Min(this.dates)
     },
     stopDate () {
-      return d3Max(this.dates) || new Date()
+      return d3Max(this.dates)
+    },
+    startDateString () {
+      return this.formatDate(this.startDate)
+    },
+    stopDateString () {
+      return this.formatDate(this.stopDate)
     },
     graphData () {
       const stats = this.statistics
@@ -181,7 +199,6 @@ export default {
     },
     renderBarGraph () {
       const data = this.graphData
-      console.log(data)
       const scaleX = d3ScaleLinear()
         .domain([0, this.businessRecords.length])
         .range([0, this.barGraphWidth])
@@ -216,6 +233,9 @@ export default {
           .attr('x', d => 0.5 * scaleX(d.frequency))
           .attr('y', this.barGraphHeight + 2)
           .text(d => `${d.percentage.toFixed(0)}%`)
+    },
+    formatDate (date) {
+      return date ? date.toLocaleDateString() : '?'
     }
   }
 }
@@ -224,6 +244,8 @@ export default {
 <style lang="scss">
 /* should not be scoped because Vue does not give a scope id to SVG elements. */
 .business-statistics {
+  position: relative;
+
   .svg-container {
     display: flex;
     justify-content: center;
