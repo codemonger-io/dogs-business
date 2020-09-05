@@ -7,24 +7,6 @@ Here the structure of `DogsBusinessDb` is described.
 
 ### Stores
 
-#### user
-
-```js
-{
-    userId: 1,
-    accountId: undefined,
-    mapboxAccessToken: 'access token'
-}
-```
-
-There should be only one entry in the `user` store.
-
-`userId` is always `1`.
-
-`accountId` is `undefined` until the user sign up for an online account.
-
-`mapboxAccessToken` is a token to access the map data hosted by Mapbox.
-
 #### dog
 
 ```js
@@ -74,3 +56,54 @@ It may be `undefined` if it is not given.
 
 `date` is the date when the business happened.
 Its format is `YYYY-MM-DD`.
+
+## Version 2
+
+### Stores
+
+In addition to the stores of the version 2, there will be the following store.
+
+#### user
+
+```js
+{
+    userId: 1,
+    account: {},
+    mapboxAccessToken: 'access token'
+}
+```
+
+There should be only one entry in the `user` store.
+
+`userId` is always `1`.
+
+`accountId` is an object depending on the account type.
+- [Offline account](README.md#offline-account)
+
+    ```js
+    {
+        type: 'offline'
+    }
+    ```
+
+- [Online device account](README.md#online-device-account)
+
+    ```js
+    {
+        type: 'device',
+        privateKey: '',
+        publicKey: ''
+    }
+    ```
+
+- [Online personal account](README.md#online-personal-account)
+
+    ```js
+    {
+        type: 'personal',
+        email: '',
+        token: {}
+    }
+    ```
+
+`mapboxAccessToken` is a token to access the map data hosted by Mapbox.
