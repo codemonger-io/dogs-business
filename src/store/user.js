@@ -124,40 +124,7 @@ export const getters = {
    *   Dog information associated with `dogId`.
    *   `null` if no dog information is associated with `dogId`.
    */
-  dogOfId: state => findDogById.bind(null, state),
-  /**
-   * Possessive form of the dog.
-   *
-   * @function possessiveFormOfDog
-   *
-   * @memberof module:store/user.getters
-   *
-   * @param {number} dogId
-   *
-   :   ID of the dog whose possessive form is to be obtained.
-   *
-   * @return {string}
-   *
-   *   Possessive form of the dog.
-   *   Precedence: `name`+'s > `sex`(her/his).
-   */
-  possessiveFormOfDog (state) {
-    return dogId => {
-      const {
-        name,
-        sex
-      } = (findDogById(state, dogId) || {})
-      if (name) {
-        return name + "'s"
-      } else if (sex === 'female') {
-        return 'her'
-      } else if (sex === 'male') {
-        return 'his'
-      } else {
-        return 'her/his'
-      }
-    }
-  }
+  dogOfId: state => findDogById.bind(null, state)
 }
 
 /**

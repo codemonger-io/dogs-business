@@ -8,18 +8,29 @@
     <div class="map-overlay map-overlay-bottom-right">
       <div class="map-overlay-contents">
         <map-controller
+          :is-tracking-location="isTrackingLocation"
+          @toggling-location-tracking="toggleLocationTracking"
           @centering-current-location="centerCurrentLocation"
         />
       </div>
     </div>
     <!-- popup elements -->
     <div
-      ref="event-popup"
+      ref="business-record-input-popup"
       class="mapbox-popup dogs-business-body"
     >
       <business-record-input
         :dog="currentDog"
         @adding-business-record="onAddingBusinessRecord"
+      />
+    </div>
+    <div
+      ref="business-statistics-popup"
+      class="mapbox-popup dogs-business-body"
+    >
+      <business-statistics
+        :business-records="selectedBusinessRecords"
+        :business-records-ready="selectedBusinessRecordsReady"
       />
     </div>
   </div>
@@ -35,10 +46,17 @@ import {
 
 import { formatDate } from '@db/types/date'
 import { getObjectiveFormOfDog } from '@db/types/dog'
+import GeolocationTracker from '@utils/geolocation-tracker'
+import {
+  boxesIntersect,
+  collectCollisionBoxesAndFeatures
+} from '@utils/mapbox/collision-boxes'
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
 import BusinessRecordInput from './business-record-input'
+import BusinessStatistics from './business-statistics'
 import MapController from './map-controller'
+import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-listener-on-destroy'
 
 import peePngPath from '@assets/images/pee.png'
 import pooPngPath from '@assets/images/poo.png'
@@ -87,18 +105,26 @@ function makeNonReactive (obj) {
  */
 export default {
   name: 'MapPane',
+  mixins: [
+    ReleaseEventListenerOnDestroy
+  ],
   components: {
     BusinessRecordInput,
+    BusinessStatistics,
     MapController
   },
   data () {
     return {
-      locationWatcherId: undefined,
       isMapInitialized: false,
+      isTrackingLocation: false,
+      selectedBusinessRecords: [],
+      selectedBusinessRecordsReady: true,
       // Mapbox objects should not become reactive.
       getNonReactive: makeNonReactive({
+        locationTracker: null,
         map: null,
-        marker: null
+        marker: null,
+        statisticsPopup: null
       })
     }
   },
@@ -119,11 +145,31 @@ export default {
     objectiveFormOfCurrentDog () {
       return getObjectiveFormOfDog(this.currentDog)
     },
+    // sorts the business records by date in descending order
+    // TODO: make it more efficient
+    businessRecordsSortedByDate () {
+      return this.businessRecords.sort((r1, r2) => {
+        if (r1.date < r2.date) {
+          return 1
+        } else if (r1.date > r2.date) {
+          return -1
+        } else {
+          // newer recordId precedes
+          if (r1.recordId < r2.recordId) {
+            return 1
+          } else if (r1.recordId > r2.recordId) {
+            return -1
+          } else {
+            return 0
+          }
+        }
+      })
+    },
     // TODO: make it more efficient
     mappedBusinessRecords () {
       return {
         type: 'FeatureCollection',
-        features: this.businessRecords.map(record => {
+        features: this.businessRecordsSortedByDate.map(record => {
           const {
             date,
             dogId,
@@ -169,33 +215,25 @@ export default {
     if (process.env.NODE_ENV !== 'production') {
       console.log('MapPane', 'mounted')
     }
-    // tests the Geolocation API
-    navigator.geolocation.getCurrentPosition(
-      // success
-      position => {
+    // initializes a geolocation tracker
+    this.initializeLocationTracker()
+    const { locationTracker } = this.getNonReactive()
+    locationTracker.getCurrentPosition()
+      .then(position => {
         if (process.env.NODE_ENV !== 'production') {
           console.log('obtained location', position)
         }
         this.initializeMap(position)
         // keeps tracking the location
         this.registerLocationWatcher()
-      },
-      // error
-      err => {
-        console.error(err)
-      },
-      // options
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-      }
-    )
+        this.startTrackingLocation()
+      })
+      .catch(err => console.error(err))
   },
+  // makes sure that location tracking is stopped.
   beforeDestroy () {
-    if (this.locationWatcherId !== undefined) {
-      navigator.geolocation.clearWatch(this.locationWatcherId)
-    }
+    const { locationTracker } = this.getNonReactive()
+    locationTracker.stopTracking()
   },
   methods: {
     ...mapActions('user', [
@@ -224,6 +262,10 @@ export default {
         ],
         zoom
       })
+      if (process.env.NODE_ENV !== 'production') {
+        // DEBUG
+        map.showCollisionBoxes = true
+      }
       map.on('load', () => {
         const imagesToLoad = [
           {
@@ -254,14 +296,42 @@ export default {
               }
             })
             map.on('click', 'business-records', record => {
-              console.log(record)
+              if (process.env.NODE_ENV !== 'production') {
+                console.log('MapPane', 'click', record)
+              }
+              const { recordId } = record.features[0].properties
+              // selects records hidden by the clicked icon
+              this.selectedBusinessRecords = []
+              this.selectedBusinessRecordsReady = false
+              collectCollisionBoxesAndFeatures(
+                map,
+                'business-records')
+                .then(collisionBoxes => {
+                  // locates the clicked collision box
+                  // and collects boxes intersecting it
+                  const clickedBox = collisionBoxes
+                    .find(box => box.feature.properties.recordId === recordId)
+                  const groupedBoxes = collisionBoxes.filter(box => {
+                    return boxesIntersect(
+                      clickedBox.collisionBox,
+                      box.collisionBox)
+                  })
+                  this.selectedBusinessRecords = groupedBoxes.map(box => {
+                    const {
+                      recordId
+                    } = box.feature.properties
+                    return this.businessRecords
+                      .find(r => r.recordId === recordId)
+                  })
+                  this.selectedBusinessRecordsReady = true
+                })
+                .catch(err => console.error(err))
+              // shows a stats popup anyway
               const {
-                recordId,
-                dogId,
-                type,
-                date
-              } = record.features[0].properties
-              console.log(`you stepped in ${type}-${recordId} made by ${this.dogOfId(dogId).name} on ${date}`)
+                lng,
+                lat
+              } = record.lngLat
+              this.showBusinessStatisticsPopup([lng, lat])
             })
             // notifies that the map is initialized.
             this.isMapInitialized = true
@@ -276,14 +346,24 @@ export default {
         latitude
       ])
       marker.addTo(map)
-      const eventPopup = new mapboxgl.Popup()
-      eventPopup.setDOMContent(this.$refs['event-popup'])
-      marker.setPopup(eventPopup)
+      const inputPopup = new mapboxgl.Popup()
+      inputPopup.setDOMContent(this.$refs['business-record-input-popup'])
+      marker.setPopup(inputPopup)
       marker.togglePopup() // should open the popup
-      // saves map and marker in the non-reactive object
+      // saves Mapbox related instances in the non-reactive object
       const nonReactive = this.getNonReactive()
       nonReactive.map = map
       nonReactive.marker = marker
+      // initializes a business statistics popup
+      this.initializeBusinessStatisticsPopup()
+    },
+    initializeBusinessStatisticsPopup () {
+      const popup = new mapboxgl.Popup({
+        closeOnMove: true
+      })
+      popup.setDOMContent(this.$refs['business-statistics-popup'])
+      const nonReactive = this.getNonReactive()
+      nonReactive.statisticsPopup = popup
     },
     // makes sure that initialization of the map has finished.
     // returns a Promise that
@@ -308,27 +388,88 @@ export default {
         marker.togglePopup()
       }
     },
-    registerLocationWatcher (locationOptions) {
-      this.locationWatcherId = navigator.geolocation.watchPosition(
-        // success
-        position => {
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('updating the location', position)
-          }
-          this.updateLocation(position)
-        },
-        // error
-        error => {
-          console.error('failed to get the location', error)
-        },
-        // options
-        // TODO: test on a mobile device
-        {
-          enableHighAccuracy: false,
-          timeout: 5000,
-          maximumAge: 1000
+    showBusinessStatisticsPopup (position) {
+      const {
+        map,
+        statisticsPopup
+      } = this.getNonReactive()
+      statisticsPopup
+        .setLngLat(position)
+        .addTo(map)
+    },
+    initializeLocationTracker () {
+      const tracker = new GeolocationTracker({
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 1000,
+        retryCount: 3
+      })
+      const nonReactive = this.getNonReactive()
+      nonReactive.locationTracker = tracker
+    },
+    registerLocationWatcher () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('registering location watcher')
+      }
+      const { locationTracker } = this.getNonReactive()
+      console.log(locationTracker)
+      locationTracker.addEventListener('tracking-started', event => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('MapPane', 'tracking-started', event)
         }
-      )
+        this.isTrackingLocation = true
+      })
+      locationTracker.addEventListener('tracking-stopped', event => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('MapPane', 'tracking-stopped', event)
+        }
+        this.isTrackingLocation = false
+      })
+      locationTracker.addEventListener('location-updated', event => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('MapPane', 'location-updated', event)
+        }
+        this.updateLocation(event.position)
+      })
+      locationTracker.addEventListener('location-error', event => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('MapPane', 'location-error', event)
+        }
+      })
+      // toggles location tracking when the visibility changes.
+      // - stops location tracking when the application is hidden.
+      // - starts location tracking when the application is shown again.
+      //   and centers the current location.
+      this.registerEventListener(document, 'visibilitychange', event => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('visibilitychange', event, document.hidden)
+        }
+        if (document.hidden) {
+          locationTracker.stopTracking()
+        } else {
+          locationTracker.getCurrentPosition()
+            .then(position => {
+              this.updateLocation(position)
+              this.centerCurrentLocation()
+              locationTracker.startTracking()
+            })
+            .catch(err => console.error(err))
+        }
+      })
+    },
+    startTrackingLocation () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('start tracking location')
+      }
+      const { locationTracker } = this.getNonReactive()
+      locationTracker.startTracking()
+    },
+    stopTrackingLocation () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('stop tracking location')
+      }
+      const { locationTracker } = this.getNonReactive()
+      locationTracker.stopTracking()
     },
     updateLocation ({ coords }) {
       const {
@@ -340,6 +481,14 @@ export default {
         longitude,
         latitude
       ])
+    },
+    toggleLocationTracking () {
+      const { locationTracker } = this.getNonReactive()
+      if (this.isTrackingLocation) {
+        this.stopTrackingLocation()
+      } else {
+        this.startTrackingLocation()
+      }
     },
     // centers the current location on the map.
     // opens a business popup if it is closed after centering.

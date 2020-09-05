@@ -5,14 +5,14 @@
 1. A `user` requests a `server` for an `app`.
 2. The `server` returns an `app` to the `user`.
 
-## Initializing an user account
+## Initializing an offline user account
 
 1. [Requesting an app](#requesting-an-app)
 2. The `user` starts the `app`.
 3. The `app` asks the `user` for `user information` including
-    - his/her dog's name (optional)
-    - his/her dog's sex (optional)
-    - his/her dog's date of birth (optional)
+    - her/his dog's name (optional)
+    - her/his dog's sex (optional)
+    - her/his dog's date of birth (optional)
 4. The `user` inputs `user information`.
 5. The `app` initializes an `user account` with
     - the `user information`
@@ -44,6 +44,9 @@
 - 1-A: Starting for the first time
     1. [Initializing an offline user account](#initializing-an-offline-user-account)
     2. Start from the step 2 of the main scenario.
+- 6-A: When there are `business records` overlapping each other on the `map`
+    1. The `app` shows the latest `business record` among the overlapping `business records` on the `map`.
+    2. Start from the step 7 of the main scenario.
 
 ## Updating the current location
 
@@ -96,3 +99,15 @@
 2. The `user` clicks the `centering button` on the `map`.
 3. The `app` obtains the `current location` of the `user`.
 4. The `app` centers the `current location` on the `map`.
+
+## Viewing business records at a point
+
+1. [Starting an app](#starting-an-app)
+2. The `user` clicks a `business record` on the `map`.
+3. The `app` queries the `business records` for `business records` overlapping with the clicked `business record`.
+   The overlapping `business records` include the clicked `business record`.
+4. The `app` shows a `business statistics popup` at the clicked `business record`.
+5. The `business statistics popup` shows a `business record bar chart` indicating the following information,
+    - The percentage of `pee` records.
+    - The percentage of `poo` records.
+6. The `business statistics popup` also shows a link to a `list of business records`.

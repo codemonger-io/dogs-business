@@ -1,20 +1,6 @@
 <template>
   <div>
-    <div class="level is-mobile app-title">
-      <div class="level-left">
-        <div class="level-item">
-          <img
-            class="image is-48x48"
-            src="@assets/images/dogs-business.svg"
-          />
-        </div>
-        <div class="level-item">
-          <h1 class="title is-5 dogs-business-title">
-            Dog's Business
-          </h1>
-        </div>
-      </div>
-    </div>
+    <navigation-bar />
     <div
       ref="map-container"
       class="map-container"
@@ -36,8 +22,9 @@ import {
   mapState
 } from 'vuex'
 
-import MapPane from '@components/map-pane'
 import DogRegistrationModal from '@components/dog-registration-modal'
+import MapPane from '@components/map-pane'
+import NavigationBar from '@components/navigation-bar'
 import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-listener-on-destroy'
 
 /**
@@ -53,8 +40,9 @@ export default {
     ReleaseEventListenerOnDestroy
   ],
   components: {
+    DogRegistrationModal,
     MapPane,
-    DogRegistrationModal
+    NavigationBar
   },
   computed: {
     ...mapState('user', [
@@ -142,13 +130,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.app-title {
-  display: inline-block;
-  padding: 0.5em 1.0em;
-  background-color: #299250;
-  box-shadow: 0 0 2px 1px gray;
-}
-
 .map-container {
   position: absolute;
   top: 0;

@@ -1,6 +1,9 @@
 /* loads the default Bulma theme. */
 @import "~bulma/sass/utilities/_all";
 
+/* customizes a navbar. */
+$navbar-background-color: #37C49F;
+
 /* customizes a toast. */
 $toast-border-radius: 0.25rem;
 
