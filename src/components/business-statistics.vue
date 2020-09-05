@@ -1,7 +1,7 @@
 <template>
   <div class="business-statistics">
-    <p>
-      Your dog's business around here.
+    <p class="capitalized-sentence">
+      {{possessiveFormOfDog}} business around here.
     </p>
     <p class="svg-container">
       <svg
@@ -50,6 +50,13 @@ import {
 import {
   select as d3Select
 } from 'd3-selection'
+import {
+  mapGetters
+} from 'vuex'
+
+import {
+  getPossessiveFormOfDog
+} from '@db/types/dog'
 
 import peePngPath from '@assets/images/pee.png'
 import pooPngPath from '@assets/images/poo.png'
@@ -115,6 +122,9 @@ export default {
     }
   },
   computed: {
+    ...mapGetters('user', [
+      'dogOfId'
+    ]),
     barGraphWidth () {
       return this.svgWidth - this.barGraphHorizontalPadding
     },
@@ -149,6 +159,20 @@ export default {
     },
     stopDateString () {
       return this.formatDate(this.stopDate)
+    },
+    firstDogId () {
+      return (this.businessRecords.length > 0) ?
+        this.businessRecords[0].dogId :
+        undefined
+    },
+    firstDog () {
+      return this.dogOfId(this.firstDogId) || {
+        name: '',
+        sex: 'n/a'
+      }
+    },
+    possessiveFormOfDog () {
+      return getPossessiveFormOfDog(this.firstDog)
     },
     graphData () {
       const stats = this.statistics
@@ -245,6 +269,10 @@ export default {
 /* should not be scoped because Vue does not give a scope id to SVG elements. */
 .business-statistics {
   position: relative;
+
+  .capitalized-sentence:first-letter {
+    text-transform: capitalize;
+  }
 
   .svg-container {
     display: flex;
