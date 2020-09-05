@@ -333,11 +333,8 @@ export default {
                 })
                 .catch(err => console.error(err))
               // shows a stats popup anyway
-              const {
-                lng,
-                lat
-              } = record.lngLat
-              this.showBusinessStatisticsPopup([lng, lat])
+              const position = record.features[0].geometry.coordinates
+              this.showBusinessStatisticsPopup(position)
             })
             // notifies that the map is initialized.
             this.isMapInitialized = true
