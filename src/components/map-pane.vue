@@ -13,7 +13,7 @@
       :class="debugPaneClass"
       :width="debugPane.width"
       :height="debugPane.height"
-      @click="showsDebugPane = false"
+      @click="hideDebugPane"
     >
       <g class="debug-pane-contents" />
       <text
@@ -389,7 +389,21 @@ export default {
                     this.showsDebugPane = true
                   }
                 })
-                .catch(err => console.error(err))
+                .catch(err => {
+                  console.error(err)
+                  if (this.debugMode) {
+                    const svg = d3Select(this.$refs['debug-pane'])
+                    const contents = svg.select('g.debug-pane-contents')
+                    contents.selectAll('text').remove()
+                    contents.append('text')
+                      .attr('x', 10)
+                      .attr('y', 150)
+                      .attr('font-size', 9)
+                      .attr('fill', 'black')
+                      .text('' + err)
+                    this.showsDebugPane = true
+                  }
+                })
               // shows a stats popup anyway
               const position = record.features[0].geometry.coordinates
               this.showBusinessStatisticsPopup(position)
@@ -622,6 +636,14 @@ export default {
       } = mapContainer.getBoundingClientRect()
       this.debugPane.width = width
       this.debugPane.height = height
+    },
+    // DEBUG
+    hideDebugPane () {
+      const svg = d3Select(this.$refs['debug-pane'])
+      const contents = svg.select('g.debug-pane-contents')
+      contents.selectAll('rect').remove()
+      contents.selectAll('text').remove()
+      this.showsDebugPane = false
     }
   }
 }
