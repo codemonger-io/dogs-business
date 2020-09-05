@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p>What is {{ possessiveFormOfDog(dogId) }} business here?</p>
+    <p>What is {{ possessiveFormOfDog }} business here?</p>
     <div class="level is-mobile">
       <p class="level-item">
         <button
@@ -34,8 +34,8 @@
 
 <script>
 import {
-  mapGetters
-} from 'vuex'
+  getPossessiveFormOfDog
+} from '@db/types/dog'
 
 /**
  * Component that provides an interface for inputting a business record.
@@ -61,11 +61,8 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('user', [
-      'possessiveFormOfDog'
-    ]),
-    dogId () {
-      return this.dog.dogId
+    possessiveFormOfDog () {
+      return getPossessiveFormOfDog(this.dog)
     }
   },
   methods: {
