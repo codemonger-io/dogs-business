@@ -60,6 +60,42 @@ class Dog {
 }
 
 /**
+ * Returns a possessive form of a given dog.
+ *
+ * @function getPossessiveFormOfDog
+ *
+ * @static
+ *
+ * @param {module:db/types/dog.Dog} dog
+ *
+ *   Dog whose possessive form is to be obtained.
+ *
+ * @return {string}
+ *
+ *   Possessive form of `dog`.
+ *   Determines in the following order.
+ *   - `dog.name` + 's if it is not empty.
+ *   - 'her' if `dog.sex` is 'female'.
+ *   - 'his' if `dog.sex` is 'male'.
+ *   - 'her/his' if neither of `dog.name` and `dog.sex` is available.
+ */
+export function getPossessiveFormOfDog (dog) {
+  const {
+    name,
+    sex
+  } = dog
+  if (name) {
+    return name + "'s"
+  } else if (sex === 'female') {
+    return 'her'
+  } else if (sex === 'male') {
+    return 'his'
+  } else {
+    return 'her/his'
+  }
+}
+
+/**
  * Returns an objective form of a given dog.
  *
  * @function getObjectiveFormOfDog
