@@ -154,7 +154,14 @@ export default {
         } else if (r1.date > r2.date) {
           return -1
         } else {
-          return 0
+          // newer recordId precedes
+          if (r1.recordId < r2.recordId) {
+            return 1
+          } else if (r1.recordId > r2.recordId) {
+            return -1
+          } else {
+            return 0
+          }
         }
       })
     },
