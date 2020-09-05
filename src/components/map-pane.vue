@@ -77,6 +77,12 @@ if (urlParams.has('access-token')) {
   console.error('specify a Mapbox access token to access-token parameter')
 }
 
+// turns on the debug mode if `debug-mode` is 'true'.
+let debugMode = false
+if (urlParams.has('debug-mode')) {
+  debugMode = urlParams.get('debug-mode').toLowerCase() === 'true'
+}
+
 /**
  * Creates a function that returns a non-reactive object.
  *
@@ -262,7 +268,7 @@ export default {
         ],
         zoom
       })
-      if (process.env.NODE_ENV !== 'production') {
+      if (debugMode || (process.env.NODE_ENV !== 'production')) {
         // DEBUG
         map.showCollisionBoxes = true
       }
