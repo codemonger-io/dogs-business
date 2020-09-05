@@ -3,7 +3,7 @@
     <p>
       Your dog's business around here.
     </p>
-    <p>
+    <p class="svg-container">
       <svg
         ref="svg-root"
         xmlns:svg="http://www.w3.org/2000/svg"
@@ -23,10 +23,23 @@
         </g>
       </svg>
     </p>
+    <p>
+      Out of <strong>{{businessRecords.length}}</strong> records
+    </p>
+    </p>
+      From <strong>{{startDate.toLocaleDateString()}}</strong>
+    </p>
+    <p>
+      To <strong>{{stopDate.toLocaleDateString()}}</strong>
+    </p>
   </div>
 </template>
 
 <script>
+import {
+  max as d3Max,
+  min as d3Min
+} from 'd3-array'
 import {
   scaleLinear as d3ScaleLinear
 } from 'd3-scale'
@@ -109,6 +122,15 @@ export default {
         ++stats[type].frequency
       })
       return stats
+    },
+    dates () {
+      return this.businessRecords.map(r => new Date(r.date))
+    },
+    startDate () {
+      return d3Min(this.dates) || new Date()
+    },
+    stopDate () {
+      return d3Max(this.dates) || new Date()
     },
     graphData () {
       const stats = this.statistics
@@ -202,6 +224,11 @@ export default {
 <style lang="scss">
 /* should not be scoped because Vue does not give a scope id to SVG elements. */
 .business-statistics {
+  .svg-container {
+    display: flex;
+    justify-content: center;
+  }
+
   .bar-graph-contents {
     .bar-graph-area {
       rect {
@@ -215,13 +242,13 @@ export default {
 
       &.bar-graph-area-pee {
         rect {
-          fill: #FFE920;
+          fill: #FFEE57;
         }
       }
 
       &.bar-graph-area-poo {
         rect {
-          fill: #A05A2C;
+          fill: #CD7E4B;
         }
       }
     }
