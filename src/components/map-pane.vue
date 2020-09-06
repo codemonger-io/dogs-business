@@ -359,6 +359,9 @@ export default {
                   // and collects boxes intersecting it
                   const clickedBox = collisionBoxes
                     .find(box => box.feature.properties.recordId === recordId)
+                  if (!clickedBox) {
+                    throw new Error(`clicked record ${recordId} was not in ${collisionBoxes.map(box => box.feature.properties.recordId)}`)
+                  }
                   const groupedBoxes = collisionBoxes.filter(box => {
                     return boxesIntersect(
                       clickedBox.collisionBox,
