@@ -128,8 +128,12 @@ export function collectCollisionBoxesAndFeatures (map, sourceName) {
           const tlY = ((y1 * tileToViewport) + projectedPoint.point.y) - VIEWPORT_PADDING
           const brX = ((x2 * tileToViewport) + projectedPoint.point.x) - VIEWPORT_PADDING
           const brY = ((y2 * tileToViewport) + projectedPoint.point.y) - VIEWPORT_PADDING
-          const queryData = Object.values(retainedQueryData)
-            .find(q => q.bucketIndex === bucketIndex)
+          // `bucketInstanceId` is necessary
+          // because `bucketIndex` is not unique in `retainedQueryData`
+          const bucket = Object.values(buckets)
+            .find(b => b.index === bucketIndex)
+          const { bucketInstanceId } = bucket
+          const queryData = retainedQueryData[bucketInstanceId]
           const bucketSymbols = queryData.featureIndex.lookupSymbolFeatures(
             [featureIndex],
             map.style._serializedLayers,
