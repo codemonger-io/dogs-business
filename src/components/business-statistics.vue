@@ -32,6 +32,14 @@
     <p>
       To <strong>{{stopDateString}}</strong>
     </p>
+    <p>
+      <a
+        href="#"
+        @click.prevent="onListBusinessRecordsClicked"
+      >
+        List records
+      </a>
+    </p>
     <b-loading
       :active="!businessRecordsReady"
       :is-full-page="false"
@@ -93,6 +101,10 @@ const TYPED_ICON_PATHS = {
  * @vue-prop {Number} [svg-height=50]
  *
  *   Height of the SVG element that renders statistics.
+ *
+ * @vue-event {nothing} listing-business-records
+ *
+ *   Notified when a user clicks the "List records" link.
  */
 export default {
   name: 'BusinessStatistics',
@@ -257,6 +269,9 @@ export default {
           .attr('x', d => 0.5 * scaleX(d.frequency))
           .attr('y', this.barGraphHeight + 2)
           .text(d => `${d.percentage.toFixed(0)}%`)
+    },
+    onListBusinessRecordsClicked () {
+      this.$emit('listing-business-records')
     },
     formatDate (date) {
       return date ? date.toLocaleDateString() : '?'

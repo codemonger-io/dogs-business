@@ -53,7 +53,22 @@
       <business-statistics
         :business-records="selectedBusinessRecords"
         :business-records-ready="selectedBusinessRecordsReady"
+        @listing-business-records="onListingBusinessRecords"
       />
+    </div>
+    <!-- business-record-list precedes other popups-->
+    <div
+      v-if="showsBusinessRecordList"
+      class="map-overlay map-overlay-top-left business-record-list-container"
+    >
+      <div class="map-overlay-contents">
+        <business-record-list-frame
+          ref="business-record-list-frame"
+          :business-records="selectedBusinessRecords"
+          :resize-trigger="resizeTrigger"
+          @closing-frame="onBusinessRecordListFrameClosing"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -79,6 +94,7 @@ import {
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
 import BusinessRecordInput from './business-record-input'
+import BusinessRecordListFrame from './business-record-list-frame'
 import BusinessStatistics from './business-statistics'
 import MapController from './map-controller'
 import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-listener-on-destroy'
@@ -133,6 +149,17 @@ function makeNonReactive (obj) {
  * @namespace MapPane
  *
  * @memberof module:components
+ *
+ * @vue-prop {number} [resize-trigger=0]
+ *
+ *   Change to this property triggers the process necessary for this component
+ *   after it is resized.
+ *   The value itself does not matter.
+ *
+ *   **NOTE**: If a component individually reacts to a resize event from
+ *   `window`, its parent component may not have been resized yet.
+ *   An incorrect size will be calculated in that case.
+ *   This property is introduced to address this problem.
  */
 export default {
   name: 'MapPane',
@@ -141,8 +168,15 @@ export default {
   ],
   components: {
     BusinessRecordInput,
+    BusinessRecordListFrame,
     BusinessStatistics,
     MapController
+  },
+  props: {
+    resizeTrigger: {
+      type: Number,
+      default: 0
+    }
   },
   data () {
     return {
@@ -150,6 +184,7 @@ export default {
       isTrackingLocation: false,
       selectedBusinessRecords: [],
       selectedBusinessRecordsReady: true,
+      showsBusinessRecordList: false,
       // Mapbox objects should not become reactive.
       getNonReactive: makeNonReactive({
         locationTracker: null,
@@ -244,6 +279,14 @@ export default {
     }
   },
   watch: {
+    resizeTrigger () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('MapPane', 'resizing was triggered')
+      }
+      if (this.debugMode) {
+        this.resizeDebugPane()
+      }
+    },
     mappedBusinessRecords (newRecords) {
       this.promiseMapInitialized()
         .then(() => {
@@ -274,9 +317,6 @@ export default {
     // initializes the debug pane
     if (this.debugMode) {
       this.resizeDebugPane()
-      this.registerEventListener(window, 'resize', () => {
-        this.resizeDebugPane()
-      })
     }
   },
   // makes sure that location tracking is stopped.
@@ -630,6 +670,18 @@ export default {
         message: `<span style="font-weight:bold;">Clean up after ${getObjectiveFormOfDog(this.currentDog)}.</span>`
       })
     },
+    onListingBusinessRecords () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('MapPane', 'listing-business-records')
+      }
+      this.showsBusinessRecordList = true
+    },
+    onBusinessRecordListFrameClosing () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('MapPane', 'closing-frame')
+      }
+      this.showsBusinessRecordList = false
+    },
     // DEBUG
     resizeDebugPane () {
       const mapContainer = this.$refs['mapbox-container']
@@ -653,6 +705,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "~bulma/sass/utilities/initial-variables.sass";
+
 .map-pane {
   position: relative;
   width: 100%;
@@ -677,17 +731,38 @@ export default {
   .map-overlay {
     position: absolute;
 
+    &.map-overlay-top-left {
+      top: 0;
+      left: 0;
+    }
+
     &.map-overlay-bottom-right {
       bottom: 0;
       right: 0;
-
-      .map-overlay-contents {
-        padding-bottom: 3.0em;
-      }
     }
 
     .map-overlay-contents {
       padding: 0.75em;
+      padding-bottom: 3.0em;
+    }
+  }
+
+  .business-record-list-container {
+    width: 20rem;
+    min-width: 20rem;
+    max-width: 20rem;
+    height: 100%;
+
+    .map-overlay-contents {
+      width: 100%;
+      height: 100%;
+    }
+  }
+  @media screen and (max-width: $tablet) {
+    .business-record-list-container {
+      width: 100%;
+      min-width: 100%;
+      max-width: 100%;
     }
   }
 }

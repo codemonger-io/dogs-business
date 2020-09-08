@@ -1,11 +1,14 @@
 <template>
-  <div>
+  <div ref="app">
     <navigation-bar />
     <div
       ref="map-container"
       class="map-container"
     >
-      <map-pane />
+      <map-pane
+        ref="map-pane"
+        :resize-trigger="resizeTrigger"
+      />
     </div>
     <dog-registration-modal
       ref="dog-registration-modal"
@@ -44,6 +47,11 @@ export default {
     MapPane,
     NavigationBar
   },
+  data () {
+    return {
+      resizeTrigger: 0
+    }
+  },
   computed: {
     ...mapState('user', [
       'isLoaded'
@@ -60,10 +68,9 @@ export default {
     // this is necessary because `100vh` may include the height of
     // a navigation bar on a mobile device.
     this.resizeMapContainer()
-    this.registerEventListener(
-      window,
-      'resize',
-      () => this.resizeMapContainer())
+    this.registerEventListener(window, 'resize', () => {
+      this.resizeMapContainer()
+    })
     // shows a dog registration modal if no dog is registered
     this.promiseLoaded()
       .then(() => {
@@ -102,8 +109,12 @@ export default {
         console.log('resizing the map container')
       }
       const mapContainer = this.$refs['map-container']
+      const { top } = mapContainer.getBoundingClientRect()
       const { innerHeight } = window
-      mapContainer.style.height = `${innerHeight}px`
+      const containerHeight = innerHeight - top
+      mapContainer.style.height = `${containerHeight}px`
+      // resizes subsequent components
+      ++this.resizeTrigger
     },
     showDogRegistrationModal () {
       this.$refs['dog-registration-modal'].show()
@@ -131,11 +142,7 @@ export default {
 
 <style lang="scss" scoped>
 .map-container {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: -1; /* shows as the background. */
 }
 </style>
