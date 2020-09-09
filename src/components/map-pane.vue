@@ -459,7 +459,9 @@ export default {
             console.error('failed to load images', error)
           })
       })
-      const marker = new mapboxgl.Marker()
+      const marker = new mapboxgl.Marker({
+        color: '#37C49F'
+      })
       marker.setLngLat([
         longitude,
         latitude
