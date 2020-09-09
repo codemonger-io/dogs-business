@@ -66,6 +66,7 @@
           ref="business-record-list-frame"
           :business-records="selectedBusinessRecords"
           :resize-trigger="resizeTrigger"
+          @business-record-selected="onBusinessRecordSelected"
           @closing-frame="onBusinessRecordListFrameClosing"
         />
       </div>
@@ -618,16 +619,16 @@ export default {
         map,
         marker
       } = this.getNonReactive()
-      const {
-        lng,
-        lat
-      } = marker.getLngLat()
+      this.centerLocation(marker.getLngLat())
+      map.once('moveend', () => {
+        this.setPopupOpen(true)
+      })
+    },
+    centerLocation ({ lng, lat }) {
+      const { map } = this.getNonReactive()
       map.flyTo({
         center: [lng, lat],
         curve: 0
-      })
-      map.once('moveend', () => {
-        this.setPopupOpen(true)
       })
     },
     onAddingBusinessRecord (type) {
@@ -675,6 +676,20 @@ export default {
         console.log('MapPane', 'listing-business-records')
       }
       this.showsBusinessRecordList = true
+    },
+    onBusinessRecordSelected ({ businessRecord }) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('MapPane', 'business-record-selected', businessRecord)
+      }
+      // centers the business record
+      const {
+        longitude,
+        latitude
+      } = businessRecord.location
+      this.centerLocation({
+        lng: longitude,
+        lat: latitude
+      })
     },
     onBusinessRecordListFrameClosing () {
       if (process.env.NODE_ENV !== 'production') {

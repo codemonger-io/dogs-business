@@ -17,6 +17,7 @@
     >
       <business-record-list
         :business-records="businessRecords"
+        @business-record-selected="$emit('business-record-selected', $event)"
       />
     </div>
   </article>
@@ -46,6 +47,13 @@ import BusinessRecordList from '@components/business-record-list'
  *   `window`, its parent component may not have been resized yet.
  *   An incorrect size will be calculated in that case.
  *   This property is introduced to address this problem.
+ *
+ * @vue-event {object} business-record-selected
+ *
+ *   Notified when one of listed business records is selected.
+ *   The argument is an object with the following field,
+ *   - `businessRecord`: {@linkcode module:db/types/business-record.BusinessRecord}
+ *     Selected business record.
  *
  * @vue-event {nothing} closing-frame
  *
@@ -110,6 +118,7 @@ export default {
   height: 100%;
 
   .business-record-list-frame-body {
+    padding: 0 0;
     overflow-x: hidden;
     overflow-y: auto;
   }
