@@ -67,6 +67,7 @@
           :business-records="selectedBusinessRecords"
           :resize-trigger="resizeTrigger"
           @business-record-selected="onBusinessRecordSelected"
+          @deleting-business-record="onDeletingBusinessRecord"
           @closing-frame="onBusinessRecordListFrameClosing"
         />
       </div>
@@ -327,7 +328,8 @@ export default {
   },
   methods: {
     ...mapActions('user', [
-      'appendBusinessRecord'
+      'appendBusinessRecord',
+      'deleteBusinessRecord'
     ]),
     initializeMap ({ coords }) {
       const {
@@ -691,6 +693,27 @@ export default {
       this.centerLocation({
         lng: longitude,
         lat: latitude
+      })
+    },
+    onDeletingBusinessRecord ({ businessRecord }) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('MapPane', 'deleting-business-record', businessRecord)
+      }
+      this.$buefy.dialog.confirm({
+        message: 'Are you sure to delete this record?',
+        onConfirm: () => {
+          this.deleteBusinessRecord(businessRecord)
+            .then(() => {
+              // removes the record if it is in `selectedBusinessRecords`
+              const { recordId } = businessRecord
+              const index = this.selectedBusinessRecords
+                .findIndex(r => r.recordId === recordId)
+              if (index !== -1) {
+                this.selectedBusinessRecords.splice(index, 1)
+              }
+            })
+            .catch(err => console.error(err))
+        }
       })
     },
     onBusinessRecordListFrameClosing () {

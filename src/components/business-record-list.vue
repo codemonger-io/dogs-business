@@ -11,16 +11,29 @@
         class="business-record-row"
         @click.prevent="onBusinessRecordClicked(record)"
       >
-        <span class="business-record-column business-record-column-type">
-          <figure class="image is-24x24">
-            <img
-              :src="iconPathOfType(record.type)"
-              :alt="record.type"
-            />
-          </figure>
-        </span>
-        <span class="business-record-column business-record-column-date">
-          on {{ record.date }}
+        <div class="business-record-information">
+          <span class="business-record-column business-record-column-type">
+            <figure class="image is-24x24">
+              <img
+                :src="iconPathOfType(record.type)"
+                :alt="record.type"
+              />
+            </figure>
+          </span>
+          <span class="business-record-column business-record-column-date">
+            on {{ record.date }}
+          </span>
+        </div>
+        <span class="business-record-column business-record-column-delete">
+          <button
+            v-if="record.recordId === selectedRecordId"
+            class="button is-small"
+            @click.stop="onDeleteBusinessRecordClicked(record)"
+          >
+            <span class="icon">
+              <i class="mdi mdi-18px mdi-trash-can-outline" />
+            </span>
+          </button>
         </span>
       </a>
     </li>
@@ -51,8 +64,15 @@ const ICON_PATH_OF_TYPES = {
  *
  *   Notified when one of listed business records is selected.
  *   The argument is an object with the following field,
- *   - `businessRecord`: {`module:db/types/business-record.BusinessRecord`}
+ *   - `businessRecord`: {@linkcode module:db/types/business-record.BusinessRecord}
  *     Selected business record.
+ *
+ * @vue-event {object} deleting-business-record
+ *
+ *   Notified when the user tries to delete a business record.
+ *   The argument is an object with the following field,
+ *   - `businessRecord`: {@linkcode module:db/types/business-record.BusinessRecord}
+ *     Business record to delete.
  */
 export default {
   name: 'BusinessRecordList',
@@ -89,6 +109,14 @@ export default {
       this.$emit('business-record-selected', {
         businessRecord: record
       })
+    },
+    onDeleteBusinessRecordClicked (record) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('BusinessRecordList', 'deleting business record', record)
+      }
+      this.$emit('deleting-business-record', {
+        businessRecord: record
+      })
     }
   }
 }
@@ -112,6 +140,8 @@ export default {
       &.business-record-row {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        height: 2.5em;
         text-decoration: none;
 
         &:active,
@@ -121,9 +151,17 @@ export default {
       }
     }
 
+    .business-record-information {
+      display: flex;
+      align-items: center;
+    }
+
     .business-record-column {
       display: inline-block;
       margin-right: 1em;
+      &:last-child {
+        margin-right: 0;
+      }
 
       &.business-record-column-type {
         width: 24px;

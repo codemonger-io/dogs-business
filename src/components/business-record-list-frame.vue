@@ -18,6 +18,7 @@
       <business-record-list
         :business-records="businessRecords"
         @business-record-selected="$emit('business-record-selected', $event)"
+        @deleting-business-record="$emit('deleting-business-record', $event)"
       />
     </div>
   </article>
@@ -51,6 +52,13 @@ import BusinessRecordList from '@components/business-record-list'
  * @vue-event {object} business-record-selected
  *
  *   Notified when one of listed business records is selected.
+ *   The argument is an object with the following field,
+ *   - `businessRecord`: {@linkcode module:db/types/business-record.BusinessRecord}
+ *     Selected business record.
+ *
+ * @vue-event {object} deleting-business-record
+ *
+ *   Notified when the user tries to delete a business record.
  *   The argument is an object with the following field,
  *   - `businessRecord`: {@linkcode module:db/types/business-record.BusinessRecord}
  *     Selected business record.

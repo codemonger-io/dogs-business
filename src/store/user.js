@@ -278,6 +278,33 @@ export const mutations = {
       console.log('appending a business record', businessRecords, newRecord)
     }
     businessRecords.push(newRecord)
+  },
+  /**
+   * Deletes a given business record.
+   *
+   * @function _deleteBusinessRecord
+   *
+   * @memberof module:store/user.mutations
+   *
+   * @param {object} state
+   *
+   *   Vuex State to be updated.
+   *   The field `businessRecords` is updated.
+   *
+   * @param {object} toDelete
+   *
+   *   Business record to delete.
+   *   Only the following field is required,
+   *   - `recordId`: {`number`} ID of the business record.
+   */
+  _deleteBusinessRecord ({ businessRecords }, { recordId }) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('deleting a business record', businessRecords, recordId)
+    }
+    const index = businessRecords.findIndex(r => r.recordId === recordId)
+    if (index !== -1) {
+      businessRecords.splice(index, 1)
+    }
   }
 }
 
@@ -418,6 +445,40 @@ function createActions (db) {
       return db.putBusinessRecord(newRecord)
         .then(newRecord => {
           commit('_appendBusinessRecord', newRecord)
+        })
+    },
+    /**
+     * Deletes a given business record from the database.
+     *
+     * This function invokes
+     * [Database.deleteBusinessRecord]{@linkcode module:db.Database#deleteBusinessRecord}
+     * of the bound database.
+     *
+     * @funciton deleteBusinessRecord
+     *
+     * @memberof module:store/user.actions
+     *
+     * @param {object} context
+     *
+     *   Vuex context.
+     *
+     * @param {object} toDelete
+     *
+     *   Business record to be deleted from the database.
+     *   Only the following field is required,
+     *   - `recordId`: {`number`} ID of the business record.
+     *
+     * @return {Promise}
+     *
+     *   Resolved when deletion of the business record finishes.
+     */
+    deleteBusinessRecord ({ commit }, toDelete) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('deleting a business record', toDelete)
+      }
+      return db.deleteBusinessRecord(toDelete)
+        .then(() => {
+          commit('_deleteBusinessRecord', toDelete)
         })
     }
   }
