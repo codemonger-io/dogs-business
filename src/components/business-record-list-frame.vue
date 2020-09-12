@@ -1,7 +1,7 @@
 <template>
   <article
     ref="business-record-list-frame"
-    class="message business-record-list-frame"
+    class="message is-dogs-theme business-record-list-frame"
   >
     <div class="message-header">
       <p>Your Dog's Records</p>

@@ -1,11 +1,27 @@
-/* loads the default Bulma theme. */
-@import "~bulma/sass/utilities/_all";
+@import "~bulma/sass/utilities/initial-variables";
+@import "~bulma/sass/utilities/functions";
+
+/* theme color. */
+$dogs-theme: #37C49F;
+$dogs-theme-invert: $grey-dark;
+$dogs-theme-light: #FFFFFF;
+$dogs-theme-dark: #000000;
+
+/* adds custom colors. */
+$custom-colors: (
+  "dogs-theme": ($dogs-theme, $dogs-theme-invert, $dogs-theme-light, $dogs-theme-dark)
+);
 
 /* customizes a navbar. */
-$navbar-background-color: #37C49F;
+$navbar-background-color: $dogs-theme;
 
 /* customizes a toast. */
 $toast-border-radius: 0.25rem;
+
+/* loads the default Bulma theme.
+ * this line must be after the $custom-colors line.
+ */
+@import "~bulma/sass/utilities/_all";
 
 @import "~bulma";
 @import "~buefy/src/scss/buefy";
