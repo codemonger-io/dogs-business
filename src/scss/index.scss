@@ -30,3 +30,8 @@ $modal-button-width: 6em;
     min-width: $modal-button-width;
   }
 }
+
+/* capitalizes the first letter. */
+.capitalized-sentence:first-letter {
+  text-transform: capitalize;
+}

@@ -37,7 +37,10 @@
         href="#"
         @click.prevent="onListBusinessRecordsClicked"
       >
-        List records
+        <span class="icon">
+          <i class="mdi mdi-view-list" />
+        </span>
+        View records list
       </a>
     </p>
     <b-loading
@@ -284,10 +287,6 @@ export default {
 /* should not be scoped because Vue does not give a scope id to SVG elements. */
 .business-statistics {
   position: relative;
-
-  .capitalized-sentence:first-letter {
-    text-transform: capitalize;
-  }
 
   .svg-container {
     display: flex;

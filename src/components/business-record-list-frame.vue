@@ -4,7 +4,9 @@
     class="message is-dogs-theme business-record-list-frame"
   >
     <div class="message-header">
-      <p>Your Dog's Records</p>
+      <p class="capitalized-sentence">
+        {{possessiveFormOfDog}} Records
+      </p>
       <button
         class="delete"
         aria-label="delete"
@@ -25,7 +27,14 @@
 </template>
 
 <script>
+import {
+  mapGetters
+} from 'vuex'
+
 import BusinessRecordList from '@components/business-record-list'
+import {
+  getPossessiveFormOfDog
+} from '@db/types/dog'
 
 /**
  * Vue component that renders a frame whose content is a business record list.
@@ -80,6 +89,20 @@ export default {
     resizeTrigger: {
       type: Number,
       default: 0
+    }
+  },
+  computed: {
+    ...mapGetters('user', [
+      'dogOfId'
+    ]),
+    firstRecord () {
+      return this.businessRecords[0] || {}
+    },
+    firstDog () {
+      return this.dogOfId(this.firstRecord.dogId) || {}
+    },
+    possessiveFormOfDog () {
+      return getPossessiveFormOfDog(this.firstDog)
     }
   },
   watch: {
