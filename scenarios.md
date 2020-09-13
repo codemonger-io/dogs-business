@@ -104,10 +104,40 @@
 
 1. [Starting an app](#starting-an-app)
 2. The `user` clicks a `business record` on the `map`.
-3. The `app` queries the `business records` for `business records` overlapping with the clicked `business record`.
-   The overlapping `business records` include the clicked `business record`.
-4. The `app` shows a `business statistics popup` at the clicked `business record`.
-5. The `business statistics popup` shows a `business record bar chart` indicating the following information,
+3. The `app` selects the clicked `business record`. &rightarrow; `selected business record`
+4. The `app` queries the `user account` for `business records` overlapping with the `selected business record`.
+   The `overlapping business records` include the `selected business record`.
+5. The `app` shows a `business statistics popup` at the `selected business record`.
+6. The `business statistics popup` shows a `business record bar chart` indicating the following information,
     - The percentage of `pee` records.
     - The percentage of `poo` records.
-6. The `business statistics popup` also shows a link to a `list of business records`.
+7. The `business statistics popup` also shows a `business record list link`.
+
+## Listing business records at a point
+
+1. [Viewing business records at a point](#viewing-business-records-at-a-point)
+2. The `user` clicks the `business record list link`.
+3. The `app` shows a `business record list` on top of the `map`.
+4. The `business record list` lists the `overlapping business records`.
+5. The `business record list` has a `close button`.
+
+## Selecting a business record in a business record list
+
+1. [Listing business records at a point](#listing-business-records-at-a-point)
+2. The `user` clicks a `list item` in the `business record list`.
+3. The `app` centers the `business record` of the `clicked list item` on the `map`.
+4. The `app` shows a `delete button` beside the `clicked list item`.
+
+## Deleting a business record in a business record list
+
+1. [Selecting a business record in a business record list](#selecting-a-business-record-in-a-business-record-list)
+2. The `user` clicks the `delete button` of a `list item` to delete.
+3. The `app` confirms that the `user` really wants to delete the `business record` of the `list item`.
+4. The `user` answers yes to the `app`.
+5. The `app` deletes the `business record` from the `user account`.
+
+## Hiding a business record list
+
+1. [Listing business records at a point](#listing-business-records-at-a-point)
+2. The `user` clicks the `close button` of the `business record list`.
+3. The `app` closes the `business record list`.

@@ -32,6 +32,17 @@
     <p>
       To <strong>{{stopDateString}}</strong>
     </p>
+    <p>
+      <a
+        href="#"
+        @click.prevent="onListBusinessRecordsClicked"
+      >
+        <span class="icon">
+          <i class="mdi mdi-view-list" />
+        </span>
+        View records list
+      </a>
+    </p>
     <b-loading
       :active="!businessRecordsReady"
       :is-full-page="false"
@@ -93,6 +104,10 @@ const TYPED_ICON_PATHS = {
  * @vue-prop {Number} [svg-height=50]
  *
  *   Height of the SVG element that renders statistics.
+ *
+ * @vue-event {nothing} listing-business-records
+ *
+ *   Notified when a user clicks the "List records" link.
  */
 export default {
   name: 'BusinessStatistics',
@@ -258,6 +273,9 @@ export default {
           .attr('y', this.barGraphHeight + 2)
           .text(d => `${d.percentage.toFixed(0)}%`)
     },
+    onListBusinessRecordsClicked () {
+      this.$emit('listing-business-records')
+    },
     formatDate (date) {
       return date ? date.toLocaleDateString() : '?'
     }
@@ -269,10 +287,6 @@ export default {
 /* should not be scoped because Vue does not give a scope id to SVG elements. */
 .business-statistics {
   position: relative;
-
-  .capitalized-sentence:first-letter {
-    text-transform: capitalize;
-  }
 
   .svg-container {
     display: flex;

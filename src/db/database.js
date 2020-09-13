@@ -338,6 +338,54 @@ export class Database {
         })
       })
   }
+
+  /**
+   * Deletes a given business record from the database.
+   *
+   * @function deleteBusinessRecord
+   *
+   * @instance
+   *
+   * @memberof module:db.Database
+   *
+   * @param {object} toDelete
+   *
+   *   Business record to delete.
+   *   Only the following field is required,
+   *   - `recordId`: {`number`} ID of the business record.
+   *
+   * @return {Promise}
+   *
+   *   Resolves when the business record is deleted from the database.
+   */
+  deleteBusinessRecord ({ recordId }) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('deleting a business record from the database', recordId)
+    }
+    return this.#promisedDb
+      .then(db => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('starting transaction: delete business record')
+        }
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction(
+            BUSINESS_RECORD_STORE_NAME,
+            'readwrite')
+          const store = transaction.objectStore(BUSINESS_RECORD_STORE_NAME)
+          const result = store.delete(recordId)
+          result.onsuccess = event => {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('deleteBusinessRecord', 'success', event)
+            }
+            resolve()
+          }
+          result.onerror = event => {
+            console.error('deleteBusinessRecord', 'error', event)
+            reject(new Error('failed to delete a business record from the database'))
+          }
+        })
+      })
+  }
 }
 
 export default Database

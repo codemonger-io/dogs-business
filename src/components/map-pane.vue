@@ -53,8 +53,30 @@
       <business-statistics
         :business-records="selectedBusinessRecords"
         :business-records-ready="selectedBusinessRecordsReady"
+        @listing-business-records="onListingBusinessRecords"
       />
     </div>
+    <!-- business-record-list precedes other popups-->
+    <div
+      v-if="showsBusinessRecordList"
+      class="map-overlay map-overlay-top-left business-record-list-container"
+    >
+      <div class="map-overlay-contents">
+        <business-record-list-frame
+          ref="business-record-list-frame"
+          :business-records="selectedBusinessRecords"
+          :business-records-ready="selectedBusinessRecordsReady"
+          :resize-trigger="resizeTrigger"
+          @business-record-selected="onBusinessRecordSelected"
+          @deleting-business-record="onDeletingBusinessRecord"
+          @closing-frame="onBusinessRecordListFrameClosing"
+        />
+      </div>
+    </div>
+    <!-- dialog that confirms record deletion -->
+    <record-deletion-dialog
+      ref="record-deletion-dialog"
+    />
   </div>
 </template>
 
@@ -79,8 +101,10 @@ import {
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
 import BusinessRecordInput from './business-record-input'
+import BusinessRecordListFrame from './business-record-list-frame'
 import BusinessStatistics from './business-statistics'
 import MapController from './map-controller'
+import RecordDeletionDialog from './record-deletion-dialog'
 import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-listener-on-destroy'
 
 import peePngPath from '@assets/images/pee.png'
@@ -133,6 +157,17 @@ function makeNonReactive (obj) {
  * @namespace MapPane
  *
  * @memberof module:components
+ *
+ * @vue-prop {number} [resize-trigger=0]
+ *
+ *   Change to this property triggers the process necessary for this component
+ *   after it is resized.
+ *   The value itself does not matter.
+ *
+ *   **NOTE**: If a component individually reacts to a resize event from
+ *   `window`, its parent component may not have been resized yet.
+ *   An incorrect size will be calculated in that case.
+ *   This property is introduced to address this problem.
  */
 export default {
   name: 'MapPane',
@@ -141,8 +176,16 @@ export default {
   ],
   components: {
     BusinessRecordInput,
+    BusinessRecordListFrame,
     BusinessStatistics,
-    MapController
+    MapController,
+    RecordDeletionDialog
+  },
+  props: {
+    resizeTrigger: {
+      type: Number,
+      default: 0
+    }
   },
   data () {
     return {
@@ -150,11 +193,13 @@ export default {
       isTrackingLocation: false,
       selectedBusinessRecords: [],
       selectedBusinessRecordsReady: true,
+      showsBusinessRecordList: false,
       // Mapbox objects should not become reactive.
       getNonReactive: makeNonReactive({
         locationTracker: null,
         map: null,
         marker: null,
+        recordMarker: null,
         statisticsPopup: null
       }),
       debugMode: debugMode,
@@ -244,6 +289,14 @@ export default {
     }
   },
   watch: {
+    resizeTrigger () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('MapPane', 'resizing was triggered')
+      }
+      if (this.debugMode) {
+        this.resizeDebugPane()
+      }
+    },
     mappedBusinessRecords (newRecords) {
       this.promiseMapInitialized()
         .then(() => {
@@ -274,9 +327,6 @@ export default {
     // initializes the debug pane
     if (this.debugMode) {
       this.resizeDebugPane()
-      this.registerEventListener(window, 'resize', () => {
-        this.resizeDebugPane()
-      })
     }
   },
   // makes sure that location tracking is stopped.
@@ -286,7 +336,8 @@ export default {
   },
   methods: {
     ...mapActions('user', [
-      'appendBusinessRecord'
+      'appendBusinessRecord',
+      'deleteBusinessRecord'
     ]),
     initializeMap ({ coords }) {
       const {
@@ -311,6 +362,8 @@ export default {
         ],
         zoom
       })
+      const nonReactive = this.getNonReactive()
+      nonReactive.map = map
       if (this.debugMode) {
         map.showCollisionBoxes = true
       }
@@ -418,22 +471,35 @@ export default {
             console.error('failed to load images', error)
           })
       })
-      const marker = new mapboxgl.Marker()
+      this.initializeLocationMarker({
+        longitude,
+        latitude
+      })
+      this.initializeRecordMarker()
+      this.initializeBusinessStatisticsPopup()
+    },
+    initializeLocationMarker ({ longitude, latitude }) {
+      const nonReactive = this.getNonReactive()
+      const marker = new mapboxgl.Marker({
+        color: '#37C49F'
+      })
+      nonReactive.marker = marker
       marker.setLngLat([
         longitude,
         latitude
       ])
-      marker.addTo(map)
+      marker.addTo(nonReactive.map)
       const inputPopup = new mapboxgl.Popup()
       inputPopup.setDOMContent(this.$refs['business-record-input-popup'])
       marker.setPopup(inputPopup)
       marker.togglePopup() // should open the popup
-      // saves Mapbox related instances in the non-reactive object
+    },
+    initializeRecordMarker () {
       const nonReactive = this.getNonReactive()
-      nonReactive.map = map
-      nonReactive.marker = marker
-      // initializes a business statistics popup
-      this.initializeBusinessStatisticsPopup()
+      const marker = new mapboxgl.Marker({
+        color: '#375DC4'
+      })
+      nonReactive.recordMarker = marker
     },
     initializeBusinessStatisticsPopup () {
       const popup = new mapboxgl.Popup({
@@ -465,6 +531,10 @@ export default {
       if (marker.getPopup().isOpen() !== isOpen) {
         marker.togglePopup()
       }
+    },
+    hideRecordMarker () {
+      const { recordMarker } = this.getNonReactive()
+      recordMarker.remove()
     },
     showBusinessStatisticsPopup (position) {
       const {
@@ -578,16 +648,16 @@ export default {
         map,
         marker
       } = this.getNonReactive()
-      const {
-        lng,
-        lat
-      } = marker.getLngLat()
+      this.centerLocation(marker.getLngLat())
+      map.once('moveend', () => {
+        this.setPopupOpen(true)
+      })
+    },
+    centerLocation ({ lng, lat }) {
+      const { map } = this.getNonReactive()
       map.flyTo({
         center: [lng, lat],
         curve: 0
-      })
-      map.once('moveend', () => {
-        this.setPopupOpen(true)
       })
     },
     onAddingBusinessRecord (type) {
@@ -630,6 +700,67 @@ export default {
         message: `<span style="font-weight:bold;">Clean up after ${getObjectiveFormOfDog(this.currentDog)}.</span>`
       })
     },
+    onListingBusinessRecords () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('MapPane', 'listing-business-records')
+      }
+      this.showsBusinessRecordList = true
+    },
+    onBusinessRecordSelected ({ businessRecord }) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('MapPane', 'business-record-selected', businessRecord)
+      }
+      // centers the business record
+      const {
+        longitude,
+        latitude
+      } = businessRecord.location
+      this.centerLocation({
+        lng: longitude,
+        lat: latitude
+      })
+      // shows the record marker
+      const {
+        map,
+        recordMarker
+      } = this.getNonReactive()
+      recordMarker
+        .setLngLat([
+          longitude,
+          latitude
+        ])
+        .addTo(map)
+    },
+    onDeletingBusinessRecord ({ businessRecord }) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('MapPane', 'deleting-business-record', businessRecord)
+      }
+      this.$refs['record-deletion-dialog'].confirm(businessRecord)
+        .then(isConfirmed => {
+          if (isConfirmed) {
+            this.deleteBusinessRecord(businessRecord)
+              .then(() => {
+                // removes the record if it is in `selectedBusinessRecords`
+                const { recordId } = businessRecord
+                const index = this.selectedBusinessRecords
+                  .findIndex(r => r.recordId === recordId)
+                if (index !== -1) {
+                  this.selectedBusinessRecords.splice(index, 1)
+                }
+
+                this.hideRecordMarker()
+              })
+              .catch(err => console.error(err))
+          }
+        })
+    },
+    onBusinessRecordListFrameClosing () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('MapPane', 'closing-frame')
+      }
+      this.showsBusinessRecordList = false
+      this.hideRecordMarker()
+    },
     // DEBUG
     resizeDebugPane () {
       const mapContainer = this.$refs['mapbox-container']
@@ -653,6 +784,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "~bulma/sass/utilities/initial-variables.sass";
+
 .map-pane {
   position: relative;
   width: 100%;
@@ -677,17 +810,38 @@ export default {
   .map-overlay {
     position: absolute;
 
+    &.map-overlay-top-left {
+      top: 0;
+      left: 0;
+    }
+
     &.map-overlay-bottom-right {
       bottom: 0;
       right: 0;
-
-      .map-overlay-contents {
-        padding-bottom: 3.0em;
-      }
     }
 
     .map-overlay-contents {
       padding: 0.75em;
+      padding-bottom: 3.0em;
+    }
+  }
+
+  .business-record-list-container {
+    width: 20rem;
+    min-width: 20rem;
+    max-width: 20rem;
+    height: 100%;
+
+    .map-overlay-contents {
+      width: 100%;
+      height: 100%;
+    }
+  }
+  @media screen and (max-width: $tablet) {
+    .business-record-list-container {
+      width: 100%;
+      min-width: 100%;
+      max-width: 100%;
     }
   }
 }
