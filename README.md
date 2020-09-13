@@ -16,7 +16,7 @@ Please refer to [scenarios.md](scenarios.md).
 
 Please refer to [database.md](database.md).
 
-## Account management
+## Account management (TBD)
 
 ### Offline account
 
@@ -27,6 +27,8 @@ Pros
 
 Cons
 - Data may be lost when the browser cache is deleted.
+    - **Safari erases IndexedDB if there has been no access to the server for 7 days.**
+      https://www.theregister.com/2020/03/26/apple_relax_were_not_totally/
 - Data cannot be transferred to another device.
 
 ### Online device account
@@ -41,6 +43,8 @@ Pros
 
 Cons
 - Data may be lost when the browser cache is deleted.
+    - **Safari erases IndexedDB if there has been no access to the server for 7 days.**
+      https://www.theregister.com/2020/03/26/apple_relax_were_not_totally/
 
 ### Online personal account
 
