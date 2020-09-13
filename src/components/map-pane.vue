@@ -192,6 +192,7 @@ export default {
         locationTracker: null,
         map: null,
         marker: null,
+        recordMarker: null,
         statisticsPopup: null
       }),
       debugMode: debugMode,
@@ -354,6 +355,8 @@ export default {
         ],
         zoom
       })
+      const nonReactive = this.getNonReactive()
+      nonReactive.map = map
       if (this.debugMode) {
         map.showCollisionBoxes = true
       }
@@ -461,24 +464,35 @@ export default {
             console.error('failed to load images', error)
           })
       })
+      this.initializeLocationMarker({
+        longitude,
+        latitude
+      })
+      this.initializeRecordMarker()
+      this.initializeBusinessStatisticsPopup()
+    },
+    initializeLocationMarker ({ longitude, latitude }) {
+      const nonReactive = this.getNonReactive()
       const marker = new mapboxgl.Marker({
         color: '#37C49F'
       })
+      nonReactive.marker = marker
       marker.setLngLat([
         longitude,
         latitude
       ])
-      marker.addTo(map)
+      marker.addTo(nonReactive.map)
       const inputPopup = new mapboxgl.Popup()
       inputPopup.setDOMContent(this.$refs['business-record-input-popup'])
       marker.setPopup(inputPopup)
       marker.togglePopup() // should open the popup
-      // saves Mapbox related instances in the non-reactive object
+    },
+    initializeRecordMarker () {
       const nonReactive = this.getNonReactive()
-      nonReactive.map = map
-      nonReactive.marker = marker
-      // initializes a business statistics popup
-      this.initializeBusinessStatisticsPopup()
+      const marker = new mapboxgl.Marker({
+        color: '#375DC4'
+      })
+      nonReactive.recordMarker = marker
     },
     initializeBusinessStatisticsPopup () {
       const popup = new mapboxgl.Popup({
@@ -510,6 +524,10 @@ export default {
       if (marker.getPopup().isOpen() !== isOpen) {
         marker.togglePopup()
       }
+    },
+    hideRecordMarker () {
+      const { recordMarker } = this.getNonReactive()
+      recordMarker.remove()
     },
     showBusinessStatisticsPopup (position) {
       const {
@@ -694,6 +712,17 @@ export default {
         lng: longitude,
         lat: latitude
       })
+      // shows the record marker
+      const {
+        map,
+        recordMarker
+      } = this.getNonReactive()
+      recordMarker
+        .setLngLat([
+          longitude,
+          latitude
+        ])
+        .addTo(map)
     },
     onDeletingBusinessRecord ({ businessRecord }) {
       if (process.env.NODE_ENV !== 'production') {
@@ -711,6 +740,8 @@ export default {
               if (index !== -1) {
                 this.selectedBusinessRecords.splice(index, 1)
               }
+
+              this.hideRecordMarker()
             })
             .catch(err => console.error(err))
         }
@@ -721,6 +752,7 @@ export default {
         console.log('MapPane', 'closing-frame')
       }
       this.showsBusinessRecordList = false
+      this.hideRecordMarker()
     },
     // DEBUG
     resizeDebugPane () {
