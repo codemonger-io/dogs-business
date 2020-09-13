@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="navbar dogs-business-navbar"
+    class="navbar is-dogs-theme dogs-business-navbar"
     role="navigation"
     aria-label="main navigation"
   >

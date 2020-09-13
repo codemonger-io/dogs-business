@@ -1,0 +1,20 @@
+@import "~bulma/sass/utilities/initial-variables";
+@import "~bulma/sass/utilities/functions";
+
+/* theme color. */
+$dogs-theme: #37C49F;
+$dogs-theme-invert: rgba(#000000, 0.7);
+$dogs-theme-light: #FFFFFF;
+$dogs-theme-dark: #000000;
+
+/* highlight color. */
+$dogs-highlight: #375DC4;
+$dogs-highlight-invert: white;
+$dogs-highlight-light: #FFFFFF;
+$dogs-highlight-dark: #000000;
+
+/* adds custom colors. */
+$custom-colors: (
+  "dogs-theme": ($dogs-theme, $dogs-theme-invert, $dogs-theme-light, $dogs-theme-dark),
+  "dogs-highlight": ($dogs-highlight, $dogs-highlight-invert, $dogs-highlight-light, $dogs-highlight-dark)
+);

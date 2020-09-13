@@ -123,6 +123,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "@scss/bulma-colors";
+
 .business-record-list {
   .business-record-list-item {
     padding: 0.5em 0.5em;
@@ -133,7 +135,8 @@ export default {
     }
 
     &.is-selected {
-      background-color: #83CCFC;
+      background-color: $dogs-highlight;
+      color: $dogs-highlight-invert;
     }
 
     a {
