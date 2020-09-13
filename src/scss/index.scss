@@ -31,6 +31,14 @@ $modal-button-width: 6em;
   }
 }
 
+/* modal footer that pulls items rightward. */
+.modal-card-foot {
+  &.modal-card-foot-pulled-right {
+    justify-content: flex-end;
+    justify-items: flex-end;
+  }
+}
+
 /* capitalizes the first letter. */
 .capitalized-sentence:first-letter {
   text-transform: capitalize;

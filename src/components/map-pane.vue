@@ -73,6 +73,10 @@
         />
       </div>
     </div>
+    <!-- dialog that confirms record deletion -->
+    <record-deletion-dialog
+      ref="record-deletion-dialog"
+    />
   </div>
 </template>
 
@@ -100,6 +104,7 @@ import BusinessRecordInput from './business-record-input'
 import BusinessRecordListFrame from './business-record-list-frame'
 import BusinessStatistics from './business-statistics'
 import MapController from './map-controller'
+import RecordDeletionDialog from './record-deletion-dialog'
 import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-listener-on-destroy'
 
 import peePngPath from '@assets/images/pee.png'
@@ -173,7 +178,8 @@ export default {
     BusinessRecordInput,
     BusinessRecordListFrame,
     BusinessStatistics,
-    MapController
+    MapController,
+    RecordDeletionDialog
   },
   props: {
     resizeTrigger: {
@@ -729,24 +735,24 @@ export default {
       if (process.env.NODE_ENV !== 'production') {
         console.log('MapPane', 'deleting-business-record', businessRecord)
       }
-      this.$buefy.dialog.confirm({
-        message: 'Are you sure to delete this record?',
-        onConfirm: () => {
-          this.deleteBusinessRecord(businessRecord)
-            .then(() => {
-              // removes the record if it is in `selectedBusinessRecords`
-              const { recordId } = businessRecord
-              const index = this.selectedBusinessRecords
-                .findIndex(r => r.recordId === recordId)
-              if (index !== -1) {
-                this.selectedBusinessRecords.splice(index, 1)
-              }
+      this.$refs['record-deletion-dialog'].confirm(businessRecord)
+        .then(isConfirmed => {
+          if (isConfirmed) {
+            this.deleteBusinessRecord(businessRecord)
+              .then(() => {
+                // removes the record if it is in `selectedBusinessRecords`
+                const { recordId } = businessRecord
+                const index = this.selectedBusinessRecords
+                  .findIndex(r => r.recordId === recordId)
+                if (index !== -1) {
+                  this.selectedBusinessRecords.splice(index, 1)
+                }
 
-              this.hideRecordMarker()
-            })
-            .catch(err => console.error(err))
-        }
-      })
+                this.hideRecordMarker()
+              })
+              .catch(err => console.error(err))
+          }
+        })
     },
     onBusinessRecordListFrameClosing () {
       if (process.env.NODE_ENV !== 'production') {

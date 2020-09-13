@@ -75,16 +75,16 @@
       </section>
       <footer class="modal-card-foot modal-card-foot-pulled-right">
         <button
-          class="button modal-button is-primary"
-          @click="onRegisterClicked"
-        >
-          Register
-        </button>
-        <button
           class="button modal-button"
           @click="onOmitClicked"
         >
           Omit
+        </button>
+        <button
+          class="button modal-button is-primary"
+          @click="onRegisterClicked"
+        >
+          Register
         </button>
       </footer>
     </div>
@@ -185,11 +185,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.modal-card-foot-pulled-right {
-  justify-content: flex-end;
-  justify-items: flex-end;
-}
-
 .hint-message {
   margin-top: 2em;
 }
