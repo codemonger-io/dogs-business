@@ -22,6 +22,10 @@
         @business-record-selected="$emit('business-record-selected', $event)"
         @deleting-business-record="$emit('deleting-business-record', $event)"
       />
+      <b-loading
+        :active="!businessRecordsReady"
+        :is-full-page="false"
+      />
     </div>
   </article>
 </template>
@@ -46,6 +50,10 @@ import {
  * @vue-prop {Array<Object>} business-records
  *
  *   Business records to be listed.
+ *
+ * @vue-prop {Boolean} business-records-ready
+ *
+ *   Whether the business records are ready.
  *
  * @vue-prop {Number} [resize-trigger=0]
  *
@@ -84,6 +92,10 @@ export default {
   props: {
     businessRecords: {
       type: Array,
+      required: true
+    },
+    businessRecordsReady: {
+      type: Boolean,
       required: true
     },
     resizeTrigger: {
@@ -149,6 +161,7 @@ export default {
   height: 100%;
 
   .business-record-list-frame-body {
+    position: relative; /* for loading spinner */
     padding: 0 0;
     overflow-x: hidden;
     overflow-y: auto;

@@ -65,6 +65,7 @@
         <business-record-list-frame
           ref="business-record-list-frame"
           :business-records="selectedBusinessRecords"
+          :business-records-ready="selectedBusinessRecordsReady"
           :resize-trigger="resizeTrigger"
           @business-record-selected="onBusinessRecordSelected"
           @deleting-business-record="onDeletingBusinessRecord"
