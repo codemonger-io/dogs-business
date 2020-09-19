@@ -173,18 +173,12 @@ export class Database {
    *
    * @memberof module:db.Database
    *
-   * @param {object} newDog
+   * @param {module:db/types/dog.Dog} newDog
    *
    *   Information of the dog to be put.
-   *   Must have the following fields,
-   *   - `name`: {`string`} name of the dog.
-   *   - `sex`: {`string`} sex of the dog. 'female', 'male' or 'n/a'.
-   *   - `dateOfBirth`: {`string`}
-   *     Date of birth of the dog.
-   *     Format is `YYYY-MM-DD`.
-   *     May be `undefined` if no date of birth is given.
+   *   The `dogId` field is ignored.
    *
-   * @return {Promise<object>}
+   * @return {Promise<Dog>}
    *
    *   Resolves to a dog when a dog is put to the database.
    *   A result has the following field in addition to those of `newDog`,
@@ -193,6 +187,14 @@ export class Database {
   async putDog (newDog) {
     if (process.env.NODE_ENV !== 'production') {
       console.log('putting dog to the database', newDog)
+    }
+    // removes dogId if `newDog` has it
+    if ('dogId' in newDog) {
+      if (newDog.dogId !== undefined) {
+        console.warn('putDog', 'removing unnecessary dogId', newDog)
+      }
+      newDog = { ...newDog } // to avoid a side effect
+      delete newDog.dogId
     }
     return this.#promisedDb
       .then(db => {
@@ -217,6 +219,67 @@ export class Database {
           request.onerror = event => {
             console.error('putDog', 'error', event)
             reject(new Error('failed to put a new dog to the database'))
+          }
+        })
+      })
+  }
+
+  /**
+   * Updates a given dog in the database.
+   *
+   * @function updateDog
+   *
+   * @instance
+   *
+   * @memberof module:db.Database
+   *
+   * @param {module:db/types/dog.Dog} dog
+   *
+   *   Dog to be updated.
+   *   The `dogId` field must be specified.
+   *
+   * @return {Promise<{@linkcode module:db/types/dog.Dog}>}
+   *
+   *   Resolves to `dog` when update of the dog in the database finishes.
+   *   Rejected with `RangeError` if one of the following conditions is met,
+   *   - `dog.dogId` is not in the database
+   *   - `dog.dogId` is `undefined`
+   */
+  async updateDog (dog) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('updating dog in the database', dog)
+    }
+    return this.#promisedDb
+      .then(db => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('starting transaction: update dog')
+        }
+        return new Promise((resolve, reject) => {
+          if (dog.dogId === undefined) {
+            reject(new RangeError('dogId must be specified'))
+            return
+          }
+          const transaction = db.transaction(DOG_STORE_NAME, 'readwrite')
+          const store = transaction.objectStore(DOG_STORE_NAME)
+          // first makes sure that the dog exists in the database,
+          // and then updates the dog
+          const getRequest = store.get(dog.dogId)
+          getRequest.onsuccess = () => {
+            const putRequest = store.put(dog)
+            putRequest.onsuccess = event => {
+              if (process.env.NODE_ENV !== 'production') {
+                console.log('updateDog', 'success', event)
+              }
+              resolve(dog)
+            }
+            putRequest.onerror = event => {
+              console.error('updateDog', 'error', event)
+              reject(new Error('failed to update dog in the database'))
+            }
+          }
+          getRequest.onerror = event => {
+            console.error('updateDog', 'error', event)
+            reject(new RangeError(`no such dog exists: dogId=${dog.dogId}`))
           }
         })
       })

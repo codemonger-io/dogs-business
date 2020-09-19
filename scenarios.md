@@ -141,3 +141,17 @@
 1. [Listing business records at a point](#listing-business-records-at-a-point)
 2. The `user` clicks the `close button` of the `business record list`.
 3. The `app` closes the `business record list`.
+
+## Editing dog profile
+
+1. [Starting an app](#starting-an-app)
+2. The `user` selects the `edit dog profile` menu item.
+3. The `app` shows a `dog profile dialog` that has fields for the following `dog profile`,
+    - Dog's name
+    - Dog's sex
+    - Dog's date of birth
+4. The `user` updates the `dog profile`.
+5. The `user` submits the `updated dog profile`.
+6. The `app` updates the `user information` of the `user account`.
+7. The `app` saves the `user account` in the `local database`.
+8. The `app` closes the `dog profile dialog`.

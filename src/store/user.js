@@ -4,6 +4,8 @@
  * @module store/user
  */
 
+import Vue from 'vue'
+
 /**
  * Vuex State for user information.
  *
@@ -216,6 +218,39 @@ export const mutations = {
     dogs.push(newDog)
   },
   /**
+   * Updates the information of a given dog.
+   *
+   * @function _updateDog
+   *
+   * @memberof module:store/user.mutations
+   *
+   * @param {object} state
+   *
+   *   Vuex State to be updated.
+   *   The field `dogs` is updated.
+   *
+   * @param {module:db/types/dog.Dog} dog
+   *
+   *   Information of a dog to be updated.
+   *   The `dogId` field must be specified.
+   *
+   * @throws {RangeError}
+   *
+   *   If `dog.dogId` is not in the `dogs` field in `state`.
+   */
+  _updateDog ({ dogs }, dog) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('updating a dog', dogs, dog)
+    }
+    const index = dogs.findIndex(d => d.dogId === dog.dogId)
+    if (index === -1) {
+      throw new RangeError(`no such dog`, dog)
+    }
+    // directly updating an array element disables reactivity.
+    // https://vuejs.org/v2/guide/reactivity.html#For-Arrays
+    Vue.set(dogs, index, dog)
+  },
+  /**
    * Replaces business records.
    *
    * @function _replaceBusinessRecords
@@ -403,6 +438,38 @@ function createActions (db) {
       return db.putDog(newDog)
         .then(newDog => {
           commit('_appendDog', newDog)
+        })
+    },
+    /**
+     * Updates a given dog in the database.
+     *
+     * @function updateDog
+     *
+     * @memberof module:store/user.actions
+     *
+     * @param {object} context
+     *
+     *   Vuex context.
+     *
+     * @param {module:db/types/dog.Dog} dog
+     *
+     *   Dog to be updated.
+     *   `dogId` must be specified.
+     *
+     * @return {Promise}
+     *
+     *   Resolves when updating the dog in the database finishes.
+     *   Rejected with `RangeError` if one of the following conditions is met,
+     *   - `dog.dogId` is not in the database
+     *   - `dog.dogId` is `undefined`
+     */
+    updateDog ({ commit }, dog) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('updating a dog', dog)
+      }
+      return db.updateDog(dog)
+        .then(dog => {
+          commit('_updateDog', dog)
         })
     },
     /**

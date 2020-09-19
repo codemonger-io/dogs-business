@@ -1,6 +1,8 @@
 <template>
   <div ref="app">
-    <navigation-bar />
+    <navigation-bar
+      @editing-dog-profile="editDogProfile"
+    />
     <div
       ref="map-container"
       class="map-container"
@@ -10,10 +12,10 @@
         :resize-trigger="resizeTrigger"
       />
     </div>
-    <dog-registration-modal
-      ref="dog-registration-modal"
-      @registering-dog="onRegisteringDog"
-      @registration-omitted="onRegistrationOmitted"
+    <dog-profile-modal
+      ref="dog-profile-modal"
+      @saving-dog-profile="onSavingDogProfile"
+      @cancelling-dog-profile="onCancellingDogProfile"
     />
   </div>
 </template>
@@ -25,7 +27,7 @@ import {
   mapState
 } from 'vuex'
 
-import DogRegistrationModal from '@components/dog-registration-modal'
+import DogProfileModal from '@components/dog-profile-modal'
 import MapPane from '@components/map-pane'
 import NavigationBar from '@components/navigation-bar'
 import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-listener-on-destroy'
@@ -43,7 +45,7 @@ export default {
     ReleaseEventListenerOnDestroy
   ],
   components: {
-    DogRegistrationModal,
+    DogProfileModal,
     MapPane,
     NavigationBar
   },
@@ -54,11 +56,18 @@ export default {
   },
   computed: {
     ...mapState('user', [
+      'dogs',
       'isLoaded'
     ]),
     ...mapGetters('user', [
       'dogCount'
-    ])
+    ]),
+    // current dog.
+    // `undefined` if no dog is registered.
+    currentDog () {
+      // TODO: support multiple dogs
+      return this.dogs[0]
+    }
   },
   mounted () {
     if (process.env.NODE_ENV !== 'production') {
@@ -71,17 +80,20 @@ export default {
     this.registerEventListener(window, 'resize', () => {
       this.resizeMapContainer()
     })
-    // shows a dog registration modal if no dog is registered
+    // shows a dog profile modal if no dog is registered
     this.promiseLoaded()
       .then(() => {
         if (this.dogCount === 0) {
-          this.showDogRegistrationModal()
+          this.showDogProfileModal({
+            isNewDog: true
+          })
         }
       })
   },
   methods: {
     ...mapActions('user', [
-      'appendDog'
+      'appendDog',
+      'updateDog'
     ]),
     promiseLoaded () {
       if (process.env.NODE_ENV !== 'production') {
@@ -116,25 +128,40 @@ export default {
       // resizes subsequent components
       ++this.resizeTrigger
     },
-    showDogRegistrationModal () {
-      this.$refs['dog-registration-modal'].show()
+    showDogProfileModal (settings) {
+      this.$refs['dog-profile-modal'].show(settings)
     },
-    hideDogRegistrationModal () {
-      this.$refs['dog-registration-modal'].hide()
+    hideDogProfileModal () {
+      this.$refs['dog-profile-modal'].hide()
     },
-    onRegisteringDog (dog) {
+    onSavingDogProfile ({ isNewDog, dog }) {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('registering dog', dog)
+        console.log('saving dog profile', `isNewDog=${isNewDog}`, dog)
       }
-      this.appendDog(dog)
-        .catch(err => console.log(err))
-        .finally(() => this.hideDogRegistrationModal())
+      let promiseUpdated
+      if (isNewDog) {
+        promiseUpdated = this.appendDog(dog)
+      } else {
+        promiseUpdated = this.updateDog(dog)
+      }
+      promiseUpdated
+        .catch(err => console.error(err))
+        .finally(() => this.hideDogProfileModal())
     },
-    onRegistrationOmitted () {
+    onCancellingDogProfile () {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('registration omitted')
+        console.log('cancelling dog profile')
       }
-      this.hideDogRegistrationModal()
+      this.hideDogProfileModal()
+    },
+    editDogProfile () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('App', 'editing dog profile')
+      }
+      this.showDogProfileModal({
+        isNewDog: false,
+        dog: this.currentDog
+      })
     }
   }
 }
