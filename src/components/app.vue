@@ -1,6 +1,8 @@
 <template>
   <div ref="app">
-    <navigation-bar />
+    <navigation-bar
+      @editing-dog-profile="editDogProfile"
+    />
     <div
       ref="map-container"
       class="map-container"
@@ -54,11 +56,18 @@ export default {
   },
   computed: {
     ...mapState('user', [
+      'dogs',
       'isLoaded'
     ]),
     ...mapGetters('user', [
       'dogCount'
-    ])
+    ]),
+    // current dog.
+    // `undefined` if no dog is registered.
+    currentDog () {
+      // TODO: support multiple dogs
+      return this.dogs[0]
+    }
   },
   mounted () {
     if (process.env.NODE_ENV !== 'production') {
@@ -75,13 +84,16 @@ export default {
     this.promiseLoaded()
       .then(() => {
         if (this.dogCount === 0) {
-          this.showDogRegistrationModal()
+          this.showDogRegistrationModal({
+            isNewDog: true
+          })
         }
       })
   },
   methods: {
     ...mapActions('user', [
-      'appendDog'
+      'appendDog',
+      'updateDog'
     ]),
     promiseLoaded () {
       if (process.env.NODE_ENV !== 'production') {
@@ -116,18 +128,24 @@ export default {
       // resizes subsequent components
       ++this.resizeTrigger
     },
-    showDogRegistrationModal () {
-      this.$refs['dog-registration-modal'].show()
+    showDogRegistrationModal (settings) {
+      this.$refs['dog-registration-modal'].show(settings)
     },
     hideDogRegistrationModal () {
       this.$refs['dog-registration-modal'].hide()
     },
-    onRegisteringDog (dog) {
+    onRegisteringDog ({ isNewDog, dog }) {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('registering dog', dog)
+        console.log('registering dog', `isNewDog=${isNewDog}`, dog)
       }
-      this.appendDog(dog)
-        .catch(err => console.log(err))
+      let promiseUpdated
+      if (isNewDog) {
+        promiseUpdated = this.appendDog(dog)
+      } else {
+        promiseUpdated = this.updateDog(dog)
+      }
+      promiseUpdated
+        .catch(err => console.error(err))
         .finally(() => this.hideDogRegistrationModal())
     },
     onRegistrationOmitted () {
@@ -135,6 +153,15 @@ export default {
         console.log('registration omitted')
       }
       this.hideDogRegistrationModal()
+    },
+    editDogProfile () {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('App', 'editing dog profile')
+      }
+      this.showDogRegistrationModal({
+        isNewDog: false,
+        dog: this.currentDog
+      })
     }
   }
 }

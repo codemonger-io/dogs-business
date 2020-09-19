@@ -56,6 +56,10 @@ import { makeRandomId } from '@utils/random-id'
  * @namespace NavigationBar
  *
  * @memberof module:components
+ *
+ * @vue-event {nothing} editing-dog-profile
+ *
+ *   Notified when the `edit dog profile` menu is selected.
  */
 export default {
   name: 'NavigationBar',
@@ -95,6 +99,7 @@ export default {
       if (process.env.NODE_ENV !== 'production') {
         console.log('NavigationBar', 'edit dog profile clicked')
       }
+      this.$emit('editing-dog-profile')
     }
   }
 }
