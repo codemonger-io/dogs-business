@@ -76,13 +76,13 @@
       <footer class="modal-card-foot modal-card-foot-pulled-right">
         <button
           class="button modal-button"
-          @click="onOmitClicked"
+          @click="onCancelClicked"
         >
           {{ cancelButtonTitle }}
         </button>
         <button
           class="button modal-button is-primary"
-          @click="onRegisterClicked"
+          @click="onSaveClicked"
         >
           {{ saveButtonTitle }}
         </button>
@@ -95,13 +95,13 @@
 import { formatDate } from '@db/types/date'
 
 /**
- * Modal to register a dog.
+ * Modal to register or update a dog.
  *
- * @namespace DogRegistrationModal
+ * @namespace DogProfileModal
  *
  * @memberof module:components
  *
- * @vue-event {object} registering-dog
+ * @vue-event {object} saving-dog-profile
  *
  *   If the user is going to save a dog profile.
  *   An argument has the following fields,
@@ -110,13 +110,13 @@ import { formatDate } from '@db/types/date'
  *     New dog profile to be saved.
  *     `dogId` is `undefined` if `isNewDog` is `true`.
  *
- * @vue-event {nothing} registration-omitted
+ * @vue-event {nothing} cancelling-dog-profile
  *
- *   If the user omits registration of a dog.
+ *   If the user cancels editing a dog profile.
  */
 export default {
   // TODO: rename to DogProfileModal
-  name: 'DogRegistrationModal',
+  name: 'DogProfileModal',
   data () {
     return {
       isActive: false,
@@ -144,11 +144,11 @@ export default {
   },
   methods: {
     /**
-     * Shows this dog registration modal.
+     * Shows this dog profile modal.
      *
      * @function show
      *
-     * @memberof module:components.DogRegistrationModal
+     * @memberof module:components.DogProfileModal
      *
      * @param {object} settings
      *
@@ -161,7 +161,7 @@ export default {
      */
     show (settings) {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('showing dog registration modal', settings)
+        console.log('showing dog profile modal', settings)
       }
       this.isNewDog = settings.isNewDog
       if (this.isNewDog) {
@@ -189,19 +189,19 @@ export default {
       this.isActive = true
     },
     /**
-     * Hides this dog registration modal.
+     * Hides this dog profile modal.
      *
      * @function hide
      *
-     * @memberof module:components.DogRegistrationModal
+     * @memberof module:components.DogProfileModal
      */
     hide () {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('hiding dog registration modal')
+        console.log('hiding dog profile modal')
       }
       this.isActive = false
     },
-    onRegisterClicked () {
+    onSaveClicked () {
       const {
         dogId,
         name,
@@ -209,8 +209,7 @@ export default {
         omitsDateOfBirth,
         dateOfBirth
       } = this.dog
-      // TODO: rename event name
-      this.$emit('registering-dog', {
+      this.$emit('saving-dog-profile', {
         isNewDog: this.isNewDog,
         dog: {
           dogId,
@@ -220,8 +219,8 @@ export default {
         }
       })
     },
-    onOmitClicked () {
-      this.$emit('registration-omitted')
+    onCancelClicked () {
+      this.$emit('cancelling-dog-profile')
     }
   }
 }
