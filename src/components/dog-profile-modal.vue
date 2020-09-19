@@ -115,7 +115,6 @@ import { formatDate } from '@db/types/date'
  *   If the user cancels editing a dog profile.
  */
 export default {
-  // TODO: rename to DogProfileModal
   name: 'DogProfileModal',
   data () {
     return {
