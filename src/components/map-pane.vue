@@ -560,7 +560,6 @@ export default {
         console.log('registering location watcher')
       }
       const { locationTracker } = this.getNonReactive()
-      console.log(locationTracker)
       locationTracker.addEventListener('tracking-started', event => {
         if (process.env.NODE_ENV !== 'production') {
           console.log('MapPane', 'tracking-started', event)
