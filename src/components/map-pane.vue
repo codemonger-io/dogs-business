@@ -690,7 +690,7 @@ export default {
     },
     showCleanUpMessage () {
       this.$buefy.toast.open({
-        type: 'is-info',
+        type: 'is-dogs-highlight',
         position: 'is-top',
         duration: 2000, // 2s
         // TODO: how to directly specify an element for a toast message?
