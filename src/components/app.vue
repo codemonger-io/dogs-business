@@ -27,7 +27,7 @@ import {
   mapState
 } from 'vuex'
 
-import DogRegistrationModal from '@components/dog-registration-modal'
+import DogRegistrationModal from '@components/dog-profile-modal'
 import MapPane from '@components/map-pane'
 import NavigationBar from '@components/navigation-bar'
 import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-listener-on-destroy'
