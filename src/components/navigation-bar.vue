@@ -100,6 +100,7 @@ export default {
         console.log('NavigationBar', 'edit dog profile clicked')
       }
       this.$emit('editing-dog-profile')
+      this.isMenuActive = false
     }
   }
 }
