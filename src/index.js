@@ -8,7 +8,7 @@ import Buefy from 'buefy'
 Vue.use(Buefy)
 
 import '@mdi/font/css/materialdesignicons.min.css'
-import 'mapbox-gl/dist/mapbox-gl.css'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import '@scss'
 
 import {

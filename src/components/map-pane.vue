@@ -84,7 +84,7 @@
 import {
   select as d3Select
 } from 'd3-selection'
-import mapboxgl from 'mapbox-gl'
+import mapboxgl from 'maplibre-gl'
 import {
   mapActions,
   mapGetters,

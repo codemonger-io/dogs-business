@@ -1,4 +1,4 @@
-import EXTENT from 'mapbox-gl/src/data/extent'
+import EXTENT from 'maplibre-gl/src/data/extent'
 
 /**
  * Viewport padding included in a collision box.
