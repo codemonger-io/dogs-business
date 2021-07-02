@@ -4,14 +4,12 @@
  * @module store/user
  */
 
-import Vue from 'vue'
-
 /**
  * Vuex State for user information.
  *
  * @namespace state
  */
-export const state = {
+export const state = () => ({
   /**
    * Whether data is loaded.
    *
@@ -58,7 +56,7 @@ export const state = {
    * @memberof module:store/user.state
    */
   businessRecords: []
-}
+})
 
 /**
  * Finds a dog associated with a given ID.
@@ -246,9 +244,7 @@ export const mutations = {
     if (index === -1) {
       throw new RangeError(`no such dog`, dog)
     }
-    // directly updating an array element disables reactivity.
-    // https://vuejs.org/v2/guide/reactivity.html#For-Arrays
-    Vue.set(dogs, index, dog)
+    dogs[index] = dog // reactive on Vue 3
   },
   /**
    * Replaces business records.

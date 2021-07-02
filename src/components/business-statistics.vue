@@ -26,7 +26,7 @@
     <p>
       Out of <strong>{{businessRecords.length}}</strong> records
     </p>
-    </p>
+    <p>
       From <strong>{{startDateString}}</strong>
     </p>
     <p>

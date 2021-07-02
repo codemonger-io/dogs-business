@@ -2,10 +2,8 @@
  * Entry point.
  */
 
-import Vue from 'vue'
+import { createApp } from 'vue'
 import Buefy from 'buefy'
-
-Vue.use(Buefy)
 
 import '@mdi/font/css/materialdesignicons.min.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -27,7 +25,9 @@ store.dispatch('user/loadData')
     console.error('failed to load data', err)
   })
 
-new Vue({
-  render: h => h(App),
-  store
-}).$mount('#app')
+const app = createApp(App)
+
+app.use(Buefy)
+app.use(store)
+
+app.mount('#app')
