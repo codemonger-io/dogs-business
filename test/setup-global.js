@@ -14,3 +14,7 @@ window.crypto = {
     }
   }
 }
+
+// get "ReferenceError: SVGElement is not defined" otherwise
+// https://github.com/vuejs/vue-next/issues/3590
+global.SVGElement = window.SVGElement
