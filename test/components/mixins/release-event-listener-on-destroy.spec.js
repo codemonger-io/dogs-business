@@ -46,7 +46,7 @@ describe('ReleaseEventListenerOnDestroy', function () {
 
     describe('after destroying', function () {
       beforeEach(function () {
-        wrapper.destroy()
+        wrapper.unmount()
       })
 
       it('target.removeEventListener("resize", listener) should have been invoked', function () {
@@ -71,7 +71,7 @@ describe('ReleaseEventListenerOnDestroy', function () {
 
       describe('after destroying', function () {
         beforeEach(function () {
-          wrapper.destroy()
+          wrapper.unmount()
         })
 
         it('target.removeEventListener with ("resize", listener) and ("scroll", listener2) should have been invoked', function () {
@@ -114,7 +114,7 @@ describe('ReleaseEventListenerOnDestroy', function () {
 
     describe('after destroying', function () {
       beforeEach(function () {
-        wrapper.destroy()
+        wrapper.unmount()
       })
 
       it('target.removeEventListener("notification", listener) should have been invoked', function () {
@@ -151,7 +151,7 @@ describe('ReleaseEventListenerOnDestroy', function () {
 
     describe('after destroying', function () {
       beforeEach(function () {
-        wrapper.destroy()
+        wrapper.unmount()
       })
 
       it('customHandler(target, "notification", listener) should have been invoked', function () {

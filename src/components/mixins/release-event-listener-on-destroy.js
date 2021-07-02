@@ -24,13 +24,13 @@ export const ReleaseEventListenerOnDestroy = {
   /**
    * Releases registered event listeners.
    *
-   * @function beforeDestroy
+   * @function beforeUnmount
    *
    * @instance
    *
    * @memberof module:components/mixins.ReleaseEventListenerOnDestroy
    */
-  beforeDestroy () {
+  beforeUnmount () {
     this.eventListeners.forEach(entry => {
       const {
         target,
@@ -46,7 +46,7 @@ export const ReleaseEventListenerOnDestroy = {
      * Registers an event listener.
      *
      * An event listener registered by this function will be released on
-     * [beforeDestroy]{@linkcode module:components/mixins.ReleaseEventListenerOnDestroy#beforeDestroy}.
+     * [beforeUnmount]{@linkcode module:components/mixins.ReleaseEventListenerOnDestroy#beforeDestroy}.
      *
      * @function registerEventListener
      *
