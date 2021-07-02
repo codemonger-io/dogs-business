@@ -330,7 +330,7 @@ export default {
     }
   },
   // makes sure that location tracking is stopped.
-  beforeDestroy () {
+  beforeUnmount () {
     const { locationTracker } = this.getNonReactive()
     locationTracker.stopTracking()
   },
