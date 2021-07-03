@@ -6,10 +6,7 @@
  * @module store
  */
 
-import Vue from 'vue'
 import Vuex from 'vuex'
-
-Vue.use(Vuex)
 
 import createUserStore from './user'
 
@@ -30,13 +27,13 @@ import createUserStore from './user'
  */
 export function createStore (db) {
   const user = createUserStore(db)
-  return new Vuex.Store({
+  return Vuex.createStore({
     modules: {
       user: {
         ...user,
-        namespaced: true
-      }
-    }
+        namespaced: true,
+      },
+    },
   })
 }
 

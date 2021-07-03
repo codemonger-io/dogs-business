@@ -11,7 +11,7 @@
             <img
               class="image is-24x24"
               src="@assets/images/pee.png"
-            />
+            >
           </span>
         </button>
       </p>
@@ -24,7 +24,7 @@
             <img
               class="image is-24x24"
               src="@assets/images/poo.png"
-            />
+            >
           </span>
         </button>
       </p>
@@ -34,7 +34,7 @@
 
 <script>
 import {
-  getPossessiveFormOfDog
+  getPossessiveFormOfDog,
 } from '@db/types/dog'
 
 /**
@@ -57,13 +57,14 @@ export default {
   props: {
     dog: {
       type: Object,
-      required: true
-    }
+      required: true,
+    },
   },
+  emits: ['adding-business-record'],
   computed: {
     possessiveFormOfDog () {
       return getPossessiveFormOfDog(this.dog)
-    }
+    },
   },
   methods: {
     onBusinessTypeClicked (type) {
@@ -71,7 +72,7 @@ export default {
         console.log('BusinessRecordInput', 'businessTypeClicked', type)
       }
       this.$emit('adding-business-record', type)
-    }
-  }
+    },
+  },
 }
 </script>

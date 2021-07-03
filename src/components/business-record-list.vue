@@ -17,7 +17,7 @@
               <img
                 :src="iconPathOfType(record.type)"
                 :alt="record.type"
-              />
+              >
             </figure>
           </span>
           <span class="business-record-column business-record-column-date">
@@ -46,7 +46,7 @@ import pooPngPath from '@assets/images/poo.png'
 
 const ICON_PATH_OF_TYPES = {
   pee: peePngPath,
-  poo: pooPngPath
+  poo: pooPngPath,
 }
 
 /**
@@ -79,18 +79,19 @@ export default {
   props: {
     businessRecords: {
       type: Array,
-      required: true
-    }
+      required: true,
+    },
   },
+  emits: ['business-record-selected', 'deleting-business-record'],
   data () {
     return {
-      selectedRecord: null
+      selectedRecord: null,
     }
   },
   computed: {
     selectedRecordId () {
       return this.selectedRecord ? this.selectedRecord.recordId : undefined
-    }
+    },
   },
   methods: {
     iconPathOfType (type) {
@@ -98,7 +99,7 @@ export default {
     },
     businessRecordListItemClass ({ recordId }) {
       return {
-        'is-selected': recordId === this.selectedRecordId
+        'is-selected': recordId === this.selectedRecordId,
       }
     },
     onBusinessRecordClicked (record) {
@@ -107,7 +108,7 @@ export default {
       }
       this.selectedRecord = record
       this.$emit('business-record-selected', {
-        businessRecord: record
+        businessRecord: record,
       })
     },
     onDeleteBusinessRecordClicked (record) {
@@ -115,10 +116,10 @@ export default {
         console.log('BusinessRecordList', 'deleting business record', record)
       }
       this.$emit('deleting-business-record', {
-        businessRecord: record
+        businessRecord: record,
       })
-    }
-  }
+    },
+  },
 }
 </script>
 

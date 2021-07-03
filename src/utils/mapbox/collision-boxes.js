@@ -83,7 +83,7 @@ export function collectCollisionBoxesAndFeatures (map, sourceName) {
       const {
         collisionIndex,
         retainedQueryData,
-        transform
+        transform,
       } = placement
       const sourceCache = style.sourceCaches[sourceName]
       const { _tiles } = sourceCache
@@ -92,7 +92,7 @@ export function collectCollisionBoxesAndFeatures (map, sourceName) {
         const tile = _tiles[tileName]
         const {
           buckets,
-          collisionBoxArray
+          collisionBoxArray,
         } = tile
         if (!collisionBoxArray) {
           // sometimes waiting for placement.stale turning to false
@@ -117,7 +117,7 @@ export function collectCollisionBoxesAndFeatures (map, sourceName) {
             anchorPointY,
             featureIndex,
             bucketIndex,
-            sourceLayerIndex
+            sourceLayerIndex,
           } = collisionBox
           const projectedPoint = collisionIndex.projectAndGetPerspectiveRatio(
             posMat,
@@ -149,10 +149,10 @@ export function collectCollisionBoxesAndFeatures (map, sourceName) {
               x1: tlX,
               y1: tlY,
               x2: brX,
-              y2: brY
+              y2: brY,
             },
             featureIndex,
-            feature
+            feature,
           })
         }
         results.push(tileResults)

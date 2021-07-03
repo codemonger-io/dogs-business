@@ -7,8 +7,8 @@
     <!-- DEBUG -->
     <svg
       v-if="debugMode"
-      xmlns:svg="http://www.w3.org/2000/svg"
       ref="debug-pane"
+      xmlns:svg="http://www.w3.org/2000/svg"
       class="debug-pane"
       :class="debugPaneClass"
       :width="debugPane.width"
@@ -82,13 +82,13 @@
 
 <script>
 import {
-  select as d3Select
+  select as d3Select,
 } from 'd3-selection'
 import mapboxgl from 'maplibre-gl'
 import {
   mapActions,
   mapGetters,
-  mapState
+  mapState,
 } from 'vuex'
 
 import { formatDate } from '@db/types/date'
@@ -96,7 +96,7 @@ import { getObjectiveFormOfDog } from '@db/types/dog'
 import GeolocationTracker from '@utils/geolocation-tracker'
 import {
   boxesIntersect,
-  collectCollisionBoxesAndFeatures
+  collectCollisionBoxesAndFeatures,
 } from '@utils/mapbox/collision-boxes'
 import promiseLoadImage from '@utils/mapbox/promise-load-image'
 
@@ -171,21 +171,21 @@ function makeNonReactive (obj) {
  */
 export default {
   name: 'MapPane',
-  mixins: [
-    ReleaseEventListenerOnDestroy
-  ],
   components: {
     BusinessRecordInput,
     BusinessRecordListFrame,
     BusinessStatistics,
     MapController,
-    RecordDeletionDialog
+    RecordDeletionDialog,
   },
+  mixins: [
+    ReleaseEventListenerOnDestroy,
+  ],
   props: {
     resizeTrigger: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   data () {
     return {
@@ -200,23 +200,23 @@ export default {
         map: null,
         marker: null,
         recordMarker: null,
-        statisticsPopup: null
+        statisticsPopup: null,
       }),
       debugMode: debugMode,
       showsDebugPane: debugMode,
       debugPane: {
         width: 100,
-        height: 100
-      }
+        height: 100,
+      },
     }
   },
   computed: {
     ...mapState('user', [
       'businessRecords',
-      'dogs'
+      'dogs',
     ]),
     ...mapGetters('user', [
-      'dogOfId'
+      'dogOfId',
     ]),
     currentDog () {
       return (this.dogs.length > 0) ? this.dogs[0] : {}
@@ -230,7 +230,7 @@ export default {
     // sorts the business records by date in descending order
     // TODO: make it more efficient
     businessRecordsSortedByDate () {
-      return this.businessRecords.sort((r1, r2) => {
+      return [...this.businessRecords].sort((r1, r2) => {
         if (r1.date < r2.date) {
           return 1
         } else if (r1.date > r2.date) {
@@ -257,11 +257,11 @@ export default {
             dogId,
             location,
             recordId,
-            type
+            type,
           } = record
           const {
             longitude,
-            latitude
+            latitude,
           } = location
           return {
             type: 'Feature',
@@ -269,24 +269,24 @@ export default {
               recordId,
               dogId,
               type,
-              date
+              date,
             },
             geometry: {
               type: 'Point',
               coordinates: [
                 longitude,
-                latitude
-              ]
-            }
+                latitude,
+              ],
+            },
           }
-        })
+        }),
       }
     },
     debugPaneClass () {
       return {
-        'is-active': this.showsDebugPane
+        'is-active': this.showsDebugPane,
       }
-    }
+    },
   },
   watch: {
     resizeTrigger () {
@@ -304,7 +304,7 @@ export default {
           map.getSource('business-records')
             .setData(newRecords)
         })
-    }
+    },
   },
   mounted () {
     if (process.env.NODE_ENV !== 'production') {
@@ -330,20 +330,20 @@ export default {
     }
   },
   // makes sure that location tracking is stopped.
-  beforeDestroy () {
+  beforeUnmount () {
     const { locationTracker } = this.getNonReactive()
     locationTracker.stopTracking()
   },
   methods: {
     ...mapActions('user', [
       'appendBusinessRecord',
-      'deleteBusinessRecord'
+      'deleteBusinessRecord',
     ]),
     initializeMap ({ coords }) {
       const {
         latitude,
         longitude,
-        accuracy
+        accuracy,
       } = coords
       if (process.env.NODE_ENV !== 'production') {
         console.log('coords', latitude, longitude, accuracy)
@@ -358,9 +358,9 @@ export default {
         style: 'mapbox://styles/mapbox/streets-v11',
         center: [
           longitude,
-          latitude
+          latitude,
         ],
-        zoom
+        zoom,
       })
       const nonReactive = this.getNonReactive()
       nonReactive.map = map
@@ -371,12 +371,12 @@ export default {
         const imagesToLoad = [
           {
             name: 'pee',
-            path: peePngPath
+            path: peePngPath,
           },
           {
             name: 'poo',
-            path: pooPngPath
-          }
+            path: pooPngPath,
+          },
         ]
         Promise.all(imagesToLoad.map(info => promiseLoadImage(map, info.path)))
           .then(images => {
@@ -385,7 +385,7 @@ export default {
             })
             map.addSource('business-records', {
               type: 'geojson',
-              data: this.mappedBusinessRecords
+              data: this.mappedBusinessRecords,
             })
             map.addLayer({
               id: 'business-records',
@@ -393,8 +393,8 @@ export default {
               source: 'business-records',
               layout: {
                 'icon-image': ['get', 'type'],
-                'icon-size': 0.375
-              }
+                'icon-size': 0.375,
+              },
             })
             map.on('click', 'business-records', record => {
               if (process.env.NODE_ENV !== 'production') {
@@ -422,7 +422,7 @@ export default {
                   })
                   this.selectedBusinessRecords = groupedBoxes.map(box => {
                     const {
-                      recordId
+                      recordId,
                     } = box.feature.properties
                     return this.businessRecords
                       .find(r => r.recordId === recordId)
@@ -473,7 +473,7 @@ export default {
       })
       this.initializeLocationMarker({
         longitude,
-        latitude
+        latitude,
       })
       this.initializeRecordMarker()
       this.initializeBusinessStatisticsPopup()
@@ -481,12 +481,12 @@ export default {
     initializeLocationMarker ({ longitude, latitude }) {
       const nonReactive = this.getNonReactive()
       const marker = new mapboxgl.Marker({
-        color: '#37C49F'
+        color: '#37C49F',
       })
       nonReactive.marker = marker
       marker.setLngLat([
         longitude,
-        latitude
+        latitude,
       ])
       marker.addTo(nonReactive.map)
       const inputPopup = new mapboxgl.Popup()
@@ -497,13 +497,13 @@ export default {
     initializeRecordMarker () {
       const nonReactive = this.getNonReactive()
       const marker = new mapboxgl.Marker({
-        color: '#375DC4'
+        color: '#375DC4',
       })
       nonReactive.recordMarker = marker
     },
     initializeBusinessStatisticsPopup () {
       const popup = new mapboxgl.Popup({
-        closeOnMove: true
+        closeOnMove: true,
       })
       popup.setDOMContent(this.$refs['business-statistics-popup'])
       const nonReactive = this.getNonReactive()
@@ -539,7 +539,7 @@ export default {
     showBusinessStatisticsPopup (position) {
       const {
         map,
-        statisticsPopup
+        statisticsPopup,
       } = this.getNonReactive()
       statisticsPopup
         .setLngLat(position)
@@ -550,7 +550,7 @@ export default {
         enableHighAccuracy: true,
         timeout: 5000,
         maximumAge: 1000,
-        retryCount: 3
+        retryCount: 3,
       })
       const nonReactive = this.getNonReactive()
       nonReactive.locationTracker = tracker
@@ -621,12 +621,12 @@ export default {
     updateLocation ({ coords }) {
       const {
         latitude,
-        longitude
+        longitude,
       } = coords
       const { marker } = this.getNonReactive()
       marker.setLngLat([
         longitude,
-        latitude
+        latitude,
       ])
     },
     toggleLocationTracking () {
@@ -645,7 +645,7 @@ export default {
       }
       const {
         map,
-        marker
+        marker,
       } = this.getNonReactive()
       this.centerLocation(marker.getLngLat())
       map.once('moveend', () => {
@@ -656,7 +656,7 @@ export default {
       const { map } = this.getNonReactive()
       map.flyTo({
         center: [lng, lat],
-        curve: 0
+        curve: 0,
       })
     },
     onAddingBusinessRecord (type) {
@@ -673,18 +673,18 @@ export default {
       const { marker } = this.getNonReactive()
       const {
         lng: longitude,
-        lat: latitude
+        lat: latitude,
       } = marker.getLngLat()
       const location = {
         longitude,
-        latitude
+        latitude,
       }
       const date = formatDate(new Date())
       return this.appendBusinessRecord({
         dogId: this.currentDogId,
         type,
         location,
-        date
+        date,
       })
         .catch(err => console.error(err))
     },
@@ -696,7 +696,7 @@ export default {
         // TODO: how to directly specify an element for a toast message?
         //       if I could directly use BToast, I could specifiy its slot.
         //       but it seems that buefy does not expose BToast.
-        message: `<span style="font-weight:bold;">Clean up after ${getObjectiveFormOfDog(this.currentDog)}.</span>`
+        message: `<span style="font-weight:bold;">Clean up after ${getObjectiveFormOfDog(this.currentDog)}.</span>`,
       })
     },
     onListingBusinessRecords () {
@@ -712,21 +712,21 @@ export default {
       // centers the business record
       const {
         longitude,
-        latitude
+        latitude,
       } = businessRecord.location
       this.centerLocation({
         lng: longitude,
-        lat: latitude
+        lat: latitude,
       })
       // shows the record marker
       const {
         map,
-        recordMarker
+        recordMarker,
       } = this.getNonReactive()
       recordMarker
         .setLngLat([
           longitude,
-          latitude
+          latitude,
         ])
         .addTo(map)
     },
@@ -765,7 +765,7 @@ export default {
       const mapContainer = this.$refs['mapbox-container']
       const {
         width,
-        height
+        height,
       } = mapContainer.getBoundingClientRect()
       this.debugPane.width = width
       this.debugPane.height = height
@@ -777,8 +777,8 @@ export default {
       contents.selectAll('rect').remove()
       contents.selectAll('text').remove()
       this.showsDebugPane = false
-    }
-  }
+    },
+  },
 }
 </script>
 

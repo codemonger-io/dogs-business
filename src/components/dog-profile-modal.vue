@@ -116,6 +116,7 @@ import { formatDate } from '@db/types/date'
  */
 export default {
   name: 'DogProfileModal',
+  emits: ['cancelling-dog-profile', 'saving-dog-profile'],
   data () {
     return {
       isActive: false,
@@ -124,14 +125,14 @@ export default {
         name: '',
         sex: 'n/a',
         omitsDateOfBirth: true,
-        dateOfBirth: new Date()
-      }
+        dateOfBirth: new Date(),
+      },
     }
   },
   computed: {
     modalClass () {
       return {
-        'is-active': this.isActive
+        'is-active': this.isActive,
       }
     },
     saveButtonTitle () {
@@ -139,7 +140,7 @@ export default {
     },
     cancelButtonTitle () {
       return this.isNewDog ? 'Omit' : 'Cancel'
-    }
+    },
   },
   methods: {
     /**
@@ -168,21 +169,21 @@ export default {
           name: '',
           sex: 'n/a',
           omitsDateOfBirth: true,
-          dateOfBirth: new Date()
+          dateOfBirth: new Date(),
         }
       } else {
         const {
           dogId,
           name,
           sex,
-          dateOfBirth
+          dateOfBirth,
         } = settings.dog
         this.dog = {
           dogId,
           name,
           sex,
           omitsDateOfBirth: dateOfBirth === undefined,
-          dateOfBirth: (dateOfBirth === undefined) ? new Date() : new Date(dateOfBirth)
+          dateOfBirth: (dateOfBirth === undefined) ? new Date() : new Date(dateOfBirth),
         }
       }
       this.isActive = true
@@ -206,7 +207,7 @@ export default {
         name,
         sex,
         omitsDateOfBirth,
-        dateOfBirth
+        dateOfBirth,
       } = this.dog
       this.$emit('saving-dog-profile', {
         isNewDog: this.isNewDog,
@@ -214,14 +215,14 @@ export default {
           dogId,
           name,
           sex,
-          dateOfBirth: omitsDateOfBirth ? undefined : formatDate(dateOfBirth)
-        }
+          dateOfBirth: omitsDateOfBirth ? undefined : formatDate(dateOfBirth),
+        },
       })
     },
     onCancelClicked () {
       this.$emit('cancelling-dog-profile')
-    }
-  }
+    },
+  },
 }
 </script>
 

@@ -12,5 +12,9 @@ window.crypto = {
     for (let i = 0; i < buf8.length; ++i) {
       buf8[i] = Math.floor(256 * Math.random())
     }
-  }
+  },
 }
+
+// get "ReferenceError: SVGElement is not defined" otherwise
+// https://github.com/vuejs/vue-next/issues/3590
+global.SVGElement = window.SVGElement

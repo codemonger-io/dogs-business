@@ -21,7 +21,7 @@ describe('makeRandomId', function () {
     'c',
     'd',
     'e',
-    'f'
+    'f',
   ]
 
   it('should return a string consisting of 16 characters ranged in [0-9a-z]', function () {

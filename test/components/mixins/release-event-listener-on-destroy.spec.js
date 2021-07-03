@@ -13,7 +13,7 @@ describe('ReleaseEventListenerOnDestroy', function () {
   beforeEach(function () {
     target = {
       addEventListener () {},
-      removeEventListener () {}
+      removeEventListener () {},
     }
     sinon.spy(target)
   })
@@ -24,11 +24,11 @@ describe('ReleaseEventListenerOnDestroy', function () {
     const TestComponent = {
       template: '<div />',
       mixins: [
-        ReleaseEventListenerOnDestroy
+        ReleaseEventListenerOnDestroy,
       ],
       mounted () {
         this.registerEventListener(target, 'resize', listener)
-      }
+      },
     }
 
     beforeEach(function () {
@@ -46,7 +46,7 @@ describe('ReleaseEventListenerOnDestroy', function () {
 
     describe('after destroying', function () {
       beforeEach(function () {
-        wrapper.destroy()
+        wrapper.unmount()
       })
 
       it('target.removeEventListener("resize", listener) should have been invoked', function () {
@@ -71,7 +71,7 @@ describe('ReleaseEventListenerOnDestroy', function () {
 
       describe('after destroying', function () {
         beforeEach(function () {
-          wrapper.destroy()
+          wrapper.unmount()
         })
 
         it('target.removeEventListener with ("resize", listener) and ("scroll", listener2) should have been invoked', function () {
@@ -89,14 +89,14 @@ describe('ReleaseEventListenerOnDestroy', function () {
     const TestComponent = {
       template: '<div />',
       mixins: [
-        ReleaseEventListenerOnDestroy
+        ReleaseEventListenerOnDestroy,
       ],
       mounted () {
         const options = {
-          addEventListener: customHandler
+          addEventListener: customHandler,
         }
         this.registerEventListener(target, 'notification', listener, options)
-      }
+      },
     }
 
     beforeEach(function () {
@@ -114,7 +114,7 @@ describe('ReleaseEventListenerOnDestroy', function () {
 
     describe('after destroying', function () {
       beforeEach(function () {
-        wrapper.destroy()
+        wrapper.unmount()
       })
 
       it('target.removeEventListener("notification", listener) should have been invoked', function () {
@@ -130,14 +130,14 @@ describe('ReleaseEventListenerOnDestroy', function () {
     const TestComponent = {
       template: '<div />',
       mixins: [
-        ReleaseEventListenerOnDestroy
+        ReleaseEventListenerOnDestroy,
       ],
       mounted () {
         const options = {
-          removeEventListener: customHandler
+          removeEventListener: customHandler,
         }
         this.registerEventListener(target, 'notification', listener, options)
-      }
+      },
     }
 
     beforeEach(function () {
@@ -151,7 +151,7 @@ describe('ReleaseEventListenerOnDestroy', function () {
 
     describe('after destroying', function () {
       beforeEach(function () {
-        wrapper.destroy()
+        wrapper.unmount()
       })
 
       it('customHandler(target, "notification", listener) should have been invoked', function () {

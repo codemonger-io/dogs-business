@@ -82,7 +82,7 @@ class Dog {
 export function getPossessiveFormOfDog (dog) {
   const {
     name,
-    sex
+    sex,
   } = dog
   if (name) {
     return name + "'s"

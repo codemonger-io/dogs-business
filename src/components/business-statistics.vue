@@ -1,7 +1,7 @@
 <template>
   <div class="business-statistics">
     <p class="capitalized-sentence">
-      {{possessiveFormOfDog}} business around here.
+      {{ possessiveFormOfDog }} business around here.
     </p>
     <p class="svg-container">
       <svg
@@ -24,13 +24,13 @@
       </svg>
     </p>
     <p>
-      Out of <strong>{{businessRecords.length}}</strong> records
-    </p>
-    </p>
-      From <strong>{{startDateString}}</strong>
+      Out of <strong>{{ businessRecords.length }}</strong> records
     </p>
     <p>
-      To <strong>{{stopDateString}}</strong>
+      From <strong>{{ startDateString }}</strong>
+    </p>
+    <p>
+      To <strong>{{ stopDateString }}</strong>
     </p>
     <p>
       <a
@@ -53,20 +53,20 @@
 <script>
 import {
   max as d3Max,
-  min as d3Min
+  min as d3Min,
 } from 'd3-array'
 import {
-  scaleLinear as d3ScaleLinear
+  scaleLinear as d3ScaleLinear,
 } from 'd3-scale'
 import {
-  select as d3Select
+  select as d3Select,
 } from 'd3-selection'
 import {
-  mapGetters
+  mapGetters,
 } from 'vuex'
 
 import {
-  getPossessiveFormOfDog
+  getPossessiveFormOfDog,
 } from '@db/types/dog'
 
 import peePngPath from '@assets/images/pee.png'
@@ -74,12 +74,12 @@ import pooPngPath from '@assets/images/poo.png'
 
 const RECORD_TYPES = [
   'pee',
-  'poo'
+  'poo',
 ]
 
 const TYPED_ICON_PATHS = {
   pee: peePngPath,
-  poo: pooPngPath
+  poo: pooPngPath,
 }
 
 /**
@@ -114,31 +114,32 @@ export default {
   props: {
     businessRecords: {
       type: Array,
-      required: true
+      required: true,
     },
     businessRecordsReady: {
       type: Boolean,
-      required: true
+      required: true,
     },
     svgWidth: {
       type: Number,
-      default: 200
+      default: 200,
     },
     svgHeight: {
       type: Number,
-      default: 50 // barGraphHeight + margin
-    }
+      default: 50, // barGraphHeight + margin
+    },
   },
+  emits: ['listing-business-records'],
   data () {
     return {
       barGraphTopPadding: 2,
       barGraphHorizontalPadding: 30,
-      barGraphHeight: 32
+      barGraphHeight: 32,
     }
   },
   computed: {
     ...mapGetters('user', [
-      'dogOfId'
+      'dogOfId',
     ]),
     barGraphWidth () {
       return this.svgWidth - this.barGraphHorizontalPadding
@@ -153,7 +154,7 @@ export default {
         const { type } = record
         if (!(type in stats)) {
           stats[type] = {
-            frequency: 0
+            frequency: 0,
           }
         }
         ++stats[type].frequency
@@ -183,7 +184,7 @@ export default {
     firstDog () {
       return this.dogOfId(this.firstDogId) || {
         name: '',
-        sex: 'n/a'
+        sex: 'n/a',
       }
     },
     possessiveFormOfDog () {
@@ -201,7 +202,7 @@ export default {
             ratio,
             get percentage () {
               return 100 * this.ratio
-            }
+            },
           }
         })
         .filter(d => d.frequency > 0)
@@ -211,7 +212,7 @@ export default {
         cumulativeFrequency += data[i].frequency
       }
       return data
-    }
+    },
   },
   watch: {
     graphData () {
@@ -219,7 +220,7 @@ export default {
         console.log('BusinessStatistics', 'graphData updated')
       }
       this.renderBarGraph()
-    }
+    },
   },
   mounted () {
     if (process.env.NODE_ENV !== 'production') {
@@ -278,8 +279,8 @@ export default {
     },
     formatDate (date) {
       return date ? date.toLocaleDateString() : '?'
-    }
-  }
+    },
+  },
 }
 </script>
 

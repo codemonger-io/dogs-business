@@ -18,25 +18,25 @@
 export const ReleaseEventListenerOnDestroy = {
   data () {
     return {
-      eventListeners: []
+      eventListeners: [],
     }
   },
   /**
    * Releases registered event listeners.
    *
-   * @function beforeDestroy
+   * @function beforeUnmount
    *
    * @instance
    *
    * @memberof module:components/mixins.ReleaseEventListenerOnDestroy
    */
-  beforeDestroy () {
+  beforeUnmount () {
     this.eventListeners.forEach(entry => {
       const {
         target,
         type,
         listener,
-        removeEventListener
+        removeEventListener,
       } = entry
       removeEventListener(target, type, listener)
     })
@@ -46,7 +46,7 @@ export const ReleaseEventListenerOnDestroy = {
      * Registers an event listener.
      *
      * An event listener registered by this function will be released on
-     * [beforeDestroy]{@linkcode module:components/mixins.ReleaseEventListenerOnDestroy#beforeDestroy}.
+     * [beforeUnmount]{@linkcode module:components/mixins.ReleaseEventListenerOnDestroy#beforeDestroy}.
      *
      * @function registerEventListener
      *
@@ -84,11 +84,11 @@ export const ReleaseEventListenerOnDestroy = {
         removeEventListener(target, type, listener) {
           target['removeEventListener'](type, listener)
         },
-        ...options
+        ...options,
       }
       const {
         addEventListener,
-        removeEventListener
+        removeEventListener,
       } = options
       addEventListener(target, type, listener)
       this.eventListeners.push({
@@ -96,10 +96,10 @@ export const ReleaseEventListenerOnDestroy = {
         type,
         listener,
         addEventListener,
-        removeEventListener
+        removeEventListener,
       })
-    }
-  }
+    },
+  },
 }
 
 export default ReleaseEventListenerOnDestroy

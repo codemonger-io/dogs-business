@@ -6,7 +6,7 @@
   >
     <div class="navbar-brand">
       <a class="navbar-item">
-        <img src="@assets/images/dogs-business.svg" />
+        <img src="@assets/images/dogs-business.svg">
       </a>
       <a
         class="navbar-item dogs-business-title"
@@ -63,23 +63,24 @@ import { makeRandomId } from '@utils/random-id'
  */
 export default {
   name: 'NavigationBar',
+  emits: ['editing-dog-profile'],
   data () {
     return {
       navbarMenuId: 'navbar-menu',
-      isMenuActive: false
+      isMenuActive: false,
     }
   },
   computed: {
     burgerClass () {
       return {
-        'is-active': this.isMenuActive
+        'is-active': this.isMenuActive,
       }
     },
     navbarMenuClass () {
       return {
-        'is-active': this.isMenuActive
+        'is-active': this.isMenuActive,
       }
-    }
+    },
   },
   created () {
     if (process.env.NODE_ENV !== 'production') {
@@ -101,7 +102,7 @@ export default {
       }
       this.$emit('editing-dog-profile')
       this.isMenuActive = false
-    }
-  }
+    },
+  },
 }
 </script>

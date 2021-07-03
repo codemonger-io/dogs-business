@@ -24,7 +24,7 @@
 import {
   mapActions,
   mapGetters,
-  mapState
+  mapState,
 } from 'vuex'
 
 import DogProfileModal from '@components/dog-profile-modal'
@@ -41,33 +41,33 @@ import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-list
  */
 export default {
   name: 'App',
-  mixins: [
-    ReleaseEventListenerOnDestroy
-  ],
   components: {
     DogProfileModal,
     MapPane,
-    NavigationBar
+    NavigationBar,
   },
+  mixins: [
+    ReleaseEventListenerOnDestroy,
+  ],
   data () {
     return {
-      resizeTrigger: 0
+      resizeTrigger: 0,
     }
   },
   computed: {
     ...mapState('user', [
       'dogs',
-      'isLoaded'
+      'isLoaded',
     ]),
     ...mapGetters('user', [
-      'dogCount'
+      'dogCount',
     ]),
     // current dog.
     // `undefined` if no dog is registered.
     currentDog () {
       // TODO: support multiple dogs
       return this.dogs[0]
-    }
+    },
   },
   mounted () {
     if (process.env.NODE_ENV !== 'production') {
@@ -85,7 +85,7 @@ export default {
       .then(() => {
         if (this.dogCount === 0) {
           this.showDogProfileModal({
-            isNewDog: true
+            isNewDog: true,
           })
         }
       })
@@ -93,7 +93,7 @@ export default {
   methods: {
     ...mapActions('user', [
       'appendDog',
-      'updateDog'
+      'updateDog',
     ]),
     promiseLoaded () {
       if (process.env.NODE_ENV !== 'production') {
@@ -160,10 +160,10 @@ export default {
       }
       this.showDogProfileModal({
         isNewDog: false,
-        dog: this.currentDog
+        dog: this.currentDog,
       })
-    }
-  }
+    },
+  },
 }
 </script>
 

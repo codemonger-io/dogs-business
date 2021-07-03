@@ -20,7 +20,7 @@
               <img
                 :src="iconPathOfType(businessRecordType)"
                 :alt="businessRecordType"
-              />
+              >
             </figure>
           </span>
           <span class="business-record-column business-record-date">
@@ -52,7 +52,7 @@ import pooPngPath from '@assets/images/poo.png'
 
 const ICON_PATH_OF_TYPES = {
   pee: peePngPath,
-  poo: pooPngPath
+  poo: pooPngPath,
 }
 
 /**
@@ -70,13 +70,13 @@ export default {
     return {
       isActive: false,
       businessRecord: null,
-      result: null
+      result: null,
     }
   },
   computed: {
     modalClass () {
       return {
-        'is-active': this.isActive
+        'is-active': this.isActive,
       }
     },
     businessRecordType () {
@@ -84,7 +84,7 @@ export default {
     },
     businessRecordDate () {
       return this.businessRecord ? this.businessRecord.date : ''
-    }
+    },
   },
   methods: {
     /**
@@ -110,7 +110,7 @@ export default {
       if (this.isActive) {
         console.warn('previously shown dialog is canceled')
         this.result = {
-          isConfirmed: false
+          isConfirmed: false,
         }
       }
       this.result = null
@@ -143,7 +143,7 @@ export default {
         console.log('RecordDeletionDialog', 'confirm clicked')
       }
       this.result = {
-        isConfirmed: true
+        isConfirmed: true,
       }
     },
     onCancelClicked () {
@@ -151,10 +151,10 @@ export default {
         console.log('RecordDeletionDialog', 'cancel clicked')
       }
       this.result = {
-        isConfirmed: false
+        isConfirmed: false,
       }
-    }
-  }
+    },
+  },
 }
 </script>
 

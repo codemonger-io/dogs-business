@@ -10,13 +10,13 @@ describe('boxesIntersect', function () {
       x1: 0,
       y1: 0,
       x2: 1,
-      y2: 1
+      y2: 1,
     }
     const box2 = {
       x1: 0,
       y1: 0,
       x2: 1,
-      y2: 1
+      y2: 1,
     }
     expect(boxesIntersect(box1, box2)).to.be.true
   })
@@ -27,13 +27,13 @@ describe('boxesIntersect', function () {
         x1: 0,
         y1: 0,
         x2: 1,
-        y2: 1
+        y2: 1,
       }
       const b = {
         x1: -0.1,
         y1: 0,
         x2: 0.1,
-        y2: 1
+        y2: 1,
       }
       expect(boxesIntersect(a, b)).to.be.true
       expect(boxesIntersect(b, a)).to.be.true
@@ -44,13 +44,13 @@ describe('boxesIntersect', function () {
         x1: 0,
         y1: 0,
         x2: 1,
-        y2: 1
+        y2: 1,
       }
       const b = {
         x1: 0,
         y1: -0.1,
         x2: 1,
-        y2: 0.1
+        y2: 0.1,
       }
       expect(boxesIntersect(a, b)).to.be.true
       expect(boxesIntersect(b, a)).to.be.true
@@ -63,13 +63,13 @@ describe('boxesIntersect', function () {
         x1: 0,
         y1: 0,
         x2: 1,
-        y2: 1
+        y2: 1,
       }
       const b = {
         x1: -1,
         y1: 0,
         x2: 0,
-        y2: 1
+        y2: 1,
       }
       expect(boxesIntersect(a, b)).to.be.false
       expect(boxesIntersect(b, a)).to.be.false
@@ -80,13 +80,13 @@ describe('boxesIntersect', function () {
         x1: 0,
         y1: 0,
         x2: 1,
-        y2: 1
+        y2: 1,
       }
       const b = {
         x1: 0,
         y1: -1,
         x2: 1,
-        y2: 0
+        y2: 0,
       }
       expect(boxesIntersect(a, b)).to.be.false
       expect(boxesIntersect(b, a)).to.be.false
