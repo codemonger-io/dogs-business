@@ -56,14 +56,14 @@ export default {
   props: {
     isTrackingLocation: {
       type: Boolean,
-      required: true
-    }
+      required: true,
+    },
   },
   emits: ['centering-current-location', 'toggling-location-tracking'],
   computed: {
     locationTrackingImage () {
       return this.isTrackingLocation ? navigationOnSvg : navigationOffSvg
-    }
+    },
   },
   methods: {
     onLocationTrackingButtonClicked () {
@@ -77,8 +77,8 @@ export default {
         console.log('current location button clicked')
       }
       this.$emit('centering-current-location')
-    }
-  }
+    },
+  },
 }
 </script>
 

@@ -32,12 +32,12 @@
 
 <script>
 import {
-  mapGetters
+  mapGetters,
 } from 'vuex'
 
 import BusinessRecordList from '@components/business-record-list'
 import {
-  getPossessiveFormOfDog
+  getPossessiveFormOfDog,
 } from '@db/types/dog'
 
 /**
@@ -87,21 +87,21 @@ import {
 export default {
   name: 'BusinessRecordListFrame',
   components: {
-    BusinessRecordList
+    BusinessRecordList,
   },
   props: {
     businessRecords: {
       type: Array,
-      required: true
+      required: true,
     },
     businessRecordsReady: {
       type: Boolean,
-      required: true
+      required: true,
     },
     resizeTrigger: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   emits: [
     'business-record-selected',
@@ -110,7 +110,7 @@ export default {
   ],
   computed: {
     ...mapGetters('user', [
-      'dogOfId'
+      'dogOfId',
     ]),
     firstRecord () {
       return this.businessRecords[0] || {}
@@ -120,7 +120,7 @@ export default {
     },
     possessiveFormOfDog () {
       return getPossessiveFormOfDog(this.firstDog)
-    }
+    },
   },
   watch: {
     resizeTrigger () {
@@ -128,7 +128,7 @@ export default {
         console.log('BusinessRecordListFrame', 'resizing was triggered')
       }
       this.resizeBusinessRecordListFrameBody()
-    }
+    },
   },
   mounted () {
     if (process.env.NODE_ENV !== 'production') {
@@ -144,19 +144,19 @@ export default {
       const frame = this.$refs['business-record-list-frame']
       const {
         top: frameTop,
-        bottom: frameBottom
+        bottom: frameBottom,
       } = frame.getBoundingClientRect()
       const body = this.$refs['business-record-list-frame-body']
       const {
-        top: bodyTop
+        top: bodyTop,
       } = body.getBoundingClientRect()
       const bodyHeight = frameBottom - bodyTop
       body.style.height = `${bodyHeight}px`
     },
     onDeleteClicked () {
       this.$emit('closing-frame')
-    }
-  }
+    },
+  },
 }
 </script>
 

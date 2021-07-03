@@ -55,7 +55,7 @@ export const state = () => ({
    *
    * @memberof module:store/user.state
    */
-  businessRecords: []
+  businessRecords: [],
 })
 
 /**
@@ -124,7 +124,7 @@ export const getters = {
    *   Dog information associated with `dogId`.
    *   `null` if no dog information is associated with `dogId`.
    */
-  dogOfId: state => findDogById.bind(null, state)
+  dogOfId: state => findDogById.bind(null, state),
 }
 
 /**
@@ -336,7 +336,7 @@ export const mutations = {
     if (index !== -1) {
       businessRecords.splice(index, 1)
     }
-  }
+  },
 }
 
 /**
@@ -393,7 +393,7 @@ function createActions (db) {
         db.loadDogs()
           .then(dogs => commit('_replaceDogs', dogs)),
         db.loadBusinessRecords()
-          .then(records => commit('_replaceBusinessRecords', records))
+          .then(records => commit('_replaceBusinessRecords', records)),
       ])
         .finally(() => commit('_setLoaded', true))
     },
@@ -543,7 +543,7 @@ function createActions (db) {
         .then(() => {
           commit('_deleteBusinessRecord', toDelete)
         })
-    }
+    },
   }
 }
 
@@ -568,7 +568,7 @@ export function createStore (db) {
     state,
     getters,
     mutations,
-    actions
+    actions,
   }
 }
 

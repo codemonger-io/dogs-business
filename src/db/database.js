@@ -83,7 +83,7 @@ export class Database {
           console.log('IDBOpenRequest', 'upgradeneeded', event)
         }
         const {
-          oldVersion
+          oldVersion,
         } = event
         if (oldVersion < 1) {
           // populates a brand new store
@@ -103,12 +103,12 @@ export class Database {
     // store for dogs
     db.createObjectStore(DOG_STORE_NAME, {
       keyPath: 'dogId',
-      autoIncrement: true
+      autoIncrement: true,
     })
     // store for businness records
     const recordStore = db.createObjectStore(BUSINESS_RECORD_STORE_NAME, {
       keyPath: 'recordId',
-      autoIncrement: true
+      autoIncrement: true,
     })
     recordStore.createIndex('dogId', 'dogId', { unique: false })
     recordStore.createIndex('type', 'type', { unique: false })
@@ -213,7 +213,7 @@ export class Database {
             // TODO: should I retrieve the object from the database?
             resolve({
               ...newDog,
-              dogId: key
+              dogId: key,
             })
           }
           request.onerror = event => {
@@ -391,7 +391,7 @@ export class Database {
             const key = event.target.result
             resolve({
               ...newRecord,
-              recordId: key
+              recordId: key,
             })
           }
           request.onerror = event => {

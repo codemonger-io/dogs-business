@@ -34,7 +34,7 @@
 
 <script>
 import {
-  getPossessiveFormOfDog
+  getPossessiveFormOfDog,
 } from '@db/types/dog'
 
 /**
@@ -57,14 +57,14 @@ export default {
   props: {
     dog: {
       type: Object,
-      required: true
-    }
+      required: true,
+    },
   },
   emits: ['adding-business-record'],
   computed: {
     possessiveFormOfDog () {
       return getPossessiveFormOfDog(this.dog)
-    }
+    },
   },
   methods: {
     onBusinessTypeClicked (type) {
@@ -72,7 +72,7 @@ export default {
         console.log('BusinessRecordInput', 'businessTypeClicked', type)
       }
       this.$emit('adding-business-record', type)
-    }
-  }
+    },
+  },
 }
 </script>

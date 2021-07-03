@@ -18,7 +18,7 @@
 export const ReleaseEventListenerOnDestroy = {
   data () {
     return {
-      eventListeners: []
+      eventListeners: [],
     }
   },
   /**
@@ -36,7 +36,7 @@ export const ReleaseEventListenerOnDestroy = {
         target,
         type,
         listener,
-        removeEventListener
+        removeEventListener,
       } = entry
       removeEventListener(target, type, listener)
     })
@@ -84,11 +84,11 @@ export const ReleaseEventListenerOnDestroy = {
         removeEventListener(target, type, listener) {
           target['removeEventListener'](type, listener)
         },
-        ...options
+        ...options,
       }
       const {
         addEventListener,
-        removeEventListener
+        removeEventListener,
       } = options
       addEventListener(target, type, listener)
       this.eventListeners.push({
@@ -96,10 +96,10 @@ export const ReleaseEventListenerOnDestroy = {
         type,
         listener,
         addEventListener,
-        removeEventListener
+        removeEventListener,
       })
-    }
-  }
+    },
+  },
 }
 
 export default ReleaseEventListenerOnDestroy

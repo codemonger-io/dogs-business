@@ -41,7 +41,7 @@ export class GeolocationTracker extends EventTarget {
     super()
     this.#options = {
       retryCount: 3,
-      ...options
+      ...options,
     }
     this.#watcherId = undefined
   }
@@ -82,7 +82,7 @@ export class GeolocationTracker extends EventTarget {
             }
           },
           // options
-          this.#options
+          this.#options,
         )
       }
       request()
@@ -129,7 +129,7 @@ export class GeolocationTracker extends EventTarget {
         this.dispatchEvent(event)
       },
       // options
-      this.#options
+      this.#options,
     )
     /**
      * Notified when location tracking has started.

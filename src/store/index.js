@@ -31,9 +31,9 @@ export function createStore (db) {
     modules: {
       user: {
         ...user,
-        namespaced: true
-      }
-    }
+        namespaced: true,
+      },
+    },
   })
 }
 

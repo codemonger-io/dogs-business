@@ -67,20 +67,20 @@ export default {
   data () {
     return {
       navbarMenuId: 'navbar-menu',
-      isMenuActive: false
+      isMenuActive: false,
     }
   },
   computed: {
     burgerClass () {
       return {
-        'is-active': this.isMenuActive
+        'is-active': this.isMenuActive,
       }
     },
     navbarMenuClass () {
       return {
-        'is-active': this.isMenuActive
+        'is-active': this.isMenuActive,
       }
-    }
+    },
   },
   created () {
     if (process.env.NODE_ENV !== 'production') {
@@ -102,7 +102,7 @@ export default {
       }
       this.$emit('editing-dog-profile')
       this.isMenuActive = false
-    }
-  }
+    },
+  },
 }
 </script>

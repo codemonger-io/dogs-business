@@ -10,7 +10,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import '@scss'
 
 import {
-  openDatabase
+  openDatabase,
 } from '@db'
 import createStore from '@store'
 

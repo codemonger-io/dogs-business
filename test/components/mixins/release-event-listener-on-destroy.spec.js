@@ -13,7 +13,7 @@ describe('ReleaseEventListenerOnDestroy', function () {
   beforeEach(function () {
     target = {
       addEventListener () {},
-      removeEventListener () {}
+      removeEventListener () {},
     }
     sinon.spy(target)
   })
@@ -24,11 +24,11 @@ describe('ReleaseEventListenerOnDestroy', function () {
     const TestComponent = {
       template: '<div />',
       mixins: [
-        ReleaseEventListenerOnDestroy
+        ReleaseEventListenerOnDestroy,
       ],
       mounted () {
         this.registerEventListener(target, 'resize', listener)
-      }
+      },
     }
 
     beforeEach(function () {
@@ -89,14 +89,14 @@ describe('ReleaseEventListenerOnDestroy', function () {
     const TestComponent = {
       template: '<div />',
       mixins: [
-        ReleaseEventListenerOnDestroy
+        ReleaseEventListenerOnDestroy,
       ],
       mounted () {
         const options = {
-          addEventListener: customHandler
+          addEventListener: customHandler,
         }
         this.registerEventListener(target, 'notification', listener, options)
-      }
+      },
     }
 
     beforeEach(function () {
@@ -130,14 +130,14 @@ describe('ReleaseEventListenerOnDestroy', function () {
     const TestComponent = {
       template: '<div />',
       mixins: [
-        ReleaseEventListenerOnDestroy
+        ReleaseEventListenerOnDestroy,
       ],
       mounted () {
         const options = {
-          removeEventListener: customHandler
+          removeEventListener: customHandler,
         }
         this.registerEventListener(target, 'notification', listener, options)
-      }
+      },
     }
 
     beforeEach(function () {
