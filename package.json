@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node service.js",
+    "prestart": "npm run build",
     "build": "webpack",
     "lint": "eslint --ext .js,.vue src test",
     "test": "mochapack --webpack-config webpack-test.config.js --require test/setup-global.js 'test/**/*.spec.js'",
