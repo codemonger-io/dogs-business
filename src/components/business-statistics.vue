@@ -1,7 +1,7 @@
 <template>
   <div class="business-statistics">
     <p class="capitalized-sentence">
-      {{possessiveFormOfDog}} business around here.
+      {{ possessiveFormOfDog }} business around here.
     </p>
     <p class="svg-container">
       <svg
@@ -24,13 +24,13 @@
       </svg>
     </p>
     <p>
-      Out of <strong>{{businessRecords.length}}</strong> records
+      Out of <strong>{{ businessRecords.length }}</strong> records
     </p>
     <p>
-      From <strong>{{startDateString}}</strong>
+      From <strong>{{ startDateString }}</strong>
     </p>
     <p>
-      To <strong>{{stopDateString}}</strong>
+      To <strong>{{ stopDateString }}</strong>
     </p>
     <p>
       <a
@@ -129,6 +129,7 @@ export default {
       default: 50 // barGraphHeight + margin
     }
   },
+  emits: ['listing-business-records'],
   data () {
     return {
       barGraphTopPadding: 2,

@@ -5,7 +5,7 @@
   >
     <div class="message-header">
       <p class="capitalized-sentence">
-        {{possessiveFormOfDog}} Records
+        {{ possessiveFormOfDog }} Records
       </p>
       <button
         class="delete"
@@ -103,6 +103,11 @@ export default {
       default: 0
     }
   },
+  emits: [
+    'business-record-selected',
+    'closing-frame',
+    'deleting-business-record',
+  ],
   computed: {
     ...mapGetters('user', [
       'dogOfId'

@@ -6,7 +6,7 @@
   >
     <div class="navbar-brand">
       <a class="navbar-item">
-        <img src="@assets/images/dogs-business.svg" />
+        <img src="@assets/images/dogs-business.svg">
       </a>
       <a
         class="navbar-item dogs-business-title"
@@ -63,6 +63,7 @@ import { makeRandomId } from '@utils/random-id'
  */
 export default {
   name: 'NavigationBar',
+  emits: ['editing-dog-profile'],
   data () {
     return {
       navbarMenuId: 'navbar-menu',

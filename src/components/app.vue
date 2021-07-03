@@ -41,14 +41,14 @@ import ReleaseEventListenerOnDestroy from '@components/mixins/release-event-list
  */
 export default {
   name: 'App',
-  mixins: [
-    ReleaseEventListenerOnDestroy
-  ],
   components: {
     DogProfileModal,
     MapPane,
     NavigationBar
   },
+  mixins: [
+    ReleaseEventListenerOnDestroy
+  ],
   data () {
     return {
       resizeTrigger: 0

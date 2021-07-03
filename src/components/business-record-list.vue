@@ -17,7 +17,7 @@
               <img
                 :src="iconPathOfType(record.type)"
                 :alt="record.type"
-              />
+              >
             </figure>
           </span>
           <span class="business-record-column business-record-column-date">
@@ -82,6 +82,7 @@ export default {
       required: true
     }
   },
+  emits: ['business-record-selected', 'deleting-business-record'],
   data () {
     return {
       selectedRecord: null

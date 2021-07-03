@@ -10,7 +10,7 @@
           <img
             class="image is-16x16"
             :src="locationTrackingImage"
-          />
+          >
         </span>
       </button>
     </div>
@@ -59,6 +59,7 @@ export default {
       required: true
     }
   },
+  emits: ['centering-current-location', 'toggling-location-tracking'],
   computed: {
     locationTrackingImage () {
       return this.isTrackingLocation ? navigationOnSvg : navigationOffSvg

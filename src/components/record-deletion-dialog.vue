@@ -20,7 +20,7 @@
               <img
                 :src="iconPathOfType(businessRecordType)"
                 :alt="businessRecordType"
-              />
+              >
             </figure>
           </span>
           <span class="business-record-column business-record-date">

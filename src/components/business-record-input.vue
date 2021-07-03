@@ -11,7 +11,7 @@
             <img
               class="image is-24x24"
               src="@assets/images/pee.png"
-            />
+            >
           </span>
         </button>
       </p>
@@ -24,7 +24,7 @@
             <img
               class="image is-24x24"
               src="@assets/images/poo.png"
-            />
+            >
           </span>
         </button>
       </p>
@@ -60,6 +60,7 @@ export default {
       required: true
     }
   },
+  emits: ['adding-business-record'],
   computed: {
     possessiveFormOfDog () {
       return getPossessiveFormOfDog(this.dog)

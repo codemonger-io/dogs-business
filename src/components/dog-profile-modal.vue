@@ -116,6 +116,7 @@ import { formatDate } from '@db/types/date'
  */
 export default {
   name: 'DogProfileModal',
+  emits: ['cancelling-dog-profile', 'saving-dog-profile'],
   data () {
     return {
       isActive: false,

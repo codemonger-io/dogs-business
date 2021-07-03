@@ -7,8 +7,8 @@
     <!-- DEBUG -->
     <svg
       v-if="debugMode"
-      xmlns:svg="http://www.w3.org/2000/svg"
       ref="debug-pane"
+      xmlns:svg="http://www.w3.org/2000/svg"
       class="debug-pane"
       :class="debugPaneClass"
       :width="debugPane.width"
@@ -171,9 +171,6 @@ function makeNonReactive (obj) {
  */
 export default {
   name: 'MapPane',
-  mixins: [
-    ReleaseEventListenerOnDestroy
-  ],
   components: {
     BusinessRecordInput,
     BusinessRecordListFrame,
@@ -181,6 +178,9 @@ export default {
     MapController,
     RecordDeletionDialog
   },
+  mixins: [
+    ReleaseEventListenerOnDestroy
+  ],
   props: {
     resizeTrigger: {
       type: Number,
@@ -230,7 +230,7 @@ export default {
     // sorts the business records by date in descending order
     // TODO: make it more efficient
     businessRecordsSortedByDate () {
-      return this.businessRecords.sort((r1, r2) => {
+      return [...this.businessRecords].sort((r1, r2) => {
         if (r1.date < r2.date) {
           return 1
         } else if (r1.date > r2.date) {
