@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node service.js",
     "build": "webpack",
+    "lint": "eslint --ext .js,.vue src test",
     "test": "mochapack --webpack-config webpack-test.config.js --require test/setup-global.js 'test/**/*.spec.js'",
     "test:watch": "mochapack --webpack-config webpack-test.config.js --require test/setup-global.js --watch test 'test/**/*.spec.js'"
   },
@@ -16,6 +17,7 @@
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.14.6",
+    "@babel/eslint-parser": "^7.14.7",
     "@babel/preset-env": "^7.14.7",
     "@mdi/font": "^5.9.55",
     "@vue/compiler-sfc": "^3.1.4",
@@ -29,6 +31,8 @@
     "css-loader": "^4.3.0",
     "d3-scale": "^3.3.0",
     "d3-selection": "^2.0.0",
+    "eslint": "^7.30.0",
+    "eslint-plugin-vue": "^7.12.1",
     "event-target-shim": "^5.0.1",
     "express": "^4.17.1",
     "file-loader": "^6.2.0",
