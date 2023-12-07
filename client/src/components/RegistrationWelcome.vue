@@ -9,7 +9,7 @@ import TheTermsOfService from './TheTermsOfService.vue'
 const { t } = useI18n()
 
 const self = getCurrentInstance()
-console.log('AuthenticatorWelcome.getCurrentInstance()', self)
+console.log('RegistrationWelcome.getCurrentInstance()', self)
 
 const showTermsOfService = () => {
   self.proxy.$buefy.modal.open({

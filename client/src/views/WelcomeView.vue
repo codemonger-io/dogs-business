@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import AuthenticatorWelcome from '../components/AuthenticatorWelcome.vue'
+import RegistrationWelcome from '../components/RegistrationWelcome.vue'
 </script>
 
 <template>
-  <AuthenticatorWelcome />
+  <RegistrationWelcome />
 </template>
