@@ -12,9 +12,12 @@
   --b-scheme-invert: var(--paper-invert);
   --b-scheme-invert-bis: var(--paper-invert-bis);
   --b-scheme-invert-ter: var(--paper-invert-ter);
-/*
-  &.card,
-  &.container {
-    background-color: var(--paper-color);
-  } */
+}
+
+.box {
+  &.welcome-box {
+    --b-box-radius: 0px;
+    --b-box-shadow: 0px 0px 100px 1px color-mix(in srgb, var(--b-scheme-invert) 30%, transparent);
+    min-height: 100vh;
+  }
 }
