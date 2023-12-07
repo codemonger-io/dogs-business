@@ -1,0 +1,32 @@
+.modal {
+  .modal-close {
+    background-color: color-mix(in hsl, var(--b-scheme-invert) 20%, transparent);
+    &:hover,
+    :focus {
+      background-color: color-mix(in hsl, var(--b-scheme-invert) 30%, transparent);
+    }
+    &:active {
+      background-color: color-mix(in hsl, var(--b-scheme-invert) 40%, transparent);
+    }
+  }
+
+  /* fullscreen activated only on a small screen. */
+  &.is-full-screen-mobile {
+    @media screen and (max-width: 768px) {
+      > .animation-content,
+      > .animation-content > .modal-card {
+        width: 100%;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      > .animation-content {
+        > .card,
+        .modal-card {
+          border-radius: 0px;
+          min-height: 100%;
+        }
+      }
+    }
+  }
+}

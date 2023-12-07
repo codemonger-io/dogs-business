@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import TheWelcome from '../components/TheWelcome.vue'
+import { RouterView } from 'vue-router'
+
+import TheAuthenticator from '../components/TheAuthenticator.vue'
 </script>
 
 <template>
-  <main>
-    <TheWelcome />
-  </main>
+  <TheAuthenticator>
+    <RouterView />
+  </TheAuthenticator>
 </template>

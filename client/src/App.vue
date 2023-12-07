@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import TheAuthenticator from './components/TheAuthenticator.vue'
+import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <TheAuthenticator>
-    <RouterView />
-  </TheAuthenticator>
+  <RouterView />
 </template>

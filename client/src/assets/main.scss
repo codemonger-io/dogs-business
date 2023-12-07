@@ -1,0 +1,20 @@
+@import './base.scss';
+@import './modal.scss';
+
+:root {
+  background-color: var(--dogs-theme);
+}
+
+.paper {
+  --b-scheme-main: var(--paper-color);
+  --b-scheme-main-bis: var(--paper-color-bis);
+  --b-scheme-main-ter: var(--paper-color-ter);
+  --b-scheme-invert: var(--paper-invert);
+  --b-scheme-invert-bis: var(--paper-invert-bis);
+  --b-scheme-invert-ter: var(--paper-invert-ter);
+/*
+  &.card,
+  &.container {
+    background-color: var(--paper-color);
+  } */
+}

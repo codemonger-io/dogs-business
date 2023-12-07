@@ -1,11 +1,11 @@
-import './assets/main.css'
+import './assets/main.scss'
 
 import { createApp } from 'vue'
 import { createI18n } from 'vue-i18n'
 import { createPinia } from 'pinia'
 
 import Buefy from '@ntohq/buefy-next'
-import '@ntohq/buefy-next/dist/buefy.css'
+// import '@ntohq/buefy-next/dist/buefy.css'
 
 import App from './App.vue'
 import router from './router'

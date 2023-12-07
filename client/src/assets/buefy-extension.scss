@@ -1,0 +1,104 @@
+/* base colors */
+$primary: #37C49F;
+
+@import 'bulma/sass/utilities/_all.sass';
+
+/* derived colors */
+$scheme-main: var(--b-scheme-main);
+$scheme-main-bis: var(--b-scheme-main-bis);
+$scheme-main-ter: var(--b-scheme-main-ter);
+$scheme-invert: var(--b-scheme-invert);
+$scheme-invert-bis: var(--b-scheme-invert-bis);
+$scheme-invert-ter: var(--b-scheme-invert-ter);
+:root {
+  --b-scheme-main: #{$white};
+  --b-scheme-main-bis: #{$white-bis};
+  --b-scheme-main-ter: #{$white-ter};
+  --b-scheme-invert: #{$black};
+  --b-scheme-invert-bis: #{$black-bis};
+  --b-scheme-invert-ter: #{$black-ter};
+}
+
+/* text decorations */
+$text: var(--b-text);
+$text-strong: var(--b-text-strong);
+:root {
+  --b-text: hsl(0 0% 29%);
+  --b-text-strong: hsl(0 0% 21%);
+}
+
+/* shadows */
+$shadow: 0 0.5em 1em -0.125em color-mix(in srgb, var(--b-scheme-invert) 10%, transparent), 0 0px 0 1px color-mix(in srgb, var(--b-scheme-invert) 2%, transparent);
+
+/* box */
+$box-color: var(--b-box-color);
+$box-background-color: var(--b-box-background-color);
+$box-radius: var(--b-box-radius);
+$box-shadow: var(--b-box-shadow);
+$box-padding: var(--b-box-padding);
+$box-link-hover-shadow: var(--box-link-hover-shadow);
+$box-link-active-shadow: var(--box-link-active-shadow);
+.box {
+  --b-box-color: var(--b-text);
+  --b-box-background-color: var(--b-scheme-main);
+  --b-box-radius: #{$radius-large};
+  --b-box-shadow: #{$shadow};
+  --b-box-padding: 1.25rem;
+  --b-box-link-hover-shadow: 0 0.5em 1em -0.125em color-mix(in srgb, var(--b-scheme-invert) 10%, transparent), 0 0 0 1px var(--b-link);
+  --b-box-link-active-shadow: inset 0 1px 2px color-mix(in srgb, var(--b-scheme-invert) 20%, transparent), 0 0 0 1px var(--b-link);
+}
+
+/* table color */
+$table-color: var(--b-table-color);
+$table-background-color: var(--b-table-background-color);
+$table-cell-heading-color: var(--b-table-cell-heading-color);
+$table-head-cell-color: var(--b-table-head-cell-color);
+$table-foot-cell-color: var(--b-table-foot-cell-color);
+$table-head-background-color: var(--b-table-head-background-color);
+$table-body-background-color: var(--b-table-body-background-color);
+$table-foot-background-color: var(--b-table-foot-background-color);
+$table-row-hover-background-color: var(--b-table-row-hover-background-color);
+$table-row-active-background-color: var(--b-table-row-active-background-color);
+$table-row-active-color: var(--b-table-row-active-color);
+$table-striped-row-even-background-color: var(--b-table-striped-row-even-background-color);
+$table-striped-row-even-hover-background-color: var(--b-table-striped-row-even-hover-background-color);
+.table {
+  --b-table-color: var(--b-text-strong);
+  --b-table-background-color: var(--b-scheme-main);
+  --b-table-cell-heading-color: var(--b-table-color);
+  --b-table-head-cell-color: var(--b-table-color);
+  --b-table-foot-cell-color: var(--b-table-color);
+  --b-table-head-background-color: transparent;
+  --b-table-body-background-color: transparent;
+  --b-table-foot-background-color: transparent;
+  --b-table-row-hover-background-color: var(--b-scheme-main-bis);
+  --b-table-row-active-background-color: #{$primary};
+  --b-table-row-active-color: #{$primary-invert};
+  --b-table-striped-row-even-background-color: var(--b-scheme-main-bis);
+  --b-table-striped-row-even-hover-background-color: var(--b-scheme-main-ter);
+}
+
+/* card color */
+$card-color: var(--b-card-color);
+$card-background-color: var(--b-card-background-color);
+$card-header-background-color: var(--b-card-header-background-color);
+$card-header-color: var(--b-card-header-color);
+$card-content-background-color: var(--b-card-content-background-color);
+$card-footer-background-color: var(--b-card-footer-background-color);
+.card {
+  --b-card-color: var(--b-text);
+  --b-card-background-color: var(--b-scheme-main);
+  --b-card-header-background-color: transparent;
+  --b-card-header-color: var(--b-text-strong);
+  --b-card-content-background-color: transparent;
+  --b-card-footer-background-color: transparent;
+}
+
+/* modal color */
+$modal-background-background-color: var(--b-modal-background-background-color);
+.modal {
+  --b-modal-background-background-color: color-mix(in srgb, var(--b-scheme-invert) 86%, transparent);
+}
+
+@import 'bulma/bulma.sass';
+@import '@ntohq/buefy-next/src/scss/buefy.scss';
