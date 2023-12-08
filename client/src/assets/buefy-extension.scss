@@ -1,4 +1,7 @@
-/* base colors */
+/* base colors.
+ * you cannot use CSS variables here, because they are processed by Bulma
+ * functions during compilation.
+ */
 $primary: #37C49F;
 
 @import 'bulma/sass/utilities/_all.sass';

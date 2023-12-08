@@ -51,7 +51,8 @@ const showFunctionalities = () => {
         <p class="block is-flex is-justify-content-center">
           <RouterLink
             :to="{ name: 'sign-up' }"
-            custom v-slot="{ href, navigate }"
+            custom
+            v-slot="{ href, navigate }"
           >
             <b-button
               type="is-primary"
@@ -71,7 +72,15 @@ const showFunctionalities = () => {
           </i18n-t>
         </p>
         <p class="block is-flex is-justify-content-center">
-          <b-button class="is-primary">{{ t('message.start_without_signup') }}</b-button>
+          <RouterLink
+            :to="{ name: 'wo-sign-up' }"
+            custom
+            v-slot="{ href, navigate }"
+          >
+            <b-button type="is-primary" @click="navigate">
+              {{ t('message.start_without_signup') }}
+            </b-button>
+          </RouterLink>
         </p>
       </section>
     </div>
