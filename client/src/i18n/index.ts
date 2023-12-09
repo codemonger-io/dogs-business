@@ -8,10 +8,12 @@ export default {
       remarks_on_without_signup: 'サインアップしない場合でも、地図データを取得・表示するためにマップボックスのプライバシーポリシーに同意していただく必要があります。',
       sign_up: 'サインアップ',
       sign_up_now: '今すぐサインアップ!',
-      start_without_signup: 'サインアップせずに利用開始'
+      start_without_signup: 'サインアップせずに利用開始',
+      we_wont_rely_on_passwords: '@:{\'term.dogs_business\'}はパスワードを使いません! 代わりにより安全な{0}を使用します。{0}はお使いのデバイスの指紋認証や顔認証などを用いてあなたが本人であるかどうかを認証します。お使いのデバイスが{0}に対応していない場合は@:{\'term.dogs_business\'}にサインアップしていただくことができません。また、お使いのデバイスと本サービスとの相性などの問題でご利用いただくことができない場合もございますので、ご容赦ください。'
     },
     term: {
       attention: 'ご注意',
+      dogs_business: 'Dog\'s Business',
       feature: {
         putting_own_droppings: 'お友達(犬)の落とし物を地図に置く',
         showing_off_own_droppings: 'お友達(犬)の落とし物を地図で披露',
@@ -19,11 +21,16 @@ export default {
         viewing_map: '地図の表示'
       },
       functionality: '機能',
+      passkey: 'パスキー',
       privacy_policy: 'プライバシーポリシー',
       signup: 'サインアップ',
       terms_of_service: '利用規約',
+      username: 'ユーザー名',
       without_signup: 'サインアップなし'
     },
+    tooltip: {
+      username: '@:{\'term.passkey\'}を識別する名前としてお使いのデバイスに表示されます'
+    }
   },
   en: {
     message: {
@@ -34,10 +41,15 @@ export default {
       remarks_on_without_signup: 'You have to agree to the Privacy Policy of Mapbox that is required to retrieve and represent map data whether you sign up or not.',
       sign_up: 'Sign up',
       sign_up_now: 'Sign up now!',
-      start_without_signup: 'Start without sign-up'
+      start_without_signup: 'Start without sign-up',
+      we_wont_rely_on_passwords: '@:{\'term.dogs_business\'} won\'t rely on passwords but uses more secure {0} instead! {0} authenticate you with your fingerprints, face, or any other metrics provided by your device. You may not sign up for @:{\'term.dogs_business\'} if your device does not support {0}. And please be patient in case you might not be able to use this service due to incompatiblity between your device and the service, or any other problems.'
+    },
+    placeholder: {
+      username: 'User0123',
     },
     term: {
       attention: 'attention',
+      dogs_business: 'Dog\'s Business',
       feature: {
         putting_own_droppings: 'Putting your dog-friend\'s droppings on the map',
         showing_off_own_droppings: 'Showing off your dog-friend\'s droppings on the map',
@@ -45,10 +57,15 @@ export default {
         viewing_map: 'Viewing the map'
       },
       functionality: 'functionality | functionalities',
+      passkey: 'passkey | passkeys',
       privacy_policy: 'Privacy Policy',
       signup: 'Sign-up',
       terms_of_service: 'Terms of Service',
+      username: 'Username',
       without_signup: 'wo Sign-up'
     },
+    tooltip: {
+      username: 'Shown on your device as the identifier of your @:term.passkey'
+    }
   },
 }

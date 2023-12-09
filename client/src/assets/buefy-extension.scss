@@ -97,6 +97,11 @@ $card-footer-background-color: var(--b-card-footer-background-color);
   --b-card-footer-background-color: transparent;
 }
 
+/* input color */
+$input-color: var(--b-text-strong);
+$input-shadow: inset 0 0.0625em 0.125em color-mix(in srgb, var(--b-scheme-invert) 5%, transparent);
+$input-placeholder-color: color-mix(in srgb, #{$input-color} 30%, transparent);
+
 /* modal color */
 $modal-background-background-color: var(--b-modal-background-background-color);
 .modal {
