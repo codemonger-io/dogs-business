@@ -10,10 +10,16 @@ import TheTermsOfService from './TheTermsOfService.vue'
 const { t } = useI18n()
 
 const self = getCurrentInstance()
+if (self == null) {
+  throw new Error('setup is called without current active component instance')
+}
 
 const isAgreementChecked = ref(false);
 
 const showTermsOfService = () => {
+  if (self.proxy == null) {
+    throw new Error('no proxy instance exists')
+  }
   self.proxy.$buefy.modal.open({
     component: TheTermsOfService,
     customClass: 'is-full-screen-mobile'
@@ -21,6 +27,9 @@ const showTermsOfService = () => {
 }
 
 const showPrivacyPolicy = () => {
+  if (self.proxy == null) {
+    throw new Error('no proxy instance exists')
+  }
   self.proxy.$buefy.modal.open({
     component: ThePrivacyPolicy,
     customClass: 'is-full-screen-mobile'
@@ -28,6 +37,9 @@ const showPrivacyPolicy = () => {
 }
 
 const showFunctionalities = () => {
+  if (self.proxy == null) {
+    throw new Error('no proxy instance exists')
+  }
   self.proxy.$buefy.modal.open({
     component: TheFunctionalities,
     customClass: 'is-full-screen-mobile'

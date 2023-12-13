@@ -8,6 +8,9 @@ import { capitalize } from '../utils/strings'
 const { t } = useI18n()
 
 const self = getCurrentInstance()
+if (self == null) {
+  throw new Error('setup is called without current active component instance')
+}
 
 const username = ref('')
 
@@ -16,6 +19,9 @@ const onSubmit = () => {
 }
 
 const showWhatArePasskeys = () => {
+  if (self.proxy == null) {
+    throw new Error('no instance proxy exists')
+  }
   self.proxy.$buefy.modal.open({
     component: ThePasskeys,
     customClass: 'is-full-screen-mobile'

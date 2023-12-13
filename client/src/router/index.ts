@@ -8,7 +8,14 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: HomeView,
+      children: [
+        {
+          path: 'map',
+          name: 'map',
+          component: () => import('../views/MapView.vue')
+        }
+      ]
     },
     // routes that do not need agreement
     {
