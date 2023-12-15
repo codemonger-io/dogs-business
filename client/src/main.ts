@@ -7,6 +7,7 @@ import { createPinia } from 'pinia'
 import Buefy from '@ntohq/buefy-next'
 
 import App from './App.vue'
+import mapboxConfig from './configs/mapbox-config'
 import type { AccountInfo, GuestAccountInfo } from './lib/account-manager'
 import { accountManagerProvider } from './stores/account-manager'
 import router from './router'
@@ -33,7 +34,10 @@ app.use(accountManagerProvider({
     return accountInfo
   },
   async createGuestAccount() {
-    const guest: GuestAccountInfo = { type: 'guest' }
+    const guest: GuestAccountInfo = {
+      type: 'guest',
+      mapboxAccessToken: mapboxConfig.guestAccessToken
+    }
     accountInfo = guest
     return guest
   }

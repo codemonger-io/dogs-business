@@ -28,7 +28,10 @@ describe('useAccountManager', () => {
           return { type: 'no-account' }
         },
         async createGuestAccount() {
-          return { type: 'guest' }
+          return {
+            type: 'guest',
+            mapboxAccessToken: 'dummy token'
+          }
         }
       }
       vi.spyOn(accountManager, 'getAccountInfo')
@@ -71,7 +74,10 @@ describe('useAccountManager', () => {
       })
 
       it('should have accountInfo "guest"', () => {
-        expect(store.accountInfo).toEqual({ type: 'guest' })
+        expect(store.accountInfo).toEqual({
+          type: 'guest',
+          mapboxAccessToken: 'dummy token'
+        })
       })
     })
   })
