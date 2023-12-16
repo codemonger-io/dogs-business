@@ -9,20 +9,21 @@ import {
 } from '@/stores/account-manager'
 
 describe('useAccountManager', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
-  })
+  describe('without account manager provided', () => {
+    beforeEach(() => {
+      setActivePinia(createPinia())
+    })
 
-  it('should throw Error if no account manager is provided', () => {
-    expect(() => useAccountManager()).toThrow(Error)
+    it('should throw Error', () => {
+      expect(() => useAccountManager()).toThrow(Error)
+    })
   })
 
   describe('with accountManagerProvider', () => {
-    let app: App
     let accountManager: AccountManager
 
     beforeEach(() => {
-      app = createApp({})
+      const app = createApp({})
       accountManager = {
         async getAccountInfo() {
           return { type: 'no-account' }

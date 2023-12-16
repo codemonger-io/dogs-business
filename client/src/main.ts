@@ -10,6 +10,7 @@ import App from './App.vue'
 import mapboxConfig from './configs/mapbox-config'
 import type { AccountInfo, GuestAccountInfo } from './lib/account-manager'
 import { accountManagerProvider } from './stores/account-manager'
+import { locationTrackerProvider } from './stores/location-tracker'
 import router from './router'
 import messages from './i18n'
 
@@ -40,6 +41,20 @@ app.use(accountManagerProvider({
     }
     accountInfo = guest
     return guest
+  }
+}))
+app.use(locationTrackerProvider({
+  async getCurrentLocation() {
+    if (typeof navigator.geolocation === 'undefined') {
+      throw new Error('navigator.geolocation is unavailable')
+    }
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        maximumAge: 3000,
+        timeout: 3000,
+        enableHighAccuracy: true
+      })
+    })
   }
 }))
 

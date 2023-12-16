@@ -57,6 +57,8 @@ export const useAccountManager = defineStore('accountManager', () => {
  * an account manager.
  *
  * ```ts
+ * import { createApp } from 'vue'
+ * const app = createApp()
  * app.use(provideAccountManager({
  *   // account manager implementation
  * }))
