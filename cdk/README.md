@@ -1,8 +1,56 @@
-# Welcome to your CDK TypeScript project
+# Dog's Business CDK
 
-This is a blank project for CDK development with TypeScript.
+Provisions AWS resources for Dog's Business.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## Setting AWS_PROFILE
+
+```sh
+export AWS_PROFILE=dogsbusiness-jp
+```
+
+## Configuring toolkit stack name
+
+```sh
+TOOLKIT_STACK_NAME=dogs-business-toolkit
+```
+
+## Configuring bootstrap qualifier
+
+See <https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html#bootstrapping-custom-synth>.
+
+```sh
+BOOTSTRAP_QUALIFIER=dogsbz2023
+```
+
+## Bootstrapping
+
+```sh
+pnpm cdk bootstrap --toolkit-stack-name $TOOLKIT_STACK_NAME --qualifier $BOOTSTRAP_QUALIFIER
+```
+
+## Synthesizing
+
+```sh
+pnpm cdk synth -c "@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER"
+```
+
+Production:
+
+```sh
+pnpm cdk synth -c "@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER" -c "dogs-business:deployment-stage=production"
+```
+
+## Deploying
+
+```sh
+pnpm cdk deploy -c "@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER"
+```
+
+Production:
+
+```sh
+pnpm cdk deploy -c "@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER" -c "dogs-business:deployment-stage=production"
+```
 
 ## Useful commands
 
