@@ -20,6 +20,7 @@ const showTermsOfService = () => {
   if (self.proxy == null) {
     throw new Error('no proxy instance exists')
   }
+  // @ts-ignore
   self.proxy.$buefy.modal.open({
     component: TheTermsOfService,
     customClass: 'is-full-screen-mobile'
@@ -30,6 +31,7 @@ const showPrivacyPolicy = () => {
   if (self.proxy == null) {
     throw new Error('no proxy instance exists')
   }
+  // @ts-ignore
   self.proxy.$buefy.modal.open({
     component: ThePrivacyPolicy,
     customClass: 'is-full-screen-mobile'
@@ -40,6 +42,7 @@ const showFunctionalities = () => {
   if (self.proxy == null) {
     throw new Error('no proxy instance exists')
   }
+  // @ts-ignore
   self.proxy.$buefy.modal.open({
     component: TheFunctionalities,
     customClass: 'is-full-screen-mobile'

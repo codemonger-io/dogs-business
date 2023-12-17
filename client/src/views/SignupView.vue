@@ -22,6 +22,7 @@ const showWhatArePasskeys = () => {
   if (self.proxy == null) {
     throw new Error('no instance proxy exists')
   }
+  // @ts-ignore
   self.proxy.$buefy.modal.open({
     component: ThePasskeys,
     customClass: 'is-full-screen-mobile'
