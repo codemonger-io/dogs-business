@@ -6,6 +6,7 @@ import markdown from 'vite-plugin-md'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/app',
   plugins: [
     vue({
       include: [/\.vue$/, /\.md$/]
