@@ -13,7 +13,14 @@ const router = createRouter({
         {
           path: 'map',
           name: 'map',
-          component: () => import('../views/MapView.vue')
+          component: () => import('../views/MapView.vue'),
+          children: [
+            {
+              path: 'profile',
+              name: 'profile',
+              component: () => import('../views/ProfileView.vue')
+            }
+          ]
         }
       ]
     },

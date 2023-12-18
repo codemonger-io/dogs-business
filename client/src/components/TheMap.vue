@@ -36,10 +36,11 @@ watch(
         // TODO: is it legitimate to make the token empty?
         mapboxgl.accessToken = ''
         break
-      default:
+      default: {
         // exhaustive cases must not lead here
         const unreachable: never = accountInfo
         throw new RangeError(`unknown account type: ${accountInfo}`)
+      }
     }
   },
   { immediate: true }
@@ -50,7 +51,12 @@ onMounted(() => {
     throw new Error('map container is unavailable')
   }
   if (map.value != null) {
-    throw new Error('map has already been initialized')
+    console.warn('map has already been initialized')
+    return
+  }
+  if (!mapboxgl.accessToken) {
+    console.warn('no Mapbox access token')
+    return
   }
   map.value = markRaw(new mapboxgl.Map({
     container: mapContainer.value,
@@ -89,7 +95,6 @@ watchEffect(() => {
 
 <style scope>
 .map-container {
-  position: relative;
   width: 100%;
   height: 100%;
 }
