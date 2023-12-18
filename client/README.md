@@ -1,68 +1,52 @@
-# client
+# Dog's Business Client
 
 This template should help get you started developing with Vue 3 in Vite.
 
-## Recommended IDE Setup
+## Deploying to AWS
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+You have to deploy the CDK stack first.
+Please see [../cdk](../cdk).
 
-## Type Support for `.vue` Imports in TS
+1. Choose the deployment stage.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+   Development:
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+    ```sh
+    DEPLOYMENT_STAGE=development
+    ```
 
-1. Disable the built-in TypeScript Extension
-    1) Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-    2) Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+   Production:
 
-## Customize configuration
+    ```sh
+    DEPLOYMENT_STAGE=production
+    ```
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+2. Configure the app:
 
-## Project Setup
+    ```sh
+    cp src/configs/mapbox-config.$DEPLOYMENT_STAGE.ts src/configs/mapbox-config.ts
+    ```
 
-```sh
-pnpm install
-```
+3. Build the production bundle:
 
-### Compile and Hot-Reload for Development
+    ```sh
+    pnpm build
+    ```
 
-```sh
-pnpm dev
-```
+4. Configure AWS_PROFILE:
 
-### Type-Check, Compile and Minify for Production
+    ```sh
+    export AWS_PROFILE=dogsbusiness-jp
+    ```
 
-```sh
-pnpm build
-```
+5. Obtain the S3 bucket name:
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+    ```sh
+    CONTENTS_BUCKET_NAME=`aws cloudformation describe-stacks --stack-name dogs-business-$DEPLOYMENT_STAGE --query "Stacks[0].Outputs[?OutputKey=='ContentsBucketName'].OutputValue" --output text`
+    ```
 
-```sh
-pnpm test:unit
-```
+6. Copy the contents to the S3 bucket:
 
-### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
-
-```sh
-pnpm test:e2e:dev
-```
-
-This runs the end-to-end tests against the Vite development server.
-It is much faster than the production build.
-
-But it's still recommended to test the production build with `test:e2e` before deploying (e.g. in CI environments):
-
-```sh
-pnpm build
-pnpm test:e2e
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-pnpm lint
-```
+    ```sh
+    aws s3 sync dist/ s3://$CONTENTS_BUCKET_NAME/app
+    ```
