@@ -52,6 +52,20 @@ Production:
 pnpm cdk deploy -c "@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER" -c "dogs-business:deployment-stage=production"
 ```
 
+## Post deployment
+
+### Obtaining the internal URL of the distribution
+
+```sh
+aws cloudformation describe-stacks --stack-name dogs-business-$DEPLOYMENT_STAGE --query "Stacks[0].Outputs[?OutputKey=='DistributionInternalUrl'].OutputValue" --output text
+```
+
+### Name of the S3 bucket for the contents
+
+```sh
+aws cloudformation describe-stacks --stack-name dogs-business-$DEPLOYMENT_STAGE --query "Stacks[0].Outputs[?OutputKey=='ContentsBucketName'].OutputValue" --output text
+```
+
 ## Useful commands
 
 * `npm run build`   compile typescript to js
