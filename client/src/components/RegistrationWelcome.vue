@@ -67,7 +67,7 @@ const showFunctionalities = () => {
           <RouterLink
             :to="{ name: 'sign-up' }"
             custom
-            v-slot="{ href, navigate }"
+            v-slot="{ navigate }"
           >
             <b-button
               type="is-primary"
@@ -90,7 +90,7 @@ const showFunctionalities = () => {
           <RouterLink
             :to="{ name: 'wo-sign-up' }"
             custom
-            v-slot="{ href, navigate }"
+            v-slot="{ navigate }"
           >
             <b-button type="is-primary" @click="navigate">
               {{ t('message.start_without_signup') }}
