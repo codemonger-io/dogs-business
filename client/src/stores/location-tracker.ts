@@ -29,16 +29,34 @@ export const useLocationTracker = defineStore('location-tracker', () => {
   const lastError = ref<any>()
 
   const currentLocation = ref<MinimalGeolocationPosition>()
+
+  const locationChanged = (location: MinimalGeolocationPosition) => {
+    currentLocation.value = location
+  }
+
   locationTracker.getCurrentLocation()
-    .then((location) => {
-      currentLocation.value = location
-    })
+    .then(locationChanged)
     .catch((err: any) => {
       console.error('failed to get current location', err)
       lastError.value = err
     })
 
-  return { currentLocation }
+  const startTracking = async () => {
+    locationTracker.addLocationChangeListener(locationChanged)
+    try {
+      await locationTracker.startTracking()
+    } catch (err) {
+      locationTracker.removeLocationChangeListener(locationChanged)
+      throw err
+    }
+  }
+
+  const stopTracking = async () => {
+    locationTracker.removeLocationChangeListener(locationChanged)
+    await locationTracker.stopTracking()
+  }
+
+  return { currentLocation, startTracking, stopTracking }
 })
 
 /**

@@ -3,6 +3,7 @@ export default {
     message: {
       agreement: '{0}および{1}に同意します。',
       do_you_want_to_be_a_friend_of_other_dog: 'ほかのユーザーのお友達(犬)とお友達になりたいですか?',
+      enable_location_tracking: '位置情報の取得を許可してください',
       functionalities_are_restricted: 'サインアップせずに利用できる{0}には制限があります。',
       get_started: '利用開始!',
       may_start_without_signup: 'サインアップせずに利用を開始することもできます。',
@@ -46,6 +47,7 @@ export default {
     message: {
       agreement: 'I agree to the {0} and the {1}.',
       do_you_want_to_be_a_friend_of_other_dog: 'Do you want to be a friend of other user\'s dog-friend?',
+      enable_location_tracking: 'Please enable location tracking',
       functionalities_are_restricted: 'There are restrictions on the available {0} if you skip sign-up.',
       get_started: 'Get started!',
       may_start_without_signup: 'You may start using without signing up.',
