@@ -14,15 +14,7 @@ import { useI18n } from 'vue-i18n'
 import mapboxConfig from '../configs/mapbox-config'
 import { useAccountManager } from '../stores/account-manager'
 import { useLocationTracker } from '../stores/location-tracker'
-
-const props = defineProps({
-  // duration in milliseconds of easing delay to track the current location
-  easeDurationInMs: {
-    type: Number,
-    default: 500,
-    validator: (ms: number) => ms >= 0
-  }
-})
+import MapActionsPopup from './MapActionsPopup.vue'
 
 const { t } = useI18n()
 
@@ -36,6 +28,8 @@ if (self == null) {
 
 const mapContainer = ref<HTMLElement>()
 const map = ref<mapboxgl.Map>()
+const actionsPopupContainer = ref<HTMLElement>()
+const actionsPopup = ref<mapboxgl.Popup>()
 
 // configures `mapboxgl` whenever the account info is updated
 watch(
@@ -97,6 +91,9 @@ onMounted(() => {
   if (mapContainer.value == null) {
     throw new Error('map container is unavailable')
   }
+  if (actionsPopupContainer.value == null) {
+    throw new Error('actions popup container is unavailable')
+  }
   if (map.value != null) {
     console.warn('map has already been initialized')
     return
@@ -111,6 +108,10 @@ onMounted(() => {
     center: [139.7671, 35.6812], // Tokyo station
     zoom: 15
   }))
+  actionsPopup.value = markRaw(new mapboxgl.Popup())
+  actionsPopup.value
+    .setDOMContent(actionsPopupContainer.value)
+    .addClassName('paper')
 })
 
 // tracks/untracks the current location when the tab visibility changes
@@ -122,9 +123,13 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibilityChanged)
 })
 
+const locationMarker = ref<mapboxgl.Marker>()
 let jumpToLocation = true
 watchEffect(() => {
   if (map.value == null) {
+    return
+  }
+  if (actionsPopup.value == null) {
     return
   }
   let coords = locationTracker.currentLocation?.coords
@@ -134,16 +139,26 @@ watchEffect(() => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('TheMap: tracking location:', coords)
   }
+  if (locationMarker.value == null) {
+    locationMarker.value = markRaw(new mapboxgl.Marker({
+      color: '#37C49F'
+    }))
+    locationMarker.value
+      .setLngLat([coords.longitude, coords.latitude])
+      .setPopup(actionsPopup.value)
+      .addTo(map.value)
+  } else {
+    locationMarker.value
+      .setLngLat([coords.longitude, coords.latitude])
+  }
+  actionsPopup.value
+    .setLngLat([coords.longitude, coords.latitude])
   if (jumpToLocation) {
     map.value.jumpTo({
       center: [coords.longitude, coords.latitude]
     })
+    actionsPopup.value.addTo(map.value)
     jumpToLocation = false
-  } else {
-    map.value.easeTo({
-      center: [coords.longitude, coords.latitude],
-      duration: props.easeDurationInMs
-    })
   }
 })
 
@@ -178,11 +193,20 @@ watch(() => locationTracker.state, (state) => {
 
 <template>
   <div ref="mapContainer" class="map-container"></div>
+  <div class="hidden">
+    <div ref="actionsPopupContainer">
+      <MapActionsPopup />
+    </div>
+  </div>
 </template>
 
 <style scope>
 .map-container {
   width: 100%;
   height: 100%;
+}
+
+.hidden {
+  display: none;
 }
 </style>

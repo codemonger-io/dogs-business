@@ -13,6 +13,13 @@
   --b-scheme-invert: var(--paper-invert);
   --b-scheme-invert-bis: var(--paper-invert-bis);
   --b-scheme-invert-ter: var(--paper-invert-ter);
+
+  .mapboxgl-popup-tip {
+    border-top-color: var(--paper-color);
+  }
+  .mapboxgl-popup-content {
+    background-color: var(--paper-color);
+  }
 }
 
 .box {
