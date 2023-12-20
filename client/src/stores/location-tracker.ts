@@ -8,6 +8,16 @@ import type { MinimalGeolocationPosition } from '../types/geolocation'
 export const LOCATION_TRACKER_INJECTION_KEY =
   Symbol() as InjectionKey<LocationTracker>
 
+/** State of the location tracker. */
+export type LocationTrackerState =
+  | 'untracking'
+  | 'starting_tracking'
+  | 'tracking'
+  | 'permission_denied'
+  | 'unavailable'
+
+const TRACKING_STATES = ['starting_tracking', 'tracking']
+
 /**
  * Pinia store for the location tracker.
  *
@@ -26,37 +36,60 @@ export const useLocationTracker = defineStore('location-tracker', () => {
     throw new Error('no location tracker is provided')
   }
 
-  const lastError = ref<any>()
-
+  const state = ref<LocationTrackerState>('untracking')
   const currentLocation = ref<MinimalGeolocationPosition>()
 
-  const locationChanged = (location: MinimalGeolocationPosition) => {
-    currentLocation.value = location
-  }
+  // TODO: I think the following code is not HMR-ready. Listeners will leak
+  //       every time HMR occurs.
+  locationTracker.addListener((event) => {
+    switch (event.type) {
+      case 'location_change':
+        state.value = 'tracking'
+        currentLocation.value = event.location
+        break
+      case 'tracking_stopped':
+        state.value = 'untracking'
+        currentLocation.value = undefined
+        break
+      case 'permission_denied':
+        state.value = 'permission_denied'
+        currentLocation.value = undefined
+        break
+      case 'unavailable':
+        state.value = 'unavailable'
+        currentLocation.value = undefined
+        break
+      default: {
+        // exhaustive cases must not lead here
+        const unreachable: never = event
+        console.warn(`unknown location tracker event: ${event}`)
+      }
+    }
+  })
 
-  locationTracker.getCurrentLocation()
-    .then(locationChanged)
-    .catch((err: any) => {
-      console.error('failed to get current location', err)
-      lastError.value = err
-    })
-
-  const startTracking = async () => {
-    locationTracker.addLocationChangeListener(locationChanged)
+  const startTracking = () => {
+    if (TRACKING_STATES.includes(state.value)) {
+      return
+    }
     try {
-      await locationTracker.startTracking()
+      state.value = 'starting_tracking'
+      locationTracker.startTracking()
     } catch (err) {
-      locationTracker.removeLocationChangeListener(locationChanged)
+      state.value = 'unavailable'
       throw err
     }
   }
 
-  const stopTracking = async () => {
-    locationTracker.removeLocationChangeListener(locationChanged)
-    await locationTracker.stopTracking()
+  const stopTracking = () => {
+    if (!TRACKING_STATES.includes(state.value)) {
+      return
+    }
+    locationTracker.stopTracking()
+    state.value = 'untracking'
+    currentLocation.value = undefined
   }
 
-  return { currentLocation, startTracking, stopTracking }
+  return { currentLocation, startTracking, state, stopTracking }
 })
 
 /**

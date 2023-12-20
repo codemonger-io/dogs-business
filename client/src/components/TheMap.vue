@@ -70,24 +70,19 @@ const onVisibilityChanged = async () => {
   switch (document.visibilityState) {
     case 'visible':
       // resumes tracking the current location
-      initialJump = false
+      jumpToLocation = true
       try {
-        await locationTracker.startTracking()
-      } catch (error) {
-        console.error(error)
-        // @ts-ignore
-        self.proxy?.$buefy.toast.open({
-          message: t('message.enable_location_tracking'),
-          type: 'is-danger'
-        })
+        locationTracker.startTracking()
+      } catch (err) {
+        console.error('TheMap: failed to start tracking:', err)
       }
       break
     case 'hidden':
       // stops tracking the current location
       try {
-        await locationTracker.stopTracking()
-      } catch (error) {
-        console.error(error)
+        locationTracker.stopTracking()
+      } catch (err) {
+        console.error('TheMap: failed to stop tracking:', err)
       }
       break
     default: {
@@ -127,7 +122,7 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibilityChanged)
 })
 
-let initialJump = true
+let jumpToLocation = true
 watchEffect(() => {
   if (map.value == null) {
     return
@@ -137,13 +132,13 @@ watchEffect(() => {
     return
   }
   if (process.env.NODE_ENV !== 'production') {
-    console.log('tracking location:', coords)
+    console.log('TheMap: tracking location:', coords)
   }
-  if (initialJump) {
+  if (jumpToLocation) {
     map.value.jumpTo({
       center: [coords.longitude, coords.latitude]
     })
-    initialJump = false
+    jumpToLocation = false
   } else {
     map.value.easeTo({
       center: [coords.longitude, coords.latitude],
@@ -151,6 +146,34 @@ watchEffect(() => {
     })
   }
 })
+
+watch(() => locationTracker.state, (state) => {
+  switch (state) {
+    case 'untracking':
+    case 'starting_tracking':
+    case 'tracking':
+      break // OK
+    case 'permission_denied':
+      // @ts-ignore
+      self.proxy?.$buefy.toast.open({
+        message: t('message.enable_location_tracking'),
+        type: 'is-danger'
+      })
+      break
+    case 'unavailable':
+      // @ts-ignore
+      self.proxy?.$buefy.toast.open({
+        message: t('message.location_tracking_unavailable'),
+        type: 'is-danger'
+      })
+      break
+    default: {
+      // exhaustive cases must not lead here
+      const unreachable: never = state
+      throw new RangeError(`unknown location tracking state: ${state}`)
+    }
+  }
+}, { immediate: true })
 </script>
 
 <template>

@@ -9,7 +9,10 @@ import Buefy from '@ntohq/buefy-next'
 import App from './App.vue'
 import mapboxConfig from './configs/mapbox-config'
 import type { AccountInfo, GuestAccountInfo } from './lib/account-manager'
-import type { LocationChangeListener } from './lib/location-tracker'
+import type {
+  LocationTrackerEvent,
+  LocationTrackerEventListener
+} from './lib/location-tracker'
 import { accountManagerProvider } from './stores/account-manager'
 import { locationTrackerProvider } from './stores/location-tracker'
 import router from './router'
@@ -45,31 +48,22 @@ app.use(accountManagerProvider({
   }
 }))
 
-const locationListeners: LocationChangeListener[] = []
+const locationListeners: LocationTrackerEventListener[] = []
+function notifyLocationListeners(event: LocationTrackerEvent) {
+  locationListeners.forEach((l) => l(event))
+}
 let locationWatchId: number | undefined = undefined
 app.use(locationTrackerProvider({
-  addLocationChangeListener(listener: LocationChangeListener) {
+  addListener(listener: LocationTrackerEventListener) {
     locationListeners.push(listener)
-  },
-  removeLocationChangeListener(listener: LocationChangeListener) {
-    const index = locationListeners.indexOf(listener)
-    if (index !== -1) {
-      locationListeners.splice(index, 1)
+    return () => {
+      const index = locationListeners.indexOf(listener)
+      if (index !== -1) {
+        locationListeners.splice(index, 1)
+      }
     }
   },
-  async getCurrentLocation() {
-    if (typeof navigator.geolocation === 'undefined') {
-      throw new Error('navigator.geolocation is unavailable')
-    }
-    return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        maximumAge: 3000,
-        timeout: 3000,
-        enableHighAccuracy: true
-      })
-    })
-  },
-  async startTracking() {
+  startTracking() {
     if (locationWatchId != null) {
       console.warn('already tracking location')
       return
@@ -79,12 +73,23 @@ app.use(locationTrackerProvider({
     }
     locationWatchId = navigator.geolocation.watchPosition(
       (location) => {
-        for (const listener of locationListeners) {
-          listener(location)
-        }
+        notifyLocationListeners({ type: 'location_change', location })
       },
       (err) => {
         console.error('location tracking error:', err)
+        switch (err.code) {
+          case 1: // PERMISSION_DENIED
+            notifyLocationListeners({ type: 'permission_denied' })
+            break
+          case 2: // POSITION_UNAVAILABLE
+            notifyLocationListeners({ type: 'unavailable' })
+            break
+          case 3: // TIMEOUT
+            console.warn('location tracking timeout')
+            break
+          default:
+            console.warn(`unknown location tracking error: ${err.code}`)
+        }
       },
       {
         maximumAge: 3000,
@@ -93,7 +98,7 @@ app.use(locationTrackerProvider({
       }
     )
   },
-  async stopTracking() {
+  stopTracking() {
     if (locationWatchId == null) {
       console.warn('not tracking location')
       return
@@ -103,6 +108,7 @@ app.use(locationTrackerProvider({
     }
     navigator.geolocation.clearWatch(locationWatchId)
     locationWatchId = undefined
+    notifyLocationListeners({ type: 'tracking_stopped' })
   }
 }))
 
