@@ -2,6 +2,7 @@ export default {
   ja: {
     message: {
       agreement: '{0}および{1}に同意します。',
+      clean_up_after: '{0}の後片付けをしましょう!',
       do_you_want_to_be_a_friend_of_other_dog: 'ほかのユーザーのお友達(犬)とお友達になりたいですか?',
       enable_location_tracking: '位置情報の取得を許可してください',
       functionalities_are_restricted: 'サインアップせずに利用できる{0}には制限があります。',
@@ -39,6 +40,7 @@ export default {
       privacy_policy: 'プライバシーポリシー',
       signup: 'サインアップ',
       terms_of_service: '利用規約',
+      undo: '取り消し',
       username: 'ユーザー名',
       without_signup: 'サインアップなし',
       your_dog_friend: 'お友達(犬)'
@@ -51,6 +53,7 @@ export default {
   en: {
     message: {
       agreement: 'I agree to the {0} and the {1}.',
+      clean_up_after: 'Clean up after {0}!',
       do_you_want_to_be_a_friend_of_other_dog: 'Do you want to be a friend of other user\'s dog-friend?',
       enable_location_tracking: 'Please enable location tracking',
       functionalities_are_restricted: 'There are restrictions on the available {0} if you skip sign-up.',
@@ -88,6 +91,7 @@ export default {
       privacy_policy: 'Privacy Policy',
       signup: 'Sign-up',
       terms_of_service: 'Terms of Service',
+      undo: 'undo',
       username: 'Username',
       without_signup: 'wo Sign-up',
       your_dog_friend: 'your dog-friend'

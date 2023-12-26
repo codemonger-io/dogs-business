@@ -189,16 +189,36 @@ watch(() => locationTracker.state, (state) => {
     }
   }
 }, { immediate: true })
+
+const placePee = () => {
+  console.log('placing pee')
+  askCleanup()
+}
+
+const placePoo = () => {
+  console.log('placing poo')
+  askCleanup()
+}
+
+const askCleanup = () => {
+  self.proxy?.$buefy.snackbar.open({
+    message: t('message.clean_up_after', [t('term.your_dog_friend')]),
+    type: 'is-warning',
+    position: 'is-top',
+    actionText: t('term.undo'),
+    duration: 3000,
+    onAction: () => {
+      console.log('undoing')
+    }
+  })
+}
 </script>
 
 <template>
   <div ref="mapContainer" class="map-container"></div>
   <div class="hidden">
     <div ref="actionsPopupContainer">
-      <MapActionsPopup
-        @pee="() => console.log('placing pee')"
-        @poo="() => console.log('placing poo')"
-      />
+      <MapActionsPopup @pee="placePee" @poo="placePoo" />
     </div>
   </div>
 </template>
