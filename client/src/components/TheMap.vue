@@ -195,7 +195,10 @@ watch(() => locationTracker.state, (state) => {
   <div ref="mapContainer" class="map-container"></div>
   <div class="hidden">
     <div ref="actionsPopupContainer">
-      <MapActionsPopup />
+      <MapActionsPopup
+        @pee="() => console.log('placing pee')"
+        @poo="() => console.log('placing poo')"
+      />
     </div>
   </div>
 </template>

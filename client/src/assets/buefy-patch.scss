@@ -1,3 +1,19 @@
+.button {
+  &.is-rounded {
+    &.is-circle-icon {
+      padding-left: $button-padding-horizontal;
+      padding-right: $button-padding-horizontal;
+    }
+  }
+}
+
+.icon {
+  svg {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
 .modal {
   .modal-close {
     background-color: color-mix(in hsl, var(--b-scheme-invert) 20%, transparent);

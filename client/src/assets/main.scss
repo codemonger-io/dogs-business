@@ -1,6 +1,7 @@
 @import 'mapbox-gl/dist/mapbox-gl.css';
 @import './base.scss';
-@import './modal.scss';
+/* base.css must be imported before */
+@import './buefy-patch.scss';
 
 :root {
   background-color: var(--dogs-theme);
