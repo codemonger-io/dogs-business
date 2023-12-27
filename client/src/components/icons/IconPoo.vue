@@ -36,7 +36,7 @@ const variantClass = computed(() => {
 <style scoped>
 svg {
   &.is-inactive-variant {
-    path, use {
+    & path, use {
       &[vectornator\:layerName="Body"] {
         fill: #A8BCE4;
         stroke: #404E64;

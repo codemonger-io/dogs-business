@@ -31,11 +31,11 @@ const variantClass = computed(() => {
 <style scoped>
 svg {
   &.is-inactive-variant {
-    path {
+    & path {
       fill: #A8BCE4;
       stroke: #404E64;
     }
-    path {
+    & path {
       &[vectornator\:layerName="Shade"] {
         fill: #404E64;
         stroke: #404E64;

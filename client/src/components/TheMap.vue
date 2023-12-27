@@ -87,6 +87,11 @@ const onVisibilityChanged = async () => {
   }
 }
 
+const getBusinessIconUrl = (businessType: string) => {
+  return new URL(`../assets/icons/${businessType}.png`, import.meta.url).href
+}
+const requestedImages = new Set<string>()
+
 onMounted(() => {
   if (mapContainer.value == null) {
     throw new Error('map container is unavailable')
@@ -108,6 +113,73 @@ onMounted(() => {
     center: [139.7671, 35.6812], // Tokyo station
     zoom: 15
   }))
+  map.value.on('styleimagemissing', (e) => {
+    const { id } = e
+    if (requestedImages.has(id)) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('image has already been requested:', id)
+      }
+      return
+    }
+    if (id.startsWith('dogs-business-')) {
+      const businessType = id.slice('dogs-business-'.length)
+      const url = getBusinessIconUrl(businessType)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('loading image:', url)
+      }
+      map.value!.loadImage(url, (err, image) => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('loaded image:', image)
+        }
+        if (err != null || image == null) {
+          console.error('failed to load icon', err)
+          requestedImages.delete(id)
+          throw err
+        }
+        map.value!.addImage(id, image)
+      })
+      requestedImages.add(id)
+    }
+  })
+  map.value.on('load', () => {
+    map.value!.addSource('active-business', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [139.3625, 35.4431]
+            },
+            properties: {
+              businessType: 'poo'
+            }
+          },
+          {
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [139.3644, 35.4394]
+            },
+            properties: {
+              businessType: 'pee'
+            }
+          }
+        ]
+      }
+    })
+    map.value!.addLayer({
+      id: 'active-business',
+      type: 'symbol',
+      source: 'active-business',
+      layout: {
+        'icon-image': ['concat', 'dogs-business-', ['get', 'businessType']],
+        'icon-size': 0.25
+      }
+    })
+  })
   actionsPopup.value = markRaw(new mapboxgl.Popup())
   actionsPopup.value
     .setDOMContent(actionsPopupContainer.value)
@@ -201,6 +273,7 @@ const placePoo = () => {
 }
 
 const askCleanup = () => {
+  // @ts-ignore
   self.proxy?.$buefy.snackbar.open({
     message: t('message.clean_up_after', [t('term.your_dog_friend')]),
     type: 'is-warning',
