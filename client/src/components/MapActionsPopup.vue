@@ -1,22 +1,30 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import type { Dog } from '../lib/dog-database'
 import { capitalize } from '../utils/strings'
 import IconPee from './icons/IconPee.vue'
 import IconPoo from './icons/IconPoo.vue'
 
 const { t } = useI18n()
 
+const props = defineProps<{ dog: Dog<unknown> }>()
+
 const emit = defineEmits<{
   pee: [],
   poo: []
 }>()
+
+const dogName = computed(() => {
+  return props.dog.name || t('term.your_dog_friend')
+})
 </script>
 
 <template>
   <div class="container">
     <p>
-      {{ t('message.what_is_the_business_here', [t('term.your_dog_friend')]) }}
+      {{ t('message.what_is_the_business_here', [dogName]) }}
     </p>
     <div class="block is-flex is-justify-content-center">
       <div class="action-item">

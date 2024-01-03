@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import mapboxgl from 'mapbox-gl'
 import {
+  computed,
   getCurrentInstance,
   markRaw,
   onMounted,
@@ -30,6 +31,11 @@ const mapContainer = ref<HTMLElement>()
 const map = ref<mapboxgl.Map>()
 const actionsPopupContainer = ref<HTMLElement>()
 const actionsPopup = ref<mapboxgl.Popup>()
+
+// current active dog
+const currentDog = computed(() => {
+  return accountManager.currentDog
+})
 
 // configures `mapboxgl` whenever the account info is updated
 watch(
@@ -92,6 +98,7 @@ const getBusinessIconUrl = (businessType: string) => {
 }
 const requestedImages = new Set<string>()
 
+// initializes the map on mounted
 onMounted(() => {
   if (mapContainer.value == null) {
     throw new Error('map container is unavailable')
@@ -195,6 +202,7 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibilityChanged)
 })
 
+// starts tracking the current location when the map is ready
 const locationMarker = ref<mapboxgl.Marker>()
 let jumpToLocation = true
 watchEffect(() => {
@@ -291,7 +299,17 @@ const askCleanup = () => {
   <div ref="mapContainer" class="map-container"></div>
   <div class="hidden">
     <div ref="actionsPopupContainer">
-      <MapActionsPopup @pee="placePee" @poo="placePoo" />
+      <MapActionsPopup
+        v-if="currentDog != null"
+        :dog="currentDog"
+        @pee="placePee"
+        @poo="placePoo"
+      />
+      <p v-else class="block">
+        <router-link :to="{ name: 'profile' }">
+          {{ t('message.register_your_dog_friend') }}
+        </router-link>
+      </p>
     </div>
   </div>
 </template>

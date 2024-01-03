@@ -9,11 +9,15 @@ import Buefy from '@ntohq/buefy-next'
 import App from './App.vue'
 import mapboxConfig from './configs/mapbox-config'
 import type { AccountInfo, GuestAccountInfo } from './lib/account-manager'
+import type { DogParams } from './lib/dog-database'
 import type {
   LocationTrackerEvent,
   LocationTrackerEventListener
 } from './lib/location-tracker'
-import { accountManagerProvider } from './stores/account-manager'
+import {
+  accountManagerProvider,
+  dogDatabaseManagerProvider
+} from './stores/account-manager'
 import { locationTrackerProvider } from './stores/location-tracker'
 import router from './router'
 import messages from './i18n'
@@ -45,6 +49,18 @@ app.use(accountManagerProvider({
     }
     accountInfo = guest
     return guest
+  }
+}))
+app.use(dogDatabaseManagerProvider({
+  async getGuestDogDatabase() {
+    return {
+      async createDog(params: DogParams) {
+        return {
+          ...params,
+          key: 1
+        }
+      }
+    }
   }
 }))
 

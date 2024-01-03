@@ -1,21 +1,27 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import { useAccountManager } from '../stores/account-manager'
 import { capitalize } from '../utils/strings'
 
 const router = useRouter()
 const { t } = useI18n()
+const { registerNewDogFriend } = useAccountManager()
 
 const dogName = ref('')
+const trimmedDogName = computed(() => dogName.value.trim())
 
 const close = () => {
   router.push({ name: 'map' })
 }
 
 const onSubmit = () => {
-  console.log('creating new dog profile for', dogName.value)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('creating new dog profile for', trimmedDogName.value)
+  }
+  registerNewDogFriend({ name: trimmedDogName.value })
   close()
 }
 </script>
@@ -57,6 +63,7 @@ const onSubmit = () => {
                     class="button is-primary"
                     type="submit"
                     :value="t('message.register_profile')"
+                    :disabled="!trimmedDogName"
                   >
                 </p>
               </form>
