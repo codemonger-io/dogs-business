@@ -31,6 +31,9 @@ devDependencies:
   '@tsconfig/node18':
     specifier: ^18.2.2
     version: 18.2.2
+  '@types/geojson':
+    specifier: ^7946.0.13
+    version: 7946.0.13
   '@types/jsdom':
     specifier: ^21.1.3
     version: 21.1.6
