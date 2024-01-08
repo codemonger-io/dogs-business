@@ -9,6 +9,7 @@ import Buefy from '@ntohq/buefy-next'
 import App from './App.vue'
 import mapboxConfig from './configs/mapbox-config'
 import type { AccountInfo, GuestAccountInfo } from './lib/account-manager'
+import type { BusinessRecordParamsOfDog } from './lib/business-record-database'
 import type { DogParams } from './lib/dog-database'
 import type {
   LocationTrackerEvent,
@@ -16,6 +17,7 @@ import type {
 } from './lib/location-tracker'
 import {
   accountManagerProvider,
+  businessRecordDatabaseManagerProvider,
   dogDatabaseManagerProvider
 } from './stores/account-manager'
 import { locationTrackerProvider } from './stores/location-tracker'
@@ -55,6 +57,18 @@ app.use(dogDatabaseManagerProvider({
   async getGuestDogDatabase() {
     return {
       async createDog(params: DogParams) {
+        return {
+          ...params,
+          key: 1
+        }
+      }
+    }
+  }
+}))
+app.use(businessRecordDatabaseManagerProvider({
+  async getGuestBusinessRecordDatabase() {
+    return {
+      async createBusinessRecord(params: BusinessRecordParamsOfDog<number>) {
         return {
           ...params,
           key: 1

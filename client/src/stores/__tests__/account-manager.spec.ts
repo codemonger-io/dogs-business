@@ -4,6 +4,11 @@ import { type App, createApp } from 'vue'
 
 import type { AccountManager } from '@/lib/account-manager'
 import type {
+  BusinessRecordDatabaseManager,
+  BusinessRecordParamsOfDog,
+  GuestBusinessRecordDatabase
+} from '@/lib/business-record-database'
+import type {
   Dog,
   DogDatabaseManager,
   DogParams,
@@ -11,29 +16,57 @@ import type {
 } from '@/lib/dog-database'
 import {
   accountManagerProvider,
+  businessRecordDatabaseManagerProvider,
   dogDatabaseManagerProvider,
   useAccountManager
 } from '@/stores/account-manager'
+
+const dummyAccountManager: AccountManager = {
+  async getAccountInfo() {
+    return { type: 'no-account' }
+  },
+  async createGuestAccount() {
+    return {
+      type: 'guest',
+      mapboxAccessToken: 'dummy token'
+    }
+  }
+}
+
+const dummyGuestDogDatabaseManager = {
+  async getGuestDogDatabase() {
+    return {
+      async createDog(params: DogParams) {
+        return {
+          ...params,
+          key: 1
+        }
+      }
+    }
+  }
+}
+
+const dummyBusinessRecordDatabaseManager = {
+  async getGuestBusinessRecordDatabase() {
+    return {
+      async createBusinessRecord(params: BusinessRecordParamsOfDog<number>) {
+        return {
+          ...params,
+          key: 1
+        }
+      }
+    }
+  }
+}
 
 describe('useAccountManager', () => {
   describe('without account manager provided', () => {
     beforeEach(() => {
       const app = createApp({})
-      const dogDatabaseManager = {
-        async getGuestDogDatabase() {
-          return {
-            async createDog(params: DogParams) {
-              return {
-                ...params,
-                key: 1
-              }
-            }
-          }
-        }
-      }
       const pinia = createPinia()
       app.use(pinia)
-      app.use(dogDatabaseManagerProvider(dogDatabaseManager))
+      app.use(dogDatabaseManagerProvider(dummyGuestDogDatabaseManager))
+      app.use(businessRecordDatabaseManagerProvider(dummyBusinessRecordDatabaseManager))
       setActivePinia(pinia)
     })
 
@@ -45,20 +78,10 @@ describe('useAccountManager', () => {
   describe('without dog database manager provided', () => {
     beforeEach(() => {
       const app = createApp({})
-      const accountManager: AccountManager = {
-        async getAccountInfo() {
-          return { type: 'no-account' }
-        },
-        async createGuestAccount() {
-          return {
-            type: 'guest',
-            mapboxAccessToken: 'dummy token'
-          }
-        }
-      }
       const pinia = createPinia()
       app.use(pinia)
-      app.use(accountManagerProvider(accountManager))
+      app.use(accountManagerProvider(dummyAccountManager))
+      app.use(businessRecordDatabaseManagerProvider(dummyBusinessRecordDatabaseManager))
       setActivePinia(pinia)
     })
 
@@ -67,10 +90,27 @@ describe('useAccountManager', () => {
     })
   })
 
-  describe('with accountManagerProviderv and dogDatabaseManagerProvider', () => {
+  describe('without business record database manager provided', () => {
+    beforeEach(() => {
+      const app = createApp({})
+      const pinia = createPinia()
+      app.use(pinia)
+      app.use(accountManagerProvider(dummyAccountManager))
+      app.use(dogDatabaseManagerProvider(dummyGuestDogDatabaseManager))
+      setActivePinia(pinia)
+    })
+
+    it('should throw Error', () => {
+      expect(() => useAccountManager()).toThrow(Error)
+    })
+  })
+
+  describe('with accountManagerProviderv, dogDatabaseManagerProvider, and businessRecordDatabaseManagerProvided', () => {
     let accountManager: AccountManager
     let guestDogDatabase: GuestDogDatabase
     let dogDatabaseManager: DogDatabaseManager
+    let guestBusinessRecordDatabase: GuestBusinessRecordDatabase
+    let businessRecordDatabaseManager: BusinessRecordDatabaseManager
 
     beforeEach(() => {
       const app = createApp({})
@@ -102,10 +142,26 @@ describe('useAccountManager', () => {
         }
       }
       vi.spyOn(dogDatabaseManager, 'getGuestDogDatabase')
+      guestBusinessRecordDatabase = {
+        async createBusinessRecord(params: BusinessRecordParamsOfDog<number>) {
+          return {
+            ...params,
+            key: 1
+          }
+        }
+      }
+      vi.spyOn(guestBusinessRecordDatabase, 'createBusinessRecord')
+      businessRecordDatabaseManager = {
+        async getGuestBusinessRecordDatabase() {
+          return guestBusinessRecordDatabase
+        }
+      }
+      vi.spyOn(businessRecordDatabaseManager, 'getGuestBusinessRecordDatabase')
       const pinia = createPinia()
       app.use(pinia)
       app.use(accountManagerProvider(accountManager))
       app.use(dogDatabaseManagerProvider(dogDatabaseManager))
+      app.use(businessRecordDatabaseManagerProvider(businessRecordDatabaseManager))
       setActivePinia(pinia)
     })
 
@@ -160,11 +216,48 @@ describe('useAccountManager', () => {
         })
 
         it('should call DogDatabaseManager.getGuestDogDatabase', () => {
-          expect(dogDatabaseManager.getGuestDogDatabase).toHaveBeenCalled()
+          expect(dogDatabaseManager.getGuestDogDatabase).toHaveBeenCalledWith({
+            type: 'guest',
+            mapboxAccessToken: 'dummy token'
+          })
         })
 
         it('should call GuestDogDatabase.createDog', () => {
-          expect(guestDogDatabase.createDog).toHaveBeenCalled()
+          expect(guestDogDatabase.createDog).toHaveBeenCalledWith({
+            name: 'ポチ'
+          })
+        })
+
+        describe('then addBusinessRecord', () => {
+          beforeEach(async () => {
+            await store.addBusinessRecord({
+              businessType: 'poo',
+              location: {
+                latitude: 35.6812,
+                longitude: 139.7671
+              }
+            })
+          })
+
+          it('should call BusinessRecordDatabaseManager.getGuestBusinessRecordDatabase', () => {
+            expect(businessRecordDatabaseManager.getGuestBusinessRecordDatabase)
+              .toHaveBeenCalledWith({
+                type: 'guest',
+                mapboxAccessToken: 'dummy token'
+              })
+          })
+
+          it('should call GuestBusinessRecordDatabase.createBusinessRecord', () => {
+            expect(guestBusinessRecordDatabase.createBusinessRecord)
+              .toHaveBeenCalledWith({
+                businessType: 'poo',
+                location: {
+                  latitude: 35.6812,
+                  longitude: 139.7671
+                },
+                dogKey: 1
+              })
+          })
         })
       })
     })

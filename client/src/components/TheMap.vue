@@ -13,6 +13,7 @@ import {
 import { useI18n } from 'vue-i18n'
 
 import mapboxConfig from '../configs/mapbox-config'
+import type { BusinessType } from '../lib/business-record-database'
 import { useAccountManager } from '../stores/account-manager'
 import { useLocationTracker } from '../stores/location-tracker'
 import MapActionsPopup from './MapActionsPopup.vue'
@@ -272,12 +273,28 @@ watch(() => locationTracker.state, (state) => {
 
 const placePee = () => {
   console.log('placing pee')
+  addBusinessRecordAtCurrentMarker('pee')
   askCleanup()
 }
 
 const placePoo = () => {
   console.log('placing poo')
+  addBusinessRecordAtCurrentMarker('poo')
   askCleanup()
+}
+
+const addBusinessRecordAtCurrentMarker = (businessType: BusinessType) => {
+  if (locationMarker.value == null) {
+    throw new Error('location marker is unavailable')
+  }
+  const { lng, lat } = locationMarker.value.getLngLat()
+  accountManager.addBusinessRecord({
+    businessType,
+    location: {
+      longitude: lng,
+      latitude: lat
+    }
+  })
 }
 
 const askCleanup = () => {

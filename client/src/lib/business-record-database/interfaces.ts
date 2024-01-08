@@ -1,0 +1,50 @@
+import type { GuestAccountInfo } from '../account-manager'
+import type { BusinessRecordParamsOfDog } from './types'
+
+/** Interface of business record database managers. */
+export interface BusinessRecordDatabaseManager {
+  /**
+   * Returns the business record database for a guest.
+   *
+   * @remarks
+   *
+   * The guest business record database is supposed to be an IndexedDB store.
+   * Creates a new IndexedDB store if no store exists for the guest.
+   *
+   * @throws Error
+   *
+   *   If the guest business record database cannot be created, or opened.
+   */
+  getGuestBusinessRecordDatabase(
+    guestInfo: GuestAccountInfo
+  ): Promise<GuestBusinessRecordDatabase>
+}
+
+/**
+ * Interface of business record databases.
+ *
+ * @typeParam RecordKey
+ *
+ *   Type representing record keys.
+ *
+ * @typeParam DogKey
+ *
+ *   Type representing dog keys.
+ */
+export interface BusinessRecordDatabase<RecordKey, DogKey=RecordKey> {
+  /** Creates a new business record in the database. */
+  createBusinessRecord(
+    record: BusinessRecordParamsOfDog<DogKey>
+  ): Promise<BusinessRecord<RecordKey, DogKey>>
+}
+
+/** Interface of business record databases for guest accounts. */
+export interface GuestBusinessRecordDatabase extends BusinessRecordDatabase<number> {}
+
+/** Interface of business records stored in databases. */
+export interface BusinessRecord<RecordKey, DogKey>
+  extends BusinessRecordParamsOfDog<DogKey>
+{
+  /** Key to identify the record in the database. */
+  readonly key: RecordKey
+}
