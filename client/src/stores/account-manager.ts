@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { type App, type InjectionKey, inject, ref } from 'vue'
+import { type App, type InjectionKey, inject, markRaw, ref } from 'vue'
 
 import type {
   AccountInfo,
@@ -7,6 +7,7 @@ import type {
   GuestAccountInfo
 } from '../lib/account-manager'
 import type {
+  BusinessRecord,
   BusinessRecordDatabaseManager,
   BusinessRecordParams,
   BusinessType
@@ -73,6 +74,9 @@ export const useAccountManager = defineStore('accountManager', () => {
     })
 
   const currentDog = ref<Dog<unknown>>()
+
+  // NOTE: update `activeBusinessRecords` in the immutable manner
+  const activeBusinessRecords = ref<BusinessRecord<unknown, unknown>[]>()
 
   const createGuestAccount = async () => {
     // TODO: fail if the account already exists
@@ -154,11 +158,16 @@ export const useAccountManager = defineStore('accountManager', () => {
     try {
       const recordDb = await businessRecordDatabaseManager
         .getGuestBusinessRecordDatabase(accountInfo)
-      await recordDb.createBusinessRecord({
+      const record = await recordDb.createBusinessRecord({
         ...recordParams,
         dogKey: dog.key
       })
-      // TODO: update business record map layer source
+      // prepends the new record to `activeBusinessRecords`
+      // avoids deep reactivity to reduce the overhead
+      activeBusinessRecords.value = markRaw([
+        record,
+        ...(activeBusinessRecords.value ?? [])
+      ])
     } catch (err) {
       console.error('failed to add business record of guest', err)
       throw err
@@ -167,6 +176,7 @@ export const useAccountManager = defineStore('accountManager', () => {
 
   return {
     accountInfo,
+    activeBusinessRecords,
     addBusinessRecord,
     createGuestAccount,
     currentDog,

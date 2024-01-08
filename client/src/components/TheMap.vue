@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { FeatureCollection } from 'geojson'
 import mapboxgl from 'mapbox-gl'
 import {
   computed,
@@ -14,6 +15,7 @@ import { useI18n } from 'vue-i18n'
 
 import mapboxConfig from '../configs/mapbox-config'
 import type { BusinessType } from '../lib/business-record-database'
+import { convertBusinessRecordsToGeoJSON } from '../lib/business-record-database'
 import { useAccountManager } from '../stores/account-manager'
 import { useLocationTracker } from '../stores/location-tracker'
 import MapActionsPopup from './MapActionsPopup.vue'
@@ -30,6 +32,7 @@ if (self == null) {
 
 const mapContainer = ref<HTMLElement>()
 const map = ref<mapboxgl.Map>()
+const isMapLoaded = ref(false)
 const actionsPopupContainer = ref<HTMLElement>()
 const actionsPopup = ref<mapboxgl.Popup>()
 
@@ -66,7 +69,7 @@ watch(
 
 const onVisibilityChanged = async () => {
   if (process.env.NODE_ENV !== 'production') {
-    console.log('visibility changed:', document.visibilityState)
+    console.log('TheMap', 'visibility changed:', document.visibilityState)
   }
   switch (document.visibilityState) {
     case 'visible':
@@ -75,7 +78,7 @@ const onVisibilityChanged = async () => {
       try {
         locationTracker.startTracking()
       } catch (err) {
-        console.error('TheMap: failed to start tracking:', err)
+        console.error('TheMap', 'failed to start tracking:', err)
       }
       break
     case 'hidden':
@@ -83,13 +86,13 @@ const onVisibilityChanged = async () => {
       try {
         locationTracker.stopTracking()
       } catch (err) {
-        console.error('TheMap: failed to stop tracking:', err)
+        console.error('TheMap', 'failed to stop tracking:', err)
       }
       break
     default: {
       // exhaustive cases must not lead here
       const unreachable: never = document.visibilityState
-      console.warn(`unknown visibility state: ${document.visibilityState}`)
+      console.warn('TheMap', `unknown visibility state: ${document.visibilityState}`)
     }
   }
 }
@@ -108,11 +111,11 @@ onMounted(() => {
     throw new Error('actions popup container is unavailable')
   }
   if (map.value != null) {
-    console.warn('map has already been initialized')
+    console.warn('TheMap', 'map has already been initialized')
     return
   }
   if (!mapboxgl.accessToken) {
-    console.warn('no Mapbox access token')
+    console.warn('TheMap', 'no Mapbox access token')
     return
   }
   map.value = markRaw(new mapboxgl.Map({
@@ -125,7 +128,7 @@ onMounted(() => {
     const { id } = e
     if (requestedImages.has(id)) {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('image has already been requested:', id)
+        console.log('TheMap', 'image has already been requested:', id)
       }
       return
     }
@@ -133,14 +136,14 @@ onMounted(() => {
       const businessType = id.slice('dogs-business-'.length)
       const url = getBusinessIconUrl(businessType)
       if (process.env.NODE_ENV !== 'production') {
-        console.log('loading image:', url)
+        console.log('TheMap', 'loading image:', url)
       }
       map.value!.loadImage(url, (err, image) => {
         if (process.env.NODE_ENV !== 'production') {
-          console.log('loaded image:', image)
+          console.log('TheMap', 'loaded image:', image)
         }
         if (err != null || image == null) {
-          console.error('failed to load icon', err)
+          console.error('TheMap', 'failed to load icon', err)
           requestedImages.delete(id)
           throw err
         }
@@ -150,35 +153,45 @@ onMounted(() => {
     }
   })
   map.value.on('load', () => {
-    map.value!.addSource('active-business', {
+    isMapLoaded.value = true
+  })
+  actionsPopup.value = markRaw(new mapboxgl.Popup())
+  actionsPopup.value
+    .setDOMContent(actionsPopupContainer.value)
+    .addClassName('paper')
+})
+
+// configures the layer for active business records
+// updates the layer source if the source has already been attached,
+// otherwise, attaches the source and the layer
+watchEffect(() => {
+  if (!isMapLoaded.value) {
+    return
+  }
+  if (map.value == null) {
+    console.error('TheMap', 'map is loaded but no instance exists')
+    return
+  }
+  if (accountManager.activeBusinessRecords == null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'no active business records')
+    }
+    return
+  }
+  const data =
+    convertBusinessRecordsToGeoJSON(accountManager.activeBusinessRecords)
+  const source = map.value.getSource('active-business')
+  if (source != null) {
+    if (source.type !== 'geojson') {
+      throw new Error('active-business source must be "geojson"')
+    }
+    source.setData(data)
+  } else {
+    map.value.addSource('active-business', {
       type: 'geojson',
-      data: {
-        type: 'FeatureCollection',
-        features: [
-          {
-            type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: [139.3625, 35.4431]
-            },
-            properties: {
-              businessType: 'poo'
-            }
-          },
-          {
-            type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: [139.3644, 35.4394]
-            },
-            properties: {
-              businessType: 'pee'
-            }
-          }
-        ]
-      }
+      data
     })
-    map.value!.addLayer({
+    map.value.addLayer({
       id: 'active-business',
       type: 'symbol',
       source: 'active-business',
@@ -187,11 +200,7 @@ onMounted(() => {
         'icon-size': 0.25
       }
     })
-  })
-  actionsPopup.value = markRaw(new mapboxgl.Popup())
-  actionsPopup.value
-    .setDOMContent(actionsPopupContainer.value)
-    .addClassName('paper')
+  }
 })
 
 // tracks/untracks the current location when the tab visibility changes
@@ -218,7 +227,7 @@ watchEffect(() => {
     return
   }
   if (process.env.NODE_ENV !== 'production') {
-    console.log('TheMap: tracking location:', coords)
+    console.log('TheMap', 'tracking location:', coords)
   }
   if (locationMarker.value == null) {
     locationMarker.value = markRaw(new mapboxgl.Marker({
@@ -272,13 +281,17 @@ watch(() => locationTracker.state, (state) => {
 }, { immediate: true })
 
 const placePee = () => {
-  console.log('placing pee')
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('TheMap', 'placing pee')
+  }
   addBusinessRecordAtCurrentMarker('pee')
   askCleanup()
 }
 
 const placePoo = () => {
-  console.log('placing poo')
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('TheMap', 'placing poo')
+  }
   addBusinessRecordAtCurrentMarker('poo')
   askCleanup()
 }

@@ -5,6 +5,7 @@ import { type App, createApp } from 'vue'
 import type { AccountManager } from '@/lib/account-manager'
 import type {
   BusinessRecordDatabaseManager,
+  BusinessRecordParams,
   BusinessRecordParamsOfDog,
   GuestBusinessRecordDatabase
 } from '@/lib/business-record-database'
@@ -229,14 +230,26 @@ describe('useAccountManager', () => {
         })
 
         describe('then addBusinessRecord', () => {
+          const RECORD_PARAMS: BusinessRecordParams = {
+            businessType: 'poo',
+            location: {
+              latitude: 35.6812,
+              longitude: 139.7671
+            }
+          }
+
           beforeEach(async () => {
-            await store.addBusinessRecord({
-              businessType: 'poo',
-              location: {
-                latitude: 35.6812,
-                longitude: 139.7671
+            await store.addBusinessRecord(RECORD_PARAMS)
+          })
+
+          it('should have the business record in activeBusinessRecords', () => {
+            expect(store.activeBusinessRecords).toEqual([
+              {
+                ...RECORD_PARAMS,
+                key: 1,
+                dogKey: 1
               }
-            })
+            ])
           })
 
           it('should call BusinessRecordDatabaseManager.getGuestBusinessRecordDatabase', () => {
@@ -250,11 +263,7 @@ describe('useAccountManager', () => {
           it('should call GuestBusinessRecordDatabase.createBusinessRecord', () => {
             expect(guestBusinessRecordDatabase.createBusinessRecord)
               .toHaveBeenCalledWith({
-                businessType: 'poo',
-                location: {
-                  latitude: 35.6812,
-                  longitude: 139.7671
-                },
+                ...RECORD_PARAMS,
                 dogKey: 1
               })
           })
