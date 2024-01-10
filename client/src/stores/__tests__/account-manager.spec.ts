@@ -23,7 +23,7 @@ import {
 } from '@/stores/account-manager'
 
 const dummyAccountManager: AccountManager = {
-  async getAccountInfo() {
+  async loadAccountInfo() {
     return { type: 'no-account' }
   },
   async saveAccountInfo() {},
@@ -120,7 +120,7 @@ describe('useAccountManager', () => {
     beforeEach(() => {
       const app = createApp({})
       accountManager = {
-        async getAccountInfo() {
+        async loadAccountInfo() {
           return { type: 'no-account' }
         },
         async saveAccountInfo() {},
@@ -131,7 +131,7 @@ describe('useAccountManager', () => {
           }
         }
       }
-      vi.spyOn(accountManager, 'getAccountInfo')
+      vi.spyOn(accountManager, 'loadAccountInfo')
       vi.spyOn(accountManager, 'saveAccountInfo')
       vi.spyOn(accountManager, 'createGuestAccount')
       guestDogDatabase = {
@@ -175,9 +175,9 @@ describe('useAccountManager', () => {
       setActivePinia(pinia)
     })
 
-    it('should call AccountManager.getAccountInfo', () => {
+    it('should call AccountManager.loadAccountInfo', () => {
       useAccountManager()
-      expect(accountManager.getAccountInfo).toHaveBeenCalled()
+      expect(accountManager.loadAccountInfo).toHaveBeenCalled()
     })
 
     describe('with accountInfo loaded', () => {
@@ -185,8 +185,8 @@ describe('useAccountManager', () => {
 
       beforeEach(async () => {
         store = useAccountManager()
-        // waits for getAccountInfo to make sure `accountInfo` is resolved
-        await accountManager.getAccountInfo()
+        // waits for loadAccountInfo to make sure `accountInfo` is resolved
+        await accountManager.loadAccountInfo()
       })
 
       it('should have accountInfo "no-account"', () => {

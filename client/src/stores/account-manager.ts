@@ -72,8 +72,8 @@ export const useAccountManager = defineStore('accountManager', () => {
 
   // loads the remembrered account info
   accountManager
-    .getAccountInfo()
-    .then((info: AccountInfo) => accountInfo.value = info)
+    .loadAccountInfo()
+    .then((account: AccountInfo) => accountInfo.value = account)
     .catch((err: any) => {
       console.error('failed to obtain account info', err)
       lastError.value = err

@@ -41,7 +41,7 @@ app.use(Buefy)
 
 let accountInfo: AccountInfo = { type: 'no-account' }
 app.use(accountManagerProvider({
-  async getAccountInfo() {
+  async loadAccountInfo() {
     return accountInfo
   },
   async saveAccountInfo(account) {

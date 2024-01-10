@@ -3,13 +3,13 @@ import type { AccountInfo, GuestAccountInfo } from './types'
 /** Interface of account managers. */
 export interface AccountManager {
   /**
-   * Returns the stored account info.
+   * Loads the stored account info.
    *
    * @remarks
    *
    * Account info is supposed to be stored in `localStorage`.
    */
-  getAccountInfo(): Promise<AccountInfo>
+  loadAccountInfo(): Promise<AccountInfo>
 
   /**
    * Saves a given account info in the store.
