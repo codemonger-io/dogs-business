@@ -26,6 +26,7 @@ const dummyAccountManager: AccountManager = {
   async getAccountInfo() {
     return { type: 'no-account' }
   },
+  async saveAccountInfo() {},
   async createGuestAccount() {
     return {
       type: 'guest',
@@ -122,6 +123,7 @@ describe('useAccountManager', () => {
         async getAccountInfo() {
           return { type: 'no-account' }
         },
+        async saveAccountInfo() {},
         async createGuestAccount() {
           return {
             type: 'guest',
@@ -130,6 +132,7 @@ describe('useAccountManager', () => {
         }
       }
       vi.spyOn(accountManager, 'getAccountInfo')
+      vi.spyOn(accountManager, 'saveAccountInfo')
       vi.spyOn(accountManager, 'createGuestAccount')
       guestDogDatabase = {
         async createDog(params: DogParams) {
@@ -177,18 +180,28 @@ describe('useAccountManager', () => {
       expect(accountManager.getAccountInfo).toHaveBeenCalled()
     })
 
-    it('should have accountInfo "no-account"', async () => {
-      const store = useAccountManager()
-      // waits for getAccountInfo to make sure `accountInfo` is resolved
-      await accountManager.getAccountInfo()
-      expect(store.accountInfo).toEqual({ type: 'no-account' })
-    })
+    describe('with accountInfo loaded', () => {
+      let store: ReturnType<typeof useAccountManager>
 
-    it('should have lastError undefined', async () => {
-      const store = useAccountManager()
-      // waits for getAccountInfo to make sure `lastError` is updated
-      await accountManager.getAccountInfo()
-      expect(store.lastError).toBeUndefined()
+      beforeEach(async () => {
+        store = useAccountManager()
+        // waits for getAccountInfo to make sure `accountInfo` is resolved
+        await accountManager.getAccountInfo()
+      })
+
+      it('should have accountInfo "no-account"', () => {
+        expect(store.accountInfo).toEqual({ type: 'no-account' })
+      })
+
+      it('should call AccountManager.saveAccountInfo', () => {
+        expect(accountManager.saveAccountInfo).toHaveBeenCalledWith({
+          type: 'no-account'
+        })
+      })
+
+      it('should have lastError undefined', () => {
+        expect(store.lastError).toBeUndefined()
+      })
     })
 
     describe('then createGuestAccount', () => {
@@ -210,8 +223,16 @@ describe('useAccountManager', () => {
         })
       })
 
+      it('should call AccountManager.saveAccountInfo', () => {
+        expect(accountManager.saveAccountInfo).toHaveBeenLastCalledWith({
+          type: 'guest',
+          mapboxAccessToken: 'dummy token'
+        })
+      })
+
       describe('then registerNewDogFriend', () => {
         beforeEach(async () => {
+          vi.mocked(accountManager.saveAccountInfo).mockClear()
           await store.registerNewDogFriend({ name: 'ポチ' })
         })
 
@@ -235,6 +256,14 @@ describe('useAccountManager', () => {
         it('should call GuestDogDatabase.createDog', () => {
           expect(guestDogDatabase.createDog).toHaveBeenCalledWith({
             name: 'ポチ'
+          })
+        })
+
+        it('should call AccountManager.saveAccountInfo', () => {
+          expect(accountManager.saveAccountInfo).toHaveBeenLastCalledWith({
+            type: 'guest',
+            mapboxAccessToken: 'dummy token',
+            activeDogKey: 1
           })
         })
 

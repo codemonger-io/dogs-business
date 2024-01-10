@@ -44,6 +44,9 @@ app.use(accountManagerProvider({
   async getAccountInfo() {
     return accountInfo
   },
+  async saveAccountInfo(account) {
+    accountInfo = account
+  },
   async createGuestAccount() {
     const guest: GuestAccountInfo = {
       type: 'guest',

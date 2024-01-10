@@ -79,6 +79,24 @@ export const useAccountManager = defineStore('accountManager', () => {
       lastError.value = err
     })
 
+  // saves the account info when it is udpated
+  watch(
+    accountInfo,
+    async (account) => {
+      if (account == null) {
+        console.warn('account info should not become null')
+        return
+      }
+      try {
+        await accountManager.saveAccountInfo(account)
+      } catch (err) {
+        console.error('failed to save account info', err)
+        lastError.value = err
+      }
+    },
+    { deep: true }
+  )
+
   // loads the remembered dog
   watch(accountInfo, (account) => {
     if (account == null) {
