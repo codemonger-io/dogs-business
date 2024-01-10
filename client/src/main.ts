@@ -53,7 +53,7 @@ app.use(accountManagerProvider({
     return guest
   }
 }))
-let dogs: Dog<number>[] = []
+const dogs: Dog<number>[] = []
 app.use(dogDatabaseManagerProvider({
   async getGuestDogDatabase() {
     return {

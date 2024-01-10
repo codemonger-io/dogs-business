@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { FeatureCollection } from 'geojson'
 import mapboxgl from 'mapbox-gl'
 import {
   computed,
@@ -13,7 +12,6 @@ import {
 } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import mapboxConfig from '../configs/mapbox-config'
 import type { BusinessType } from '../lib/business-record-database'
 import { convertBusinessRecordsToGeoJSON } from '../lib/business-record-database'
 import { useAccountManager } from '../stores/account-manager'
@@ -55,7 +53,7 @@ const mapboxAccessToken = computed(() => {
     default: {
       // exhaustive cases must not lead here
       const unreachable: never = accountInfo
-      throw new Error(`unknown account type: ${accountInfo}`)
+      throw new Error(`unknown account type: ${unreachable}`)
     }
   }
 })
@@ -204,7 +202,7 @@ const onVisibilityChanged = async () => {
     default: {
       // exhaustive cases must not lead here
       const unreachable: never = document.visibilityState
-      console.warn('TheMap', `unknown visibility state: ${document.visibilityState}`)
+      console.warn('TheMap', `unknown visibility state: ${unreachable}`)
     }
   }
 }
@@ -279,7 +277,7 @@ watch(() => locationTracker.state, (state) => {
     default: {
       // exhaustive cases must not lead here
       const unreachable: never = state
-      throw new RangeError(`unknown location tracking state: ${state}`)
+      throw new RangeError(`unknown location tracking state: ${unreachable}`)
     }
   }
 }, { immediate: true })

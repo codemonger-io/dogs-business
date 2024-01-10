@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { type App, createApp } from 'vue'
+import { createApp } from 'vue'
 
 import type { AccountManager } from '@/lib/account-manager'
 import type {
@@ -11,7 +11,6 @@ import type {
   GuestBusinessRecordDatabase
 } from '@/lib/business-record-database'
 import type {
-  Dog,
   DogDatabaseManager,
   DogParams,
   GuestDogDatabase
@@ -44,7 +43,7 @@ const dummyGuestDogDatabaseManager = {
           key: 1
         }
       },
-      async getDog(key: number) {
+      async getDog() {
         return undefined
       }
     }
@@ -139,7 +138,7 @@ describe('useAccountManager', () => {
             key: 1
           }
         },
-        async getDog(key: number) {
+        async getDog() {
           return undefined
         }
       }

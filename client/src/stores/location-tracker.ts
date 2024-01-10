@@ -62,7 +62,7 @@ export const useLocationTracker = defineStore('location-tracker', () => {
       default: {
         // exhaustive cases must not lead here
         const unreachable: never = event
-        console.warn(`unknown location tracker event: ${event}`)
+        console.warn(`unknown location tracker event: ${unreachable}`)
       }
     }
   })

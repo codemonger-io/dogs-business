@@ -9,8 +9,7 @@ import type {
 import type {
   BusinessRecord,
   BusinessRecordDatabaseManager,
-  BusinessRecordParams,
-  BusinessType
+  BusinessRecordParams
 } from '../lib/business-record-database'
 import type { Dog, DogDatabaseManager, DogParams } from '../lib/dog-database'
 import { isGuestDog } from '../lib/dog-database'
