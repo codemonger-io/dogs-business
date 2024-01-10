@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { type App, type InjectionKey, inject, markRaw, ref } from 'vue'
+import { type App, type InjectionKey, inject, markRaw, ref, watch } from 'vue'
 
 import type {
   AccountInfo,
@@ -65,6 +65,13 @@ export const useAccountManager = defineStore('accountManager', () => {
   const lastError = ref<any>()
 
   const accountInfo = ref<AccountInfo>()
+
+  const currentDog = ref<Dog<unknown>>()
+
+  // NOTE: update `activeBusinessRecords` in an immutable manner
+  const activeBusinessRecords = ref<BusinessRecord<unknown, unknown>[]>()
+
+  // loads the remembrered account info
   accountManager
     .getAccountInfo()
     .then((info: AccountInfo) => accountInfo.value = info)
@@ -73,10 +80,48 @@ export const useAccountManager = defineStore('accountManager', () => {
       lastError.value = err
     })
 
-  const currentDog = ref<Dog<unknown>>()
+  // loads the remembered dog
+  watch(accountInfo, (account) => {
+    if (account == null) {
+      return
+    }
+    switch (account.type) {
+      case 'guest':
+        _loadGuestDogFriend(account)
+        break
+      case 'no-account':
+        break // does nothing
+      default: {
+        // exhaustive cases must not lead here
+        const unreachable: never = account
+        throw new Error(`unknown account type: ${unreachable}`)
+      }
+    }
+  })
 
-  // NOTE: update `activeBusinessRecords` in the immutable manner
-  const activeBusinessRecords = ref<BusinessRecord<unknown, unknown>[]>()
+  // loads the dog associated with the guest account.
+  // does nothing if the account has no dog friend, or if the dog friend has
+  // already been loaded.
+  const _loadGuestDogFriend = async (account: GuestAccountInfo) => {
+    const dogKey = account.activeDogKey
+    if (dogKey == null) {
+      return
+    }
+    if (currentDog.value?.key === dogKey) {
+      return
+    }
+    try {
+      const dogDb = await dogDatabaseManager.getGuestDogDatabase(account)
+      const dog = await dogDb.getDog(dogKey)
+      if (dog == null) {
+        throw new Error(`no dog friend with key: ${dogKey}`)
+      }
+      currentDog.value = dog
+    } catch (err) {
+      console.error('failed to load guest dog friend', err)
+      lastError.value = err
+    }
+  }
 
   const createGuestAccount = async () => {
     // TODO: fail if the account already exists
@@ -94,8 +139,7 @@ export const useAccountManager = defineStore('accountManager', () => {
     }
     switch (accountInfo.value.type) {
       case 'guest':
-        currentDog.value =
-          await _registerNewDogFriendOfGuest(accountInfo.value, dogParams)
+        await _registerNewDogFriendOfGuest(accountInfo.value, dogParams)
         break
       case 'no-account':
         throw new Error('account must be created first')
@@ -114,7 +158,11 @@ export const useAccountManager = defineStore('accountManager', () => {
   ) => {
     try {
       const dogDb = await dogDatabaseManager.getGuestDogDatabase(accountInfo)
-      return await dogDb.createDog(dogParams)
+      // we have to update currentDog then accountInfo.activeDogKey
+      // otherwise, the watcher of accountInfo will try to load the dog friend
+      const dog = await dogDb.createDog(dogParams)
+      currentDog.value = dog
+      accountInfo.activeDogKey = dog.key
     } catch (err) {
       console.error('failed to register guest dog friend', err)
       throw err

@@ -12,5 +12,7 @@ export type GuestAccountInfo = {
   /** Type: always 'guest'. */
   type: 'guest',
   /** Mapbox access token for the guest. */
-  mapboxAccessToken: string
+  mapboxAccessToken: string,
+  /** Key of the active dog. */
+  activeDogKey?: number
 }

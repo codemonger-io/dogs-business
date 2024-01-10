@@ -32,8 +32,26 @@ export interface DogDatabase<Key> {
    * @remarks
    *
    * The owner of the database will become the guardian of the created dog.
+   *
+   * @throws Error
+   *
+   *   If any error happens.
    */
   createDog(params: DogParams): Promise<Dog<Key>>
+
+  /**
+   * Returns the dog with a given key.
+   *
+   * @returns
+   *
+   *   Dog identified by `key`.
+   *   `undefined` if no dog is associated with `key`.
+   *
+   * @throws Error
+   *
+   *   If any error happens.
+   */
+  getDog(key: Key): Promise<Dog<Key> | undefined>
 }
 
 /** Interface of dog databases for guest accounts. */

@@ -1,15 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-
 import TheMap from '../components/TheMap.vue'
-
-const router = useRouter()
-
-onMounted(() => {
-  // TODO: show the profile only when no profile exists
-  router.push({ name: 'profile' })
-})
 </script>
 
 <template>

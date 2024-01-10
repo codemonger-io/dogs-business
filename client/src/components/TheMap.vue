@@ -41,81 +41,56 @@ const currentDog = computed(() => {
   return accountManager.currentDog
 })
 
-// configures `mapboxgl` whenever the account info is updated
-watch(
-  () => accountManager.accountInfo,
-  (accountInfo) => {
-    if (accountInfo == null) {
-      // loading
-      return
-    }
-    switch (accountInfo.type) {
-      case 'guest':
-        mapboxgl.accessToken = accountInfo.mapboxAccessToken
-        break
-      case 'no-account':
-        // TODO: is it legitimate to make the token empty?
-        mapboxgl.accessToken = ''
-        break
-      default: {
-        // exhaustive cases must not lead here
-        const unreachable: never = accountInfo
-        throw new RangeError(`unknown account type: ${accountInfo}`)
-      }
-    }
-  },
-  { immediate: true }
-)
-
-const onVisibilityChanged = async () => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('TheMap', 'visibility changed:', document.visibilityState)
+// current Mapbox access token
+const mapboxAccessToken = computed(() => {
+  const accountInfo = accountManager.accountInfo
+  if (accountInfo == null) {
+    return undefined
   }
-  switch (document.visibilityState) {
-    case 'visible':
-      // resumes tracking the current location
-      jumpToLocation = true
-      try {
-        locationTracker.startTracking()
-      } catch (err) {
-        console.error('TheMap', 'failed to start tracking:', err)
-      }
-      break
-    case 'hidden':
-      // stops tracking the current location
-      try {
-        locationTracker.stopTracking()
-      } catch (err) {
-        console.error('TheMap', 'failed to stop tracking:', err)
-      }
-      break
+  switch (accountInfo.type) {
+    case 'guest':
+      return accountInfo.mapboxAccessToken
+    case 'no-account':
+      return undefined
     default: {
       // exhaustive cases must not lead here
-      const unreachable: never = document.visibilityState
-      console.warn('TheMap', `unknown visibility state: ${document.visibilityState}`)
+      const unreachable: never = accountInfo
+      throw new Error(`unknown account type: ${accountInfo}`)
     }
   }
-}
+})
 
 const getBusinessIconUrl = (businessType: string) => {
   return new URL(`../assets/icons/${businessType}.png`, import.meta.url).href
 }
 const requestedImages = new Set<string>()
 
-// initializes the map on mounted
-onMounted(() => {
-  if (mapContainer.value == null) {
-    throw new Error('map container is unavailable')
-  }
-  if (actionsPopupContainer.value == null) {
-    throw new Error('actions popup container is unavailable')
-  }
-  if (map.value != null) {
-    console.warn('TheMap', 'map has already been initialized')
+// initializes the map when the Mapbox access token becomes available
+watchEffect(() => {
+  if (mapboxAccessToken.value == null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'Mapbox access token is not ready')
+    }
     return
   }
-  if (!mapboxgl.accessToken) {
-    console.warn('TheMap', 'no Mapbox access token')
+  mapboxgl.accessToken = mapboxAccessToken.value
+  // initializes the map if the map is not initialized yet
+  if (map.value != null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'map has already been initialized')
+    }
+    return
+  }
+  if (mapContainer.value == null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'map container is unavailable')
+    }
+    return
+  }
+  if (actionsPopupContainer.value == null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'actions popup container is unavailable')
+    }
     return
   }
   map.value = markRaw(new mapboxgl.Map({
@@ -204,6 +179,35 @@ watchEffect(() => {
 })
 
 // tracks/untracks the current location when the tab visibility changes
+const onVisibilityChanged = async () => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('TheMap', 'visibility changed:', document.visibilityState)
+  }
+  switch (document.visibilityState) {
+    case 'visible':
+      // resumes tracking the current location
+      jumpToLocation = true
+      try {
+        locationTracker.startTracking()
+      } catch (err) {
+        console.error('TheMap', 'failed to start tracking:', err)
+      }
+      break
+    case 'hidden':
+      // stops tracking the current location
+      try {
+        locationTracker.stopTracking()
+      } catch (err) {
+        console.error('TheMap', 'failed to stop tracking:', err)
+      }
+      break
+    default: {
+      // exhaustive cases must not lead here
+      const unreachable: never = document.visibilityState
+      console.warn('TheMap', `unknown visibility state: ${document.visibilityState}`)
+    }
+  }
+}
 onMounted(() => {
   document.addEventListener('visibilitychange', onVisibilityChanged)
   onVisibilityChanged()

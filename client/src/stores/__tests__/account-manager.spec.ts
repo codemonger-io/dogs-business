@@ -1,3 +1,4 @@
+import assert from 'node:assert'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { type App, createApp } from 'vue'
@@ -42,6 +43,9 @@ const dummyGuestDogDatabaseManager = {
           ...params,
           key: 1
         }
+      },
+      async getDog(key: number) {
+        return undefined
       }
     }
   }
@@ -134,6 +138,9 @@ describe('useAccountManager', () => {
             ...params,
             key: 1
           }
+        },
+        async getDog(key: number) {
+          return undefined
         }
       }
       vi.spyOn(guestDogDatabase, 'createDog')
@@ -216,11 +223,14 @@ describe('useAccountManager', () => {
           })
         })
 
+        it('should have the new dog key as accountInfo.activeDogKey', () => {
+          assert(store.accountInfo?.type === 'guest')
+          expect(store.accountInfo.activeDogKey).toEqual(1)
+        })
+
         it('should call DogDatabaseManager.getGuestDogDatabase', () => {
-          expect(dogDatabaseManager.getGuestDogDatabase).toHaveBeenCalledWith({
-            type: 'guest',
-            mapboxAccessToken: 'dummy token'
-          })
+          expect(dogDatabaseManager.getGuestDogDatabase)
+            .toHaveBeenCalledWith(store.accountInfo)
         })
 
         it('should call GuestDogDatabase.createDog', () => {
@@ -254,10 +264,7 @@ describe('useAccountManager', () => {
 
           it('should call BusinessRecordDatabaseManager.getGuestBusinessRecordDatabase', () => {
             expect(businessRecordDatabaseManager.getGuestBusinessRecordDatabase)
-              .toHaveBeenCalledWith({
-                type: 'guest',
-                mapboxAccessToken: 'dummy token'
-              })
+              .toHaveBeenCalledWith(store.accountInfo)
           })
 
           it('should call GuestBusinessRecordDatabase.createBusinessRecord', () => {

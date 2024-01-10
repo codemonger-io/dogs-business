@@ -10,7 +10,7 @@ import App from './App.vue'
 import mapboxConfig from './configs/mapbox-config'
 import type { AccountInfo, GuestAccountInfo } from './lib/account-manager'
 import type { BusinessRecordParamsOfDog } from './lib/business-record-database'
-import type { DogParams } from './lib/dog-database'
+import type { Dog, DogParams } from './lib/dog-database'
 import type {
   LocationTrackerEvent,
   LocationTrackerEventListener
@@ -47,20 +47,27 @@ app.use(accountManagerProvider({
   async createGuestAccount() {
     const guest: GuestAccountInfo = {
       type: 'guest',
-      mapboxAccessToken: mapboxConfig.guestAccessToken
+      mapboxAccessToken: mapboxConfig.guestAccessToken,
     }
     accountInfo = guest
     return guest
   }
 }))
+let dogs: Dog<number>[] = []
 app.use(dogDatabaseManagerProvider({
   async getGuestDogDatabase() {
     return {
       async createDog(params: DogParams) {
-        return {
+        const key = dogs.length + 1
+        const newDog: Dog<number> = {
           ...params,
-          key: 1
+          key
         }
+        dogs.push(newDog)
+        return newDog
+      },
+      async getDog(key: number) {
+        return dogs.find((dog) => dog.key === key)
       }
     }
   }
