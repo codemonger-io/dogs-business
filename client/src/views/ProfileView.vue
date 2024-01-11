@@ -17,12 +17,17 @@ const close = () => {
   router.push({ name: 'map' })
 }
 
-const onSubmit = () => {
+const onSubmit = async () => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('creating new dog profile for', trimmedDogName.value)
   }
-  registerNewDogFriend({ name: trimmedDogName.value })
-  close()
+  try {
+    await registerNewDogFriend({ name: trimmedDogName.value })
+    close()
+  } catch (err) {
+    // TODO: what can we do here?
+    console.error('ProfileView', err)
+  }
 }
 </script>
 
@@ -68,6 +73,7 @@ const onSubmit = () => {
                 </p>
               </form>
             </div>
+            <!-- TODO: disable for guest accounts -->
             <div class="block">
               <p>
                 <a href="#">

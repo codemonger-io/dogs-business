@@ -9,8 +9,8 @@ import Buefy from '@ntohq/buefy-next'
 import App from './App.vue'
 import mapboxConfig from './configs/mapbox-config'
 import type { AccountInfo, GuestAccountInfo } from './lib/account-manager'
-import type { BusinessRecordParamsOfDog } from './lib/business-record-database'
-import type { Dog, DogParams } from './lib/dog-database'
+import type { Dog } from './lib/dog-database'
+import { IndexedDBDriver } from './lib/indexeddb'
 import type {
   LocationTrackerEvent,
   LocationTrackerEventListener
@@ -39,6 +39,8 @@ app.use(i18n)
 // @ts-ignore
 app.use(Buefy)
 
+const indexedDBDriver = new IndexedDBDriver()
+
 let accountInfo: AccountInfo = { type: 'no-account' }
 app.use(accountManagerProvider({
   async loadAccountInfo() {
@@ -56,35 +58,16 @@ app.use(accountManagerProvider({
     return guest
   }
 }))
-const dogs: Dog<number>[] = []
 app.use(dogDatabaseManagerProvider({
   async getGuestDogDatabase() {
-    return {
-      async createDog(params: DogParams) {
-        const key = dogs.length + 1
-        const newDog: Dog<number> = {
-          ...params,
-          key
-        }
-        dogs.push(newDog)
-        return newDog
-      },
-      async getDog(key: number) {
-        return dogs.find((dog) => dog.key === key)
-      }
-    }
+    const connection = await indexedDBDriver.open()
+    return connection.getDogStore()
   }
 }))
 app.use(businessRecordDatabaseManagerProvider({
   async getGuestBusinessRecordDatabase() {
-    return {
-      async createBusinessRecord(params: BusinessRecordParamsOfDog<number>) {
-        return {
-          ...params,
-          key: 1
-        }
-      }
-    }
+    const connection = await indexedDBDriver.open()
+    return connection.getBusinessRecordStore()
   }
 }))
 
