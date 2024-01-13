@@ -9,6 +9,7 @@ import Buefy from '@ntohq/buefy-next'
 import App from './App.vue'
 import mapboxConfig from './configs/mapbox-config'
 import type { AccountInfo, GuestAccountInfo } from './lib/account-manager'
+import { AccountManagerImpl } from './lib/account-manager'
 import type { Dog } from './lib/dog-database'
 import { IndexedDBDriver } from './lib/indexeddb'
 import type {
@@ -41,23 +42,7 @@ app.use(Buefy)
 
 const indexedDBDriver = new IndexedDBDriver()
 
-let accountInfo: AccountInfo = { type: 'no-account' }
-app.use(accountManagerProvider({
-  async loadAccountInfo() {
-    return accountInfo
-  },
-  async saveAccountInfo(account) {
-    accountInfo = account
-  },
-  async createGuestAccount() {
-    const guest: GuestAccountInfo = {
-      type: 'guest',
-      mapboxAccessToken: mapboxConfig.guestAccessToken,
-    }
-    accountInfo = guest
-    return guest
-  }
-}))
+app.use(accountManagerProvider(new AccountManagerImpl()))
 app.use(dogDatabaseManagerProvider({
   async getGuestDogDatabase() {
     const connection = await indexedDBDriver.open()
