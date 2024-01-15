@@ -18,6 +18,9 @@ import { useAccountManager } from '../stores/account-manager'
 import { useLocationTracker } from '../stores/location-tracker'
 import MapActionsPopup from './MapActionsPopup.vue'
 
+const ACTIVE_BUSINESS_SOURCE_ID = 'active-business'
+const ACTIVE_BUSINESS_LAYER_ID = 'active-business'
+
 const { t } = useI18n()
 
 const accountManager = useAccountManager()
@@ -153,21 +156,21 @@ watchEffect(() => {
   }
   const data =
     convertBusinessRecordsToGeoJSON(accountManager.activeBusinessRecords)
-  const source = map.value.getSource('active-business')
+  const source = map.value.getSource(ACTIVE_BUSINESS_SOURCE_ID)
   if (source != null) {
     if (source.type !== 'geojson') {
       throw new Error('active-business source must be "geojson"')
     }
     source.setData(data)
   } else {
-    map.value.addSource('active-business', {
+    map.value.addSource(ACTIVE_BUSINESS_SOURCE_ID, {
       type: 'geojson',
       data
     })
     map.value.addLayer({
-      id: 'active-business',
+      id: ACTIVE_BUSINESS_LAYER_ID,
       type: 'symbol',
-      source: 'active-business',
+      source: ACTIVE_BUSINESS_SOURCE_ID,
       layout: {
         'icon-image': ['concat', 'dogs-business-', ['get', 'businessType']],
         'icon-size': 0.25
