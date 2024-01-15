@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { boxesIntersect, collectCollisionBoxesAndFeatures } from 'mapbox-collision-boxes'
 import mapboxgl from 'mapbox-gl'
 import {
   computed,
@@ -174,6 +175,30 @@ watchEffect(() => {
       layout: {
         'icon-image': ['concat', 'dogs-business-', ['get', 'businessType']],
         'icon-size': 0.25
+      }
+    })
+    // handles clicks on business records
+    map.value.on('click', ACTIVE_BUSINESS_LAYER_ID, async (event) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('TheMap', 'business record clicked', event)
+      }
+      const clickedRecordKey = event.features?.[0].properties?.recordKey
+      console.log('clicked record key', clickedRecordKey)
+      const collisionBoxes = await collectCollisionBoxesAndFeatures(
+        map.value!,
+        ACTIVE_BUSINESS_LAYER_ID
+      )
+      const clickedBox = collisionBoxes
+        .find((box) => box.feature.properties?.recordKey === clickedRecordKey)
+      if (clickedBox == null) {
+        console.warn('TheMap', 'clicked business record not found')
+        return
+      }
+      const hiddenBoxes = collisionBoxes.filter((box) => {
+        return box !== clickedBox && boxesIntersect(box.box, clickedBox.box)
+      })
+      for (const box of hiddenBoxes) {
+        console.log('hidden record key', box.feature.properties?.recordKey)
       }
     })
   }
