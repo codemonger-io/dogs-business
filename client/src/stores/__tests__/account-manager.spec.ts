@@ -59,6 +59,9 @@ const dummyBusinessRecordDatabaseManager = {
           ...params,
           key: 1
         }
+      },
+      async loadBusinessRecords() {
+        return []
       }
     }
   }
@@ -158,9 +161,13 @@ describe('useAccountManager', () => {
             ...params,
             key: 1
           }
+        },
+        async loadBusinessRecords() {
+          return []
         }
       }
       vi.spyOn(guestBusinessRecordDatabase, 'createBusinessRecord')
+      vi.spyOn(guestBusinessRecordDatabase, 'loadBusinessRecords')
       businessRecordDatabaseManager = {
         async getGuestBusinessRecordDatabase() {
           return guestBusinessRecordDatabase
@@ -259,6 +266,16 @@ describe('useAccountManager', () => {
           })
         })
 
+        it('should call BusinessRecordDatabaseManager.getGuestBusinessRecordDatabase', () => {
+          expect(businessRecordDatabaseManager.getGuestBusinessRecordDatabase)
+            .toHaveBeenCalledWith(store.accountInfo)
+        })
+
+        it('should call GuestBusinessRecordDatabase.loadBusinessRecords', () => {
+          expect(guestBusinessRecordDatabase.loadBusinessRecords)
+            .toHaveBeenCalledWith(1)
+        })
+
         it('should call AccountManager.saveAccountInfo', () => {
           expect(accountManager.saveAccountInfo).toHaveBeenLastCalledWith({
             type: 'guest',
@@ -277,6 +294,7 @@ describe('useAccountManager', () => {
           }
 
           beforeEach(async () => {
+            vi.mocked(businessRecordDatabaseManager.getGuestBusinessRecordDatabase).mockClear()
             await store.addBusinessRecord(RECORD_PARAMS)
           })
 

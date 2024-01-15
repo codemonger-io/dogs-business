@@ -140,6 +140,32 @@ export const useAccountManager = defineStore('accountManager', () => {
     }
   }
 
+  // loads the business records associated with the current dog when the
+  // current dog is updated.
+  watch(currentDog, async (dog) => {
+    if (accountInfo.value == null || dog == null) {
+      activeBusinessRecords.value = undefined
+      return
+    }
+    switch (accountInfo.value.type) {
+      case 'guest':
+        try {
+          _loadBusinessRecordsOfGuest(accountInfo.value, dog)
+        } catch (err) {
+          console.error('failed to load business records of guest', err)
+          lastError.value = err
+        }
+        break
+      case 'no-account':
+        activeBusinessRecords.value = undefined
+        break
+      default: {
+        const unreachable: never = accountInfo.value
+        console.error(`unknown account type: ${unreachable}`)
+      }
+    }
+  })
+
   const createGuestAccount = async () => {
     // TODO: fail if the account already exists
     try {
@@ -195,11 +221,16 @@ export const useAccountManager = defineStore('accountManager', () => {
     }
     switch (accountInfo.value.type) {
       case 'guest':
-        await _addBusinessRecordOfGuest(
-          accountInfo.value,
-          currentDog.value,
-          recordParams
-        )
+        try {
+          await _addBusinessRecordOfGuest(
+            accountInfo.value,
+            currentDog.value,
+            recordParams
+          )
+        } catch (err) {
+          console.error('failed to add business record of guest', err)
+          throw err
+        }
         break
       case 'no-account':
         throw new Error('account must be created first')
@@ -209,6 +240,24 @@ export const useAccountManager = defineStore('accountManager', () => {
         const unreachable: never = accountInfo.value
         throw new Error(`unknown account type: ${unreachable}`)
       }
+    }
+  }
+
+  const _loadBusinessRecordsOfGuest = async (
+    accountInfo: GuestAccountInfo,
+    dog: Dog<unknown>
+  ) => {
+    if (!isGuestDog(dog)) {
+      throw new Error('dog must be a dog friend of the guest')
+    }
+    try {
+      const recordDb = await businessRecordDatabaseManager
+        .getGuestBusinessRecordDatabase(accountInfo)
+      const records = await recordDb.loadBusinessRecords(dog.key)
+      // marks the records as raw to reduce the reactivity overhead
+      activeBusinessRecords.value = markRaw(records)
+    } catch (err) {
+      throw err
     }
   }
 
@@ -234,7 +283,6 @@ export const useAccountManager = defineStore('accountManager', () => {
         ...(activeBusinessRecords.value ?? [])
       ])
     } catch (err) {
-      console.error('failed to add business record of guest', err)
       throw err
     }
   }

@@ -100,6 +100,7 @@ export class DogStore implements GuestDogDatabase {
           }
         }
         // does nothing onerror and onabort since transaction handles them
+        transaction.commit()
       } catch (err) {
         // IndexedDB API may throw an exception
         console.error('DogStore', 'getDog', err)

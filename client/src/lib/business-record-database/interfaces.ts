@@ -36,6 +36,11 @@ export interface BusinessRecordDatabase<RecordKey, DogKey=RecordKey> {
   createBusinessRecord(
     record: BusinessRecordParamsOfDog<DogKey>
   ): Promise<BusinessRecord<RecordKey, DogKey>>
+
+  /** Loads business records of a given dog from the database. */
+  loadBusinessRecords(
+    dogKey: DogKey
+  ): Promise<BusinessRecord<RecordKey, DogKey>[]>
 }
 
 /** Interface of business record databases for guest accounts. */

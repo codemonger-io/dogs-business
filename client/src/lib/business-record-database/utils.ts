@@ -1,6 +1,53 @@
 import type { Feature, FeatureCollection } from 'geojson'
 
+import { isMinimalGeolocationCoordinates } from '../../types/geolocation'
 import type { BusinessRecord } from './interfaces'
+import type { BusinessType } from './types'
+import { BUSINESS_TYPES } from './types'
+
+/** Returns if a given value is a {@link BusinessType}. */
+export function isBusinessType(value: unknown): value is BusinessType {
+  return BUSINESS_TYPES.indexOf(value as BusinessType) !== -1
+}
+
+/** Returns if a given value is a {@link BusinessRecord}. */
+export function isBusinessRecord(value: unknown):
+  value is BusinessRecord<unknown, unknown>
+{
+  if (typeof value !== 'object' || value == null) {
+    return false
+  }
+  const maybeRecord = value as Partial<BusinessRecord<unknown, unknown>>
+  if (maybeRecord.key === undefined) {
+    return false
+  }
+  if (maybeRecord.dogKey === undefined) {
+    return false
+  }
+  if (!isBusinessType(maybeRecord.businessType)) {
+    return false
+  }
+  if (!isMinimalGeolocationCoordinates(maybeRecord.location)) {
+    return false
+  }
+  return true
+}
+
+/**
+ * Returns if a given business record may be one carried out by a dog friend of
+ * a guest account.
+ */
+export function isGuestBusinessRecord(
+  record: BusinessRecord<unknown, unknown>
+): record is BusinessRecord<number, number> {
+  if (typeof record.key !== 'number') {
+    return false
+  }
+  if (typeof record.dogKey !== 'number') {
+    return false
+  }
+  return true
+}
 
 /**
  * Converts given business records into a GeoJSON FeatureCollection.
