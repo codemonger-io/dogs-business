@@ -7,10 +7,7 @@ import { createPinia } from 'pinia'
 import Buefy from '@ntohq/buefy-next'
 
 import App from './App.vue'
-import mapboxConfig from './configs/mapbox-config'
-import type { AccountInfo, GuestAccountInfo } from './lib/account-manager'
 import { AccountManagerImpl } from './lib/account-manager'
-import type { Dog } from './lib/dog-database'
 import { IndexedDBDriver } from './lib/indexeddb'
 import type {
   LocationTrackerEvent,

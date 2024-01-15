@@ -250,15 +250,11 @@ export const useAccountManager = defineStore('accountManager', () => {
     if (!isGuestDog(dog)) {
       throw new Error('dog must be a dog friend of the guest')
     }
-    try {
-      const recordDb = await businessRecordDatabaseManager
-        .getGuestBusinessRecordDatabase(accountInfo)
-      const records = await recordDb.loadBusinessRecords(dog.key)
-      // marks the records as raw to reduce the reactivity overhead
-      activeBusinessRecords.value = markRaw(records)
-    } catch (err) {
-      throw err
-    }
+    const recordDb = await businessRecordDatabaseManager
+      .getGuestBusinessRecordDatabase(accountInfo)
+    const records = await recordDb.loadBusinessRecords(dog.key)
+    // marks the records as raw to reduce the reactivity overhead
+    activeBusinessRecords.value = markRaw(records)
   }
 
   const _addBusinessRecordOfGuest = async (
@@ -269,22 +265,18 @@ export const useAccountManager = defineStore('accountManager', () => {
     if (!isGuestDog(dog)) {
       throw new Error('dog must be a dog friend of the guest')
     }
-    try {
-      const recordDb = await businessRecordDatabaseManager
-        .getGuestBusinessRecordDatabase(accountInfo)
-      const record = await recordDb.createBusinessRecord({
-        ...recordParams,
-        dogKey: dog.key
-      })
-      // prepends the new record to `activeBusinessRecords`
-      // avoids deep reactivity to reduce the overhead
-      activeBusinessRecords.value = markRaw([
-        record,
-        ...(activeBusinessRecords.value ?? [])
-      ])
-    } catch (err) {
-      throw err
-    }
+    const recordDb = await businessRecordDatabaseManager
+      .getGuestBusinessRecordDatabase(accountInfo)
+    const record = await recordDb.createBusinessRecord({
+      ...recordParams,
+      dogKey: dog.key
+    })
+    // prepends the new record to `activeBusinessRecords`
+    // avoids deep reactivity to reduce the overhead
+    activeBusinessRecords.value = markRaw([
+      record,
+      ...(activeBusinessRecords.value ?? [])
+    ])
   }
 
   return {
