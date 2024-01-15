@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  type BusinessRecord,
+  type GenericBusinessRecord,
   convertBusinessRecordToFeature,
   convertBusinessRecordsToGeoJSON,
   isBusinessRecord,
@@ -144,7 +144,7 @@ describe('business-record-database.utils', () => {
   })
 
   describe('isGuestBusinessRecord', () => {
-    const businessRecord: BusinessRecord<unknown, unknown> = {
+    const businessRecord: GenericBusinessRecord = {
       key: 1,
       dogKey: 2,
       businessType: 'pee',
@@ -195,6 +195,7 @@ describe('business-record-database.utils', () => {
         }
       })).toEqual({
         type: 'Feature',
+        id: 1,
         geometry: {
           type: 'Point',
           coordinates: [139.7671, 35.6812]
@@ -218,6 +219,7 @@ describe('business-record-database.utils', () => {
         }
       })).toEqual({
         type: 'Feature',
+        id: 'record',
         geometry: {
           type: 'Point',
           coordinates: [-80.0079, 40.4416]
@@ -266,6 +268,7 @@ describe('business-record-database.utils', () => {
         features: [
           {
             type: 'Feature',
+            id: 1,
             geometry: {
               type: 'Point',
               coordinates: [139.7671, 35.6812]
@@ -278,6 +281,7 @@ describe('business-record-database.utils', () => {
           },
           {
             type: 'Feature',
+            id: 2,
             geometry: {
               type: 'Point',
               coordinates: [-80.0079, 40.4416]
@@ -290,6 +294,7 @@ describe('business-record-database.utils', () => {
           },
           {
             type: 'Feature',
+            id: 100,
             geometry: {
               type: 'Point',
               coordinates: [-58.3816, -34.6037]

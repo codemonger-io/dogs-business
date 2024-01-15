@@ -31,7 +31,10 @@ export interface BusinessRecordDatabaseManager {
  *
  *   Type representing dog keys.
  */
-export interface BusinessRecordDatabase<RecordKey, DogKey=RecordKey> {
+export interface BusinessRecordDatabase<
+  RecordKey extends number | string,
+  DogKey extends number | string = RecordKey
+> {
   /** Creates a new business record in the database. */
   createBusinessRecord(
     record: BusinessRecordParamsOfDog<DogKey>
@@ -47,9 +50,16 @@ export interface BusinessRecordDatabase<RecordKey, DogKey=RecordKey> {
 export interface GuestBusinessRecordDatabase extends BusinessRecordDatabase<number> {}
 
 /** Interface of business records stored in databases. */
-export interface BusinessRecord<RecordKey, DogKey>
+export interface BusinessRecord<
+  RecordKey extends number | string,
+  DogKey extends number | string
+>
   extends BusinessRecordParamsOfDog<DogKey>
 {
   /** Key to identify the record in the database. */
   readonly key: RecordKey
 }
+
+/** Generic business record. */
+export type GenericBusinessRecord =
+  BusinessRecord<number | string, number | string>

@@ -2,14 +2,14 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import type { Dog } from '../lib/dog-database'
+import type { GenericDog } from '../lib/dog-database'
 import { capitalize } from '../utils/strings'
 import IconPee from './icons/IconPee.vue'
 import IconPoo from './icons/IconPoo.vue'
 
 const { t } = useI18n()
 
-const props = defineProps<{ dog: Dog<unknown> }>()
+const props = defineProps<{ dog: GenericDog }>()
 
 const emit = defineEmits<{
   pee: [],

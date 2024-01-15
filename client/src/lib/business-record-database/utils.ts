@@ -1,7 +1,7 @@
 import type { Feature, FeatureCollection } from 'geojson'
 
 import { isMinimalGeolocationCoordinates } from '../../types/geolocation'
-import type { BusinessRecord } from './interfaces'
+import type { BusinessRecord, GenericBusinessRecord } from './interfaces'
 import type { BusinessType } from './types'
 import { BUSINESS_TYPES } from './types'
 
@@ -12,12 +12,12 @@ export function isBusinessType(value: unknown): value is BusinessType {
 
 /** Returns if a given value is a {@link BusinessRecord}. */
 export function isBusinessRecord(value: unknown):
-  value is BusinessRecord<unknown, unknown>
+  value is GenericBusinessRecord
 {
   if (typeof value !== 'object' || value == null) {
     return false
   }
-  const maybeRecord = value as Partial<BusinessRecord<unknown, unknown>>
+  const maybeRecord = value as Partial<GenericBusinessRecord>
   if (maybeRecord.key === undefined) {
     return false
   }
@@ -38,7 +38,7 @@ export function isBusinessRecord(value: unknown):
  * a guest account.
  */
 export function isGuestBusinessRecord(
-  record: BusinessRecord<unknown, unknown>
+  record: GenericBusinessRecord
 ): record is BusinessRecord<number, number> {
   if (typeof record.key !== 'number') {
     return false
@@ -60,7 +60,10 @@ export function isGuestBusinessRecord(
  *
  *   Type representing the key of a dog who carried out the business.
  */
-export function convertBusinessRecordsToGeoJSON<RecordKey, DogKey>(
+export function convertBusinessRecordsToGeoJSON<
+  RecordKey extends number | string,
+  DogKey extends number | string
+>(
   businessRecords: BusinessRecord<RecordKey, DogKey>[]
 ): FeatureCollection {
   const features: Feature[] =
@@ -74,6 +77,10 @@ export function convertBusinessRecordsToGeoJSON<RecordKey, DogKey>(
 /**
  * Converts a given business record into a GeoJSON Feature.
  *
+ * @remarks
+ *
+ * `key` of the given business record is used as `id` of the returned feature.
+ *
  * @typeParam RecordKey
  *
  *   Type representing the key of a business record.
@@ -82,13 +89,17 @@ export function convertBusinessRecordsToGeoJSON<RecordKey, DogKey>(
  *
  *   Type representing the key of a dog who carried out the business.
  */
-export function convertBusinessRecordToFeature<RecordKey, DogKey>(
+export function convertBusinessRecordToFeature<
+  RecordKey extends number | string,
+  DogKey extends number | string
+>(
   businessRecord: BusinessRecord<RecordKey, DogKey>
 ): Feature {
   const { businessType, dogKey, key: recordKey, location } = businessRecord
   const { latitude, longitude } = location
   return {
     type: 'Feature',
+    id: recordKey,
     geometry: {
       type: 'Point',
       coordinates: [longitude, latitude]

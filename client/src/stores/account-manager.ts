@@ -7,11 +7,15 @@ import type {
   GuestAccountInfo
 } from '../lib/account-manager'
 import type {
-  BusinessRecord,
+  GenericBusinessRecord,
   BusinessRecordDatabaseManager,
   BusinessRecordParams
 } from '../lib/business-record-database'
-import type { Dog, DogDatabaseManager, DogParams } from '../lib/dog-database'
+import type {
+  DogDatabaseManager,
+  DogParams,
+  GenericDog
+} from '../lib/dog-database'
 import { isGuestDog } from '../lib/dog-database'
 
 /** Injection key for the global account manager. */
@@ -65,10 +69,10 @@ export const useAccountManager = defineStore('accountManager', () => {
 
   const accountInfo = ref<AccountInfo>()
 
-  const currentDog = ref<Dog<unknown>>()
+  const currentDog = ref<GenericDog>()
 
   // NOTE: update `activeBusinessRecords` in an immutable manner
-  const activeBusinessRecords = ref<BusinessRecord<unknown, unknown>[]>()
+  const activeBusinessRecords = ref<GenericBusinessRecord[]>()
 
   // loads the remembrered account info
   accountManager
@@ -245,7 +249,7 @@ export const useAccountManager = defineStore('accountManager', () => {
 
   const _loadBusinessRecordsOfGuest = async (
     accountInfo: GuestAccountInfo,
-    dog: Dog<unknown>
+    dog: GenericDog
   ) => {
     if (!isGuestDog(dog)) {
       throw new Error('dog must be a dog friend of the guest')
@@ -259,7 +263,7 @@ export const useAccountManager = defineStore('accountManager', () => {
 
   const _addBusinessRecordOfGuest = async (
     accountInfo: GuestAccountInfo,
-    dog: Dog<unknown>,
+    dog: GenericDog,
     recordParams: BusinessRecordParams
   ) => {
     if (!isGuestDog(dog)) {

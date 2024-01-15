@@ -25,7 +25,7 @@ export interface DogDatabaseManager {
  *
  *   Type of keys to identify dogs in the database.
  */
-export interface DogDatabase<Key> {
+export interface DogDatabase<Key extends number | string> {
   /**
    * Creates a new dog in the database.
    *
@@ -58,7 +58,10 @@ export interface DogDatabase<Key> {
 export interface GuestDogDatabase extends DogDatabase<number> {}
 
 /** Interface of dogs in the database. */
-export interface Dog<Key> extends DogParams {
+export interface Dog<Key extends number | string> extends DogParams {
   /** Key to identify the dog in the database. */
   readonly key: Key
 }
+
+/** Generic dog. */
+export type GenericDog = Dog<number | string>

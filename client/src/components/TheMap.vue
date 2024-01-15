@@ -182,14 +182,14 @@ watchEffect(() => {
       if (process.env.NODE_ENV !== 'production') {
         console.log('TheMap', 'business record clicked', event)
       }
-      const clickedRecordKey = event.features?.[0].properties?.recordKey
+      const clickedRecordKey = event.features?.[0].id
       console.log('clicked record key', clickedRecordKey)
       const collisionBoxes = await collectCollisionBoxesAndFeatures(
         map.value!,
         ACTIVE_BUSINESS_LAYER_ID
       )
       const clickedBox = collisionBoxes
-        .find((box) => box.feature.properties?.recordKey === clickedRecordKey)
+        .find((box) => box.feature.id=== clickedRecordKey)
       if (clickedBox == null) {
         console.warn('TheMap', 'clicked business record not found')
         return
@@ -198,7 +198,7 @@ watchEffect(() => {
         return box !== clickedBox && boxesIntersect(box.box, clickedBox.box)
       })
       for (const box of hiddenBoxes) {
-        console.log('hidden record key', box.feature.properties?.recordKey)
+        console.log('hidden record key', box.feature.id)
       }
     })
   }
