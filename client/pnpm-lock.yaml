@@ -11,6 +11,9 @@ dependencies:
   mapbox-collision-boxes:
     specifier: github:codemonger-io/mapbox-collision-boxes#v0.2.0
     version: github.com/codemonger-io/mapbox-collision-boxes/2bc58b6809955ea05810c0348812c19b3dbf21c1(mapbox-gl@3.0.1)
+  mapbox-geo-circle-layer:
+    specifier: github:codemonger-io/mapbox-geo-circle-layer#v0.2.0
+    version: github.com/codemonger-io/mapbox-geo-circle-layer/da2d275c38cd2858d16ce530d9f1d3966904f30e(mapbox-gl@3.0.1)
   mapbox-gl:
     specifier: ^3.0.1
     version: 3.0.1
@@ -5214,10 +5217,23 @@ packages:
     id: github.com/codemonger-io/mapbox-collision-boxes/2bc58b6809955ea05810c0348812c19b3dbf21c1
     name: mapbox-collision-boxes
     version: 0.2.0
-    prepare: true
     requiresBuild: true
     peerDependencies:
       mapbox-gl: '>= 2 < 4'
+    dependencies:
+      mapbox-gl: 3.0.1
+    dev: false
+
+  github.com/codemonger-io/mapbox-geo-circle-layer/da2d275c38cd2858d16ce530d9f1d3966904f30e(mapbox-gl@3.0.1):
+    resolution: {tarball: https://codeload.github.com/codemonger-io/mapbox-geo-circle-layer/tar.gz/da2d275c38cd2858d16ce530d9f1d3966904f30e}
+    id: github.com/codemonger-io/mapbox-geo-circle-layer/da2d275c38cd2858d16ce530d9f1d3966904f30e
+    name: mapbox-geo-circle-layer
+    version: 0.2.0
+    engines: {node: '>=14.0.0'}
+    prepare: true
+    requiresBuild: true
+    peerDependencies:
+      mapbox-gl: ^2.0.0||^3.0.0
     dependencies:
       mapbox-gl: 3.0.1
     dev: false

@@ -18,6 +18,7 @@
   "dependencies": {
     "@ntohq/buefy-next": "0.1.3-1da3324a00393a572e1c6ecb53315589be6216c8",
     "mapbox-collision-boxes": "github:codemonger-io/mapbox-collision-boxes#v0.2.0",
+    "mapbox-geo-circle-layer": "github:codemonger-io/mapbox-geo-circle-layer#v0.2.0",
     "mapbox-gl": "^3.0.1",
     "pinia": "^2.1.7",
     "vue": "^3.3.4",
