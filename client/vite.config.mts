@@ -7,6 +7,9 @@ import markdown from 'vite-plugin-md'
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/app',
+  server: {
+    port: 5174
+  },
   plugins: [
     vue({
       include: [/\.vue$/, /\.md$/]
