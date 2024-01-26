@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { boxesIntersect, collectCollisionBoxesAndFeatures } from 'mapbox-collision-boxes'
+import { GeoCircleLayer } from 'mapbox-geo-circle-layer'
 import mapboxgl from 'mapbox-gl'
+import '../types/mapbox-gl'
 import {
   computed,
   getCurrentInstance,
@@ -17,10 +19,19 @@ import type { BusinessType } from '../lib/business-record-database'
 import { convertBusinessRecordsToGeoJSON } from '../lib/business-record-database'
 import { useAccountManager } from '../stores/account-manager'
 import { useLocationTracker } from '../stores/location-tracker'
+import {
+  DOGS_BUSINESS_DANGER_RGB,
+  DOGS_BUSINESS_PRIMARY,
+  DOGS_BUSINESS_PRIMARY_RGB
+} from '../utils/colors'
 import MapActionsPopup from './MapActionsPopup.vue'
 
 const ACTIVE_BUSINESS_SOURCE_ID = 'active-business'
 const ACTIVE_BUSINESS_LAYER_ID = 'active-business'
+
+const MARKER_RANGE_LAYER_ID = 'marker-range'
+const MAX_MARKER_RANGE_IN_METERS = 50
+const MARKER_RANGE_LAYER_ALPHA = 0.25
 
 const { t } = useI18n()
 
@@ -35,8 +46,20 @@ if (self == null) {
 const mapContainer = ref<HTMLElement>()
 const map = ref<mapboxgl.Map>()
 const isMapLoaded = ref(false)
+const locationMarker = ref<mapboxgl.Marker>()
+let jumpToLocation = true // intentionally non-reactive
 const actionsPopupContainer = ref<HTMLElement>()
 const actionsPopup = ref<mapboxgl.Popup>()
+const isDraggingMarker = ref(false)
+const pinnedLocation = ref<mapboxgl.LngLat>()
+const isOutOfRange = ref(false)
+
+// layer to show the region within the user can adjust the marker
+const markerRangeLayer = new GeoCircleLayer(MARKER_RANGE_LAYER_ID, {
+  radiusInMeters: MAX_MARKER_RANGE_IN_METERS,
+  center: { lat: 35.6812, lng: 139.7671 },
+  fill: { ...DOGS_BUSINESS_PRIMARY_RGB, alpha: MARKER_RANGE_LAYER_ALPHA }
+})
 
 // current active dog
 const currentDog = computed(() => {
@@ -226,6 +249,11 @@ const onVisibilityChanged = async () => {
       } catch (err) {
         console.error('TheMap', 'failed to stop tracking:', err)
       }
+      isDraggingMarker.value = false
+      pinnedLocation.value = undefined
+      isOutOfRange.value = false
+      // TODO: prohibit the user from placing business records until the
+      //       location is updated
       break
     default: {
       // exhaustive cases must not lead here
@@ -243,8 +271,7 @@ onUnmounted(() => {
 })
 
 // starts tracking the current location when the map is ready
-const locationMarker = ref<mapboxgl.Marker>()
-let jumpToLocation = true
+// won't update the location if the marker is pinned
 watchEffect(() => {
   if (map.value == null) {
     return
@@ -259,14 +286,42 @@ watchEffect(() => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('TheMap', 'tracking location:', coords)
   }
+  if (pinnedLocation.value != null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'location is pinned')
+    }
+    return
+  }
   if (locationMarker.value == null) {
     locationMarker.value = markRaw(new mapboxgl.Marker({
-      color: '#37C49F'
+      color: DOGS_BUSINESS_PRIMARY,
+      draggable: true
     }))
     locationMarker.value
       .setLngLat([coords.longitude, coords.latitude])
       .setPopup(actionsPopup.value)
       .addTo(map.value)
+    // shows the marker range while dragging
+    locationMarker.value.on('dragstart', () => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('TheMap', 'marker dragstart')
+      }
+      isDraggingMarker.value = true
+      if (pinnedLocation.value == null) {
+        pinnedLocation.value = locationMarker.value!.getLngLat()
+      }
+      checkMarkerRange()
+    })
+    locationMarker.value.on('drag', () => {
+      checkMarkerRange()
+    })
+    locationMarker.value.on('dragend', () => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('TheMap', 'marker dragend')
+      }
+      isDraggingMarker.value = false
+      checkMarkerRange()
+    })
   } else {
     locationMarker.value
       .setLngLat([coords.longitude, coords.latitude])
@@ -279,6 +334,64 @@ watchEffect(() => {
     })
     actionsPopup.value.addTo(map.value)
     jumpToLocation = false
+  }
+})
+
+// checks if the dragged marker is in the acceptable range.
+const checkMarkerRange = () => {
+  if (locationMarker.value == null) {
+    console.warn('TheMap', 'location marker is unavailable')
+    return
+  }
+  if (pinnedLocation.value == null) {
+    console.warn('TheMap', 'location must have been pinned')
+    return
+  }
+  const location = locationMarker.value.getLngLat()
+  const distance = location.distanceTo(pinnedLocation.value)
+  isOutOfRange.value = distance > MAX_MARKER_RANGE_IN_METERS
+  if (isOutOfRange.value) {
+    locationMarker.value.addClassName('marker-out-of-range')
+    locationMarker.value.removeClassName('marker-within-range')
+  } else {
+    locationMarker.value.addClassName('marker-within-range')
+    locationMarker.value.removeClassName('marker-out-of-range')
+  }
+}
+
+watchEffect(() => {
+  if (map.value == null) {
+    return
+  }
+  if (locationMarker.value == null) {
+    return
+  }
+  if (isDraggingMarker.value) {
+    if (pinnedLocation.value == null) {
+      console.warn('TheMap', 'location must have been pinned')
+      return
+    }
+    markerRangeLayer.fill = isOutOfRange.value
+      ? { ...DOGS_BUSINESS_DANGER_RGB, alpha: MARKER_RANGE_LAYER_ALPHA }
+      : { ...DOGS_BUSINESS_PRIMARY_RGB, alpha: MARKER_RANGE_LAYER_ALPHA }
+    if (map.value.getLayer(MARKER_RANGE_LAYER_ID) == null) {
+      markerRangeLayer.center = pinnedLocation.value
+      // inserts under the business records
+      if (map.value.getLayer(ACTIVE_BUSINESS_LAYER_ID) != null) {
+        map.value.addLayer(markerRangeLayer, ACTIVE_BUSINESS_LAYER_ID)
+      } else {
+        map.value.addLayer(markerRangeLayer)
+      }
+    }
+  } else {
+    if (map.value.getLayer(MARKER_RANGE_LAYER_ID) != null) {
+      map.value.removeLayer(MARKER_RANGE_LAYER_ID)
+    }
+    // resets the marker range state if the location is not pinned
+    if (pinnedLocation.value == null) {
+      locationMarker.value.removeClassName('marker-within-range')
+      locationMarker.value.removeClassName('marker-out-of-range')
+    }
   }
 })
 
@@ -360,21 +473,24 @@ const askCleanup = () => {
   <div class="hidden">
     <div ref="actionsPopupContainer">
       <MapActionsPopup
-        v-if="currentDog != null"
+        v-if="currentDog != null && !isOutOfRange"
         :dog="currentDog"
         @pee="placePee"
         @poo="placePoo"
       />
-      <p v-else class="block">
+      <p v-else-if="currentDog == null" class="block">
         <router-link :to="{ name: 'profile' }">
           {{ t('message.register_your_dog_friend') }}
         </router-link>
+      </p>
+      <p v-else>
+        {{ t('message.too_far_from_your_detected_location') }}
       </p>
     </div>
   </div>
 </template>
 
-<style scope>
+<style scoped>
 .map-container {
   width: 100%;
   height: 100%;

@@ -16,6 +16,7 @@ export default {
       sign_up_now: '今すぐサインアップ!',
       start_without_signup: 'サインアップせずに利用開始',
       tell_us_about_your_dog_friend: 'あなたのお友達(犬)について教えてください!',
+      too_far_from_your_detected_location: '検出された位置から遠すぎます。',
       we_wont_rely_on_passwords: '@:{\'term.dogs_business\'}はパスワードを使いません! 代わりにより安全な{0}を使用します。{0}はお使いのデバイスの指紋認証や顔認証などを用いてあなたが本人であるかどうかを認証します。お使いのデバイスが{0}に対応していない場合は@:{\'term.dogs_business\'}にサインアップしていただくことができません。また、お使いのデバイスと本サービスとの相性などの問題でご利用いただくことができない場合もございますので、ご容赦ください。',
       what_is_the_business_here: '{0}は何のご用でこちらに?'
     },
@@ -68,6 +69,7 @@ export default {
       sign_up_now: 'Sign up now!',
       start_without_signup: 'Start without sign-up',
       tell_us_about_your_dog_friend: 'Tell us about your dog-friend!',
+      too_far_from_your_detected_location: 'Too far from your detected location.',
       we_wont_rely_on_passwords: '@:{\'term.dogs_business\'} won\'t rely on passwords but uses more secure {0} instead! {0} authenticate you with your fingerprints, face, or any other metrics provided by your device. You may not sign up for @:{\'term.dogs_business\'} if your device does not support {0}. And please be patient in case you might not be able to use this service due to incompatiblity between your device and the service, or any other problems.',
       what_is_the_business_here: 'What is {0}\'s business here?'
     },

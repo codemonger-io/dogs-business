@@ -2,6 +2,7 @@
 @import './base.scss';
 /* base.css must be imported before */
 @import './buefy-patch.scss';
+@import './mapbox-extension.scss';
 
 :root {
   background-color: var(--dogs-theme);
