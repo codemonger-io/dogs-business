@@ -40,7 +40,8 @@ describe('business-record-database.utils', () => {
       location: {
         latitude: 35.6812,
         longitude: 139.7671
-      }
+      },
+      timestamp: new Date(2018, 5, 23)
     }
     const businessRecord2 = {
       key: 'record',
@@ -49,7 +50,8 @@ describe('business-record-database.utils', () => {
       location: {
         latitude: 40.4416,
         longitude: -80.0079
-      }
+      },
+      timestamp: new Date(2024, 1, 30, 6, 43, 0)
     }
 
     it(`should be true for ${JSON.stringify(businessRecord1)}`, () => {
@@ -75,7 +77,8 @@ describe('business-record-database.utils', () => {
         location: {
           latitude: 0.0,
           longitude: 0.0
-        }
+        },
+        timestamp: new Date(2018, 5, 23)
       })).toBe(false)
     })
 
@@ -86,7 +89,8 @@ describe('business-record-database.utils', () => {
         location: {
           latitude: 0.0,
           longitude: 0.0
-        }
+        },
+        timestamp: new Date(2018, 5, 23)
       })).toBe(false)
     })
 
@@ -97,7 +101,8 @@ describe('business-record-database.utils', () => {
         location: {
           latitude: 0.0,
           longitude: 0.0
-        }
+        },
+        timestamp: new Date(2018, 5, 23)
       })).toBe(false)
     })
 
@@ -109,7 +114,8 @@ describe('business-record-database.utils', () => {
         location: {
           latitude: 0.0,
           longitude: 0.0
-        }
+        },
+        timestamp: new Date(2018, 5, 23)
       })).toBe(false)
     })
 
@@ -117,7 +123,8 @@ describe('business-record-database.utils', () => {
       expect(isBusinessRecord({
         key: 1,
         dogKey: 2,
-        businessType: 'pee'
+        businessType: 'pee',
+        timestamp: new Date(2018, 5, 23)
       })).toBe(false)
     })
 
@@ -126,7 +133,8 @@ describe('business-record-database.utils', () => {
         key: 1,
         dogKey: 2,
         businessType: 'pee',
-        location: '139.7671,35.6812'
+        location: '139.7671,35.6812',
+        timestamp: new Date(2018, 5, 23)
       })).toBe(false)
     })
 
@@ -138,6 +146,62 @@ describe('business-record-database.utils', () => {
         location: {
           latitude: '0.0',
           longitude: '0.0'
+        },
+        timestamp: new Date(2018, 5, 23)
+      })).toBe(false)
+    })
+
+    it('should be false for { key: 1, dogKey: 2, businessType: "pee", location: { latitude: 0, longitude: 0 } } missing timestamp', () => {
+      expect(isBusinessRecord({
+        key: 1,
+        dogKey: 2,
+        businessType: 'pee',
+        location: {
+          latitude: 0,
+          longitude: 0
+        }
+      })).toBe(false)
+    })
+
+    it('should be false for { key: 1, dogKey: 2, businessType: "pee", location: { latitude: 0, longitude: 0 }, timestamp: "2018-05-23" } with non-object timestamp', () => {
+      expect(isBusinessRecord({
+        key: 1,
+        dogKey: 2,
+        businessType: 'pee',
+        location: {
+          latitude: 0,
+          longitude: 0
+        },
+        timestamp: '2018-05-23'
+      })).toBe(false)
+    })
+
+    it('should be false for { key: 1, dogKey: 2, businessType: "pee", location: { latitude: 0, longitude: 0 }, timestamp: null } with null timestamp', () => {
+      expect(isBusinessRecord({
+        key: 1,
+        dogKey: 2,
+        businessType: 'pee',
+        location: {
+          latitude: 0,
+          longitude: 0
+        },
+        timestamp: null
+      })).toBe(false)
+    })
+
+    it('should be false for { key: 1, dogKey: 2, businessType: "pee", location: { latitude: 0, longitude: 0 }, timestamp: { year: 2020, month: 4, day: 23 } } with non-Date timestamp object', () => {
+      expect(isBusinessRecord({
+        key: 1,
+        dogKey: 2,
+        businessType: 'pee',
+        location: {
+          latitude: 35.6812,
+          longitude: 139.7671
+        },
+        timestamp: {
+          year: 2020,
+          month: 4,
+          day: 23
         }
       })).toBe(false)
     })
@@ -151,14 +215,15 @@ describe('business-record-database.utils', () => {
       location: {
         latitude: 35.6812,
         longitude: 139.7671
-      }
+      },
+      timestamp: new Date(2018, 5, 23)
     }
 
     it(`should be true for ${JSON.stringify(businessRecord)}`, () => {
       expect(isGuestBusinessRecord(businessRecord)).toBe(true)
     })
 
-    it('should be false for { key: "record", dogKey: 2, businessType: "pee", location: { latitude: 0.0, longitude: 0.0 } } with non-number key', () => {
+    it('should be false for { key: "record", dogKey: 2, businessType: "pee", location: { latitude: 0.0, longitude: 0.0 }, timestamp: 2018/05/23 } with non-number key', () => {
       expect(isGuestBusinessRecord({
         key: 'record',
         dogKey: 2,
@@ -166,11 +231,12 @@ describe('business-record-database.utils', () => {
         location: {
           latitude: 0.0,
           longitude: 0.0
-        }
+        },
+        timestamp: new Date(2018, 5, 23)
       })).toBe(false)
     })
 
-    it('should be false for { key: 1, dogKey: "dog", businessType: "pee", location: { latitude: 0.0, longitude: 0.0 } } with non-number dogKey', () => {
+    it('should be false for { key: 1, dogKey: "dog", businessType: "pee", location: { latitude: 0.0, longitude: 0.0 }, timestamp: 2018/05/23 } with non-number dogKey', () => {
       expect(isGuestBusinessRecord({
         key: 1,
         dogKey: 'dog',
@@ -178,7 +244,8 @@ describe('business-record-database.utils', () => {
         location: {
           latitude: 0.0,
           longitude: 0.0
-        }
+        },
+        timestamp: new Date(2018, 5, 23)
       })).toBe(false)
     })
   })
@@ -192,7 +259,8 @@ describe('business-record-database.utils', () => {
         location: {
           latitude: 35.6812,
           longitude: 139.7671
-        }
+        },
+        timestamp: new Date(2018, 5, 23)
       })).toEqual({
         type: 'Feature',
         id: 1,
@@ -203,7 +271,8 @@ describe('business-record-database.utils', () => {
         properties: {
           recordKey: 1,
           dogKey: 2,
-          businessType: 'pee'
+          businessType: 'pee',
+          timestamp: new Date(2018, 5, 23).getTime()
         }
       })
     })
@@ -216,7 +285,8 @@ describe('business-record-database.utils', () => {
         location: {
           latitude: 40.4416,
           longitude: -80.0079
-        }
+        },
+        timestamp: new Date(2024, 1, 30, 6, 43, 0)
       })).toEqual({
         type: 'Feature',
         id: 'record',
@@ -227,7 +297,8 @@ describe('business-record-database.utils', () => {
         properties: {
           recordKey: 'record',
           dogKey: 'dog',
-          businessType: 'poo'
+          businessType: 'poo',
+          timestamp: new Date(2024, 1, 30, 6, 43, 0).getTime()
         }
       })
     })
@@ -243,7 +314,8 @@ describe('business-record-database.utils', () => {
           location: {
             latitude: 35.6812,
             longitude: 139.7671
-          }
+          },
+          timestamp: new Date(2018, 5, 23)
         },
         {
           key: 2,
@@ -252,7 +324,8 @@ describe('business-record-database.utils', () => {
           location: {
             latitude: 40.4416,
             longitude: -80.0079
-          }
+          },
+          timestamp: new Date(2020, 11, 25)
         },
         {
           key: 100,
@@ -261,7 +334,8 @@ describe('business-record-database.utils', () => {
           location: {
             latitude: -34.6037,
             longitude: -58.3816
-          }
+          },
+          timestamp: new Date(2024, 1, 30, 6, 43, 0)
         }
       ])).toEqual({
         type: 'FeatureCollection',
@@ -276,7 +350,8 @@ describe('business-record-database.utils', () => {
             properties: {
               recordKey: 1,
               dogKey: 2,
-              businessType: 'pee'
+              businessType: 'pee',
+              timestamp: new Date(2018, 5, 23).getTime()
             }
           },
           {
@@ -289,7 +364,8 @@ describe('business-record-database.utils', () => {
             properties: {
               recordKey: 2,
               dogKey: 2,
-              businessType: 'poo'
+              businessType: 'poo',
+              timestamp: new Date(2020, 11, 25).getTime()
             }
           },
           {
@@ -302,7 +378,8 @@ describe('business-record-database.utils', () => {
             properties: {
               recordKey: 100,
               dogKey: 2,
-              businessType: 'poo'
+              businessType: 'poo',
+              timestamp: new Date(2024, 1, 30, 6, 43, 0).getTime()
             }
           }
         ]

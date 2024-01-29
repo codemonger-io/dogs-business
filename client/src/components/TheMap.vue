@@ -452,7 +452,8 @@ const addBusinessRecordAtCurrentMarker = (businessType: BusinessType) => {
     location: {
       longitude: lng,
       latitude: lat
-    }
+    },
+    timestamp: new Date()
   })
 }
 

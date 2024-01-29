@@ -290,7 +290,8 @@ describe('useAccountManager', () => {
             location: {
               latitude: 35.6812,
               longitude: 139.7671
-            }
+            },
+            timestamp: new Date(2018, 5, 23)
           }
 
           beforeEach(async () => {

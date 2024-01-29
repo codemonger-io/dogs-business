@@ -13,6 +13,9 @@ export interface BusinessRecordParams {
 
   /** Location where the business was carried out. */
   location: MinimalGeolocationCoordinates
+
+  /** Timestamp when the business was carried out. */
+  timestamp: Date
 }
 
 /**
