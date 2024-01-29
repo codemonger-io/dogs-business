@@ -40,7 +40,13 @@ export interface BusinessRecordDatabase<
     record: BusinessRecordParamsOfDog<DogKey>
   ): Promise<BusinessRecord<RecordKey, DogKey>>
 
-  /** Loads business records of a given dog from the database. */
+  /**
+   * Loads business records of a given dog from the database.
+   *
+   * @remarks
+   *
+   * Business records must be sorted in descending order of the timestamps.
+   */
   loadBusinessRecords(
     dogKey: DogKey
   ): Promise<BusinessRecord<RecordKey, DogKey>[]>

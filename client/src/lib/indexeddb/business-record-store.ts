@@ -167,6 +167,10 @@ export class BusinessRecordStore implements GuestBusinessRecordDatabase {
             )
           }
           storedRecords = result
+          // business records must be sorted in desending order of timestamp
+          storedRecords.sort(
+            (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+          )
         }
         // does nothing onerror and onabort since transaction handles them
         transaction.commit()
