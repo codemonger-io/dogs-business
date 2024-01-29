@@ -70,6 +70,7 @@ export const useAccountManager = defineStore('accountManager', () => {
   const accountInfo = ref<AccountInfo>()
 
   const currentDog = ref<GenericDog>()
+  const isLoadingDog = ref<boolean>(false)
 
   // NOTE: update `activeBusinessRecords` in an immutable manner
   const activeBusinessRecords = ref<GenericBusinessRecord[]>()
@@ -108,7 +109,19 @@ export const useAccountManager = defineStore('accountManager', () => {
     }
     switch (account.type) {
       case 'guest':
-        _loadGuestDogFriend(account)
+        try {
+          isLoadingDog.value = true
+          _loadGuestDogFriend(account)
+        } catch (err) {
+          console.error(
+            'useAccountManager',
+            'failed to load guest dog friend',
+            err
+          )
+          lastError.value = err
+        } finally {
+          isLoadingDog.value = false
+        }
         break
       case 'no-account':
         break // does nothing
@@ -131,17 +144,12 @@ export const useAccountManager = defineStore('accountManager', () => {
     if (currentDog.value?.key === dogKey) {
       return
     }
-    try {
-      const dogDb = await dogDatabaseManager.getGuestDogDatabase(account)
-      const dog = await dogDb.getDog(dogKey)
-      if (dog == null) {
-        throw new Error(`no dog friend with key: ${dogKey}`)
-      }
-      currentDog.value = dog
-    } catch (err) {
-      console.error('failed to load guest dog friend', err)
-      lastError.value = err
+    const dogDb = await dogDatabaseManager.getGuestDogDatabase(account)
+    const dog = await dogDb.getDog(dogKey)
+    if (dog == null) {
+      throw new Error(`no dog friend with key: ${dogKey}`)
     }
+    currentDog.value = dog
   }
 
   // loads the business records associated with the current dog when the
@@ -156,7 +164,11 @@ export const useAccountManager = defineStore('accountManager', () => {
         try {
           _loadBusinessRecordsOfGuest(accountInfo.value, dog)
         } catch (err) {
-          console.error('failed to load business records of guest', err)
+          console.error(
+            'useAccountManager',
+            'failed to load business records of guest',
+            err
+          )
           lastError.value = err
         }
         break
@@ -289,6 +301,7 @@ export const useAccountManager = defineStore('accountManager', () => {
     addBusinessRecord,
     createGuestAccount,
     currentDog,
+    isLoadingDog,
     lastError,
     registerNewDogFriend
   }

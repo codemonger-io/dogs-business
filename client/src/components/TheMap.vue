@@ -65,6 +65,9 @@ const markerRangeLayer = new GeoCircleLayer(MARKER_RANGE_LAYER_ID, {
 const currentDog = computed(() => {
   return accountManager.currentDog
 })
+const isLoadingDog = computed(() => {
+  return accountManager.isLoadingDog
+})
 
 // current Mapbox access token
 const mapboxAccessToken = computed(() => {
@@ -472,20 +475,27 @@ const askCleanup = () => {
   <div ref="mapContainer" class="map-container"></div>
   <div class="hidden">
     <div ref="actionsPopupContainer">
-      <MapActionsPopup
-        v-if="currentDog != null && !isOutOfRange"
-        :dog="currentDog"
-        @pee="placePee"
-        @poo="placePoo"
-      />
-      <p v-else-if="currentDog == null" class="block">
-        <router-link :to="{ name: 'profile' }">
-          {{ t('message.register_your_dog_friend') }}
-        </router-link>
-      </p>
-      <p v-else>
-        {{ t('message.too_far_from_your_detected_location') }}
-      </p>
+      <template v-if="currentDog != null">
+        <MapActionsPopup
+          v-if="!isOutOfRange"
+          :dog="currentDog"
+          @pee="placePee"
+          @poo="placePoo"
+        />
+        <p v-else>
+          {{ t('message.too_far_from_your_detected_location') }}
+        </p>
+      </template>
+      <template v-else>
+        <p v-if="!isLoadingDog">
+          <router-link :to="{ name: 'profile' }">
+            {{ t('message.register_your_dog_friend') }}
+          </router-link>
+        </p>
+        <p v-else class="block">
+          {{ t('message.loading_data') }}
+        </p>
+      </template>
     </div>
   </div>
 </template>
