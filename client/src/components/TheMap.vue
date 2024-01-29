@@ -125,7 +125,7 @@ watchEffect(() => {
     container: mapContainer.value,
     style: 'mapbox://styles/mapbox/streets-v12',
     center: [139.7671, 35.6812], // Tokyo station
-    zoom: 15
+    zoom: 16
   }))
   map.value.on('styleimagemissing', (e) => {
     const { id } = e
