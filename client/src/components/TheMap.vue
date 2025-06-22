@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { boxesIntersect, collectCollisionBoxesAndFeatures } from 'mapbox-collision-boxes'
+import { boxesIntersect, collectCollisionBoxesAndFeatures } from '@codemonger-io/mapbox-collision-boxes'
 import { GeoCircleLayer } from 'mapbox-geo-circle-layer'
 import mapboxgl from 'mapbox-gl'
 import '../types/mapbox-gl'

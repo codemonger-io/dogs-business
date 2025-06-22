@@ -4,7 +4,7 @@ import { createApp } from 'vue'
 import { createI18n } from 'vue-i18n'
 import { createPinia } from 'pinia'
 
-import Buefy from '@ntohq/buefy-next'
+import Buefy from 'buefy'
 
 import App from './App.vue'
 import { AccountManagerImpl } from './lib/account-manager'
