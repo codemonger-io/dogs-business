@@ -4,9 +4,9 @@
  * @remarks
  *
  * {@link GeolocationPosition} but `coords` replaced with
- * {@link MinimalGeolocationCoordinates}.
+ * {@link MinimalGeolocationCoordinates} and omits `toJSON`.
  */
-export type MinimalGeolocationPosition = Omit<GeolocationPosition, 'coords'> & {
+export type MinimalGeolocationPosition = Pick<GeolocationPosition, 'timestamp'> & {
   /** Minimal geolocation coordinates. */
   coords: MinimalGeolocationCoordinates
 }
