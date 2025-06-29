@@ -36,5 +36,13 @@ export class CdkStack extends Stack {
       description: 'Name of the S3 bucket for the contents',
       value: distribution.contentsBucket.bucketName,
     });
+    new CfnOutput(this, 'RelyingPartyOriginParameterPath', {
+      description: 'SSM parameter path for the relying party origin for the Passkey authentication',
+      value: passquito.rpOriginParameterPath,
+    });
+    new CfnOutput(this, 'CredentialsApiInternalUrl', {
+      description: 'Internal (API Gateway) URL of the credentials API',
+      value: passquito.credentialsApiInternalUrl,
+    });
   }
 }
