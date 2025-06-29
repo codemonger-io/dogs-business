@@ -9,7 +9,11 @@
     "watch": "tsc -w",
     "test": "jest",
     "type-check": "tsc --noEmit",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "cdk-synth": "cdk synth -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-development",
+    "cdk-synth:production": "cdk synth -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-production",
+    "cdk-deploy": "cdk deploy -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-development",
+    "cdk-deploy:production": "cdk deploy -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-production"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
