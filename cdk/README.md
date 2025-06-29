@@ -28,7 +28,7 @@ Please refer to <https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html#boo
 Here is an example in my case:
 
 ```sh
-BOOTSTRAP_QUALIFIER=dogsbz2023
+export BOOTSTRAP_QUALIFIER=dogsbz2023
 ```
 
 ## Bootstrapping
@@ -42,29 +42,39 @@ pnpm cdk bootstrap --toolkit-stack-name $TOOLKIT_STACK_NAME --qualifier $BOOTSTR
 
 ## Synthesizing CloudFormation template
 
+You have to [configure the `BOOTSTRAP_QUALIFIER` environment](#configuring-bootstrap-qualifier) variable prior to synthesizing the CloudFormation template.
+
+**Development:**
+
 ```sh
-pnpm cdk synth -c "@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER"
+pnpm cdk-synth
 ```
 
-Production:
+**Production:**
 
 ```sh
-pnpm cdk synth -c "@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER" -c "dogs-business:deployment-stage=production"
+pnpm cdk-synth:production
 ```
 
 ## Deploying
 
+You have to [configure the `BOOTSTRAP_QUALIFIER` environment](#configuring-bootstrap-qualifier) variable prior to deploying the CDK stack(s).
+
+**Development:**
+
 ```sh
-pnpm cdk deploy -c "@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER"
+pnpm cdk-deploy
 ```
 
-Production:
+**Production:**
 
 ```sh
-pnpm cdk deploy -c "@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER" -c "dogs-business:deployment-stage=production"
+pnpm cdk-deploy:production
 ```
 
 ## Post deployment
+
+Replace `$DEPLOYMENT_STAGE` with "development" or "production" as needed.
 
 ### Obtaining the internal URL of the distribution
 
