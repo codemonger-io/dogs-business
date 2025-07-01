@@ -22,7 +22,7 @@ export class CdkStack extends Stack {
         group: 'dogs-business',
         config: deploymentStage,
       },
-      allowOrigins: ['http://localhost:5173'],
+      allowOrigins: ['http://localhost:5174'],
     });
     const distribution = new Distribution(this, 'Distribution', {
       deploymentStage,
