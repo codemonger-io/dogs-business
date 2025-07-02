@@ -2,6 +2,7 @@ export default {
   ja: {
     message: {
       agreement: '{0}および{1}に同意します。',
+      checking_passkey_registration_capability: '@:{\'term.passkey\'}の登録機能を確認中・・・',
       clean_up_after: '{0}の後片付けをしましょう!',
       do_you_want_to_be_a_friend_of_other_dog: 'ほかのユーザーのお友達(犬)とお友達になりたいですか?',
       enable_location_tracking: '位置情報の取得を許可してください',
@@ -10,6 +11,7 @@ export default {
       location_tracking_unavailable: '位置情報を利用できません',
       loading_data: 'データの読み込み中...',
       may_start_without_signup: 'サインアップせずに利用を開始することもできます。',
+      no_passkey_registration_supported: 'お使いのブラウザーでは{0}の登録がサポートされていません。',
       register_your_dog_friend: 'お友達(犬)を登録してください。',
       register_profile: 'プロフィール登録',
       remarks_on_without_signup: 'サインアップしない場合でも、地図データを取得・表示するためにマップボックスのプライバシーポリシーに同意していただく必要があります。',
@@ -23,11 +25,13 @@ export default {
       you_remove_it_we_remember_it: '落とし物はキレイに!思い出に!'
     },
     placeholder: {
+      display_name: 'ポチの友達',
       dog_friend_name: 'ポチ',
-      username: 'User0123',
+      username: 'User0123'
     },
     term: {
       attention: 'ご注意',
+      display_name: '表示する名前',
       dog_friend_name: 'お友達(犬)のお名前',
       dogs_business: 'Dog\'s Business',
       feature: {
@@ -50,6 +54,7 @@ export default {
       your_dog_friend: 'お友達(犬)'
     },
     tooltip: {
+      display_name: '@:{\'term.passkey\'}に紐づけられる表示名です',
       dog_friend_name: 'このアプリのメッセージをお友達(犬)に合わせてカスタマイズします。省略した場合は「お友達(犬)」と表示します。',
       username: '@:{\'term.passkey\'}を識別する名前としてお使いのデバイスに表示されます'
     }
@@ -57,6 +62,7 @@ export default {
   en: {
     message: {
       agreement: 'I agree to the {0} and the {1}.',
+      checking_passkey_registration_capability: 'Checking @:term.passkey registration capability...',
       clean_up_after: 'Clean up after {0}!',
       do_you_want_to_be_a_friend_of_other_dog: 'Do you want to be a friend of other user\'s dog-friend?',
       enable_location_tracking: 'Please enable location tracking',
@@ -65,6 +71,7 @@ export default {
       location_tracking_unavailable: 'Location tracking unavailable',
       loading_data: 'Loading data...',
       may_start_without_signup: 'You may start using without signing up.',
+      no_passkey_registration_supported: 'Your browser does not support registration of {0}.',
       register_your_dog_friend: 'Register your dog-friend.',
       register_profile: 'Register profile',
       remarks_on_without_signup: 'You have to agree to the Privacy Policy of Mapbox that is required to retrieve and represent map data whether you sign up or not.',
@@ -78,11 +85,13 @@ export default {
       you_remove_it_we_remember_it: 'You Remove It! We Remember It!'
     },
     placeholder: {
+      display_name: 'Pooch\'s Friend',
       dog_friend_name: 'Pooch',
       username: 'User0123',
     },
     term: {
       attention: 'attention',
+      display_name: 'Display Name',
       dog_friend_name: 'dog-friend\'s name',
       dogs_business: 'Dog\'s Business',
       feature: {
@@ -105,6 +114,7 @@ export default {
       your_dog_friend: 'your dog-friend'
     },
     tooltip: {
+      display_name: 'Display name associated with your @:term.passkey',
       dog_friend_name: 'Customize messages on this app for your dog-friend. If omitted, we will displayed "your dog-friend" instead',
       username: 'Shown on your device as the identifier of your @:term.passkey'
     }
