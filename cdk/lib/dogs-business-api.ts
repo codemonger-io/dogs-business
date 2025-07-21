@@ -14,6 +14,8 @@ import {
 import { RestApiWithSpec, augmentAuthorizer } from '@codemonger-io/cdk-rest-api-with-spec';
 import { composeMappingTemplate } from '@codemonger-io/mapping-template-compose';
 
+import type { SsmParameters } from './ssm-parameters';
+
 /**
  * Props for {@link DogsBusinessApi}.
  *
@@ -34,6 +36,9 @@ export interface DogsBusinessApiProps {
 
   /** User pool for authentication. */
   readonly userPool: cognito.UserPool;
+
+  /** Parameters in AWS Systems Manager Parameter Store. */
+  readonly ssmParameters: SsmParameters;
 }
 
 /**
@@ -54,6 +59,7 @@ export class DogsBusinessApi extends Construct {
     const {
       allowOrigins,
       basePath,
+      ssmParameters,
       userPool,
     } = props;
     const manifestPath = path.join('lambda', 'dogs-business-api', 'Cargo.toml');
@@ -66,7 +72,11 @@ export class DogsBusinessApi extends Construct {
       architecture: lambda.Architecture.ARM_64,
       memorySize: 128,
       timeout: Duration.seconds(5),
+      environment: {
+        MAPBOX_ACCESS_TOKEN_PARAMETER_PATH: ssmParameters.mapboxAccessTokenParameterPath,
+      }
     });
+    ssmParameters.mapboxAccessTokenParameter.grantRead(this.getUserInfoLambda);
 
     // REST API
     this.api = new RestApiWithSpec(this, 'DogsBusinessApi', {

@@ -6,6 +6,7 @@ import { PassquitoCore } from '@codemonger-io/passquito-cdk-construct';
 import type { DeploymentStage } from './deployment-stage';
 import { Distribution } from './distribution';
 import { DogsBusinessApi } from './dogs-business-api';
+import { SsmParameters } from './ssm-parameters';
 
 export interface CdkStackProps extends StackProps {
   /** Deployment stage. */
@@ -25,15 +26,23 @@ export class CdkStack extends Stack {
       },
       allowOrigins: ['http://localhost:5174'],
     });
+    const ssmParameters = new SsmParameters(this, 'SsmParameters', {
+      deploymentStage,
+    });
     const dogsBusinessApi = new DogsBusinessApi(this, 'DogsBusinessApi', {
       basePath: '/dogs-business-api',
       allowOrigins: ['http://localhost:5174'],
       userPool: passquito.userPool.userPool,
+      ssmParameters,
     })
     const distribution = new Distribution(this, 'Distribution', {
       deploymentStage,
     });
 
+    new CfnOutput(this, 'MapboxAccessTokenParameterPath', {
+      description: 'SSM parameter path for the Mapbox access token for online accounts',
+      value: ssmParameters.mapboxAccessTokenParameterPath,
+    });
     new CfnOutput(this, 'DistributionInternalUrl', {
       description: 'Internal URL of the distribution',
       value: distribution.internalUrl,
