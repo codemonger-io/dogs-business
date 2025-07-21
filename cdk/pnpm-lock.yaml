@@ -11,6 +11,9 @@ importers:
       '@codemonger-io/cdk-cors-utils':
         specifier: 0.4.0-8678c3d
         version: 0.4.0-8678c3d(aws-cdk-lib@2.202.0(constructs@10.4.2))
+      '@codemonger-io/cdk-ghost-string-parameter':
+        specifier: 0.2.0-9e4f21e
+        version: 0.2.0-9e4f21e(aws-cdk-lib@2.202.0(constructs@10.4.2))(constructs@10.4.2)
       '@codemonger-io/cdk-rest-api-with-spec':
         specifier: 0.4.0-7c11d76
         version: 0.4.0-7c11d76(aws-cdk-lib@2.202.0(constructs@10.4.2))(constructs@10.4.2)
