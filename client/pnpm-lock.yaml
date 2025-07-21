@@ -12,8 +12,11 @@ importers:
         specifier: 0.3.0-5dc75ee
         version: 0.3.0-5dc75ee(mapbox-gl@3.13.0)
       '@codemonger-io/passquito-client-js':
-        specifier: 0.0.1-ae9a869
-        version: 0.0.1-ae9a869
+        specifier: 0.0.2-dcbed6b
+        version: 0.0.2-dcbed6b
+      '@vueuse/core':
+        specifier: ^13.5.0
+        version: 13.5.0(vue@3.5.17(typescript@5.8.3))
       buefy:
         specifier: npm:@buefy/buefy@1.0.0-4f1274eb674fbe66ae6b3f1f743de7b446b5b7a6
         version: '@buefy/buefy@1.0.0-4f1274eb674fbe66ae6b3f1f743de7b446b5b7a6(vue@3.5.17(typescript@5.8.3))'
@@ -150,8 +153,8 @@ packages:
     peerDependencies:
       mapbox-gl: '>= 2 < 4'
 
-  '@codemonger-io/passquito-client-js@0.0.1-ae9a869':
-    resolution: {integrity: sha512-n27KEbbF1WTPd/7pT9PL0k3F1L1ZTx0vkLstwoSX1ih4mrW3G+KG4UraByZr+9JGeodXCSVdxY1GyEZXwtFw1g==, tarball: https://npm.pkg.github.com/download/@codemonger-io/passquito-client-js/0.0.1-ae9a869/a06d5dc7b4954cc2a1bb97631b7c5102e91c1a88}
+  '@codemonger-io/passquito-client-js@0.0.2-dcbed6b':
+    resolution: {integrity: sha512-412uuUnHMa7wFvLuXBB80fqZyoG/stg47yL0v1Y9KXU8iOpng4ys92NEh69H54j/sy/iG4RPLFHsFBIzIWWGQg==, tarball: https://npm.pkg.github.com/download/@codemonger-io/passquito-client-js/0.0.2-dcbed6b/52507237be5add44d1d8f66edede989793a87648}
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -717,6 +720,9 @@ packages:
   '@types/tough-cookie@4.0.5':
     resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
 
+  '@types/web-bluetooth@0.0.21':
+    resolution: {integrity: sha512-oIQLCGWtcFZy2JW77j9k8nHzAOpqMHLQejDA48XXMWH6tjCQHz5RCFz1bzsmROyL6PUm+LLnUiI4BCn221inxA==}
+
   '@types/yauzl@2.10.3':
     resolution: {integrity: sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==}
 
@@ -908,6 +914,19 @@ packages:
         optional: true
       vue:
         optional: true
+
+  '@vueuse/core@13.5.0':
+    resolution: {integrity: sha512-wV7z0eUpifKmvmN78UBZX8T7lMW53Nrk6JP5+6hbzrB9+cJ3jr//hUlhl9TZO/03bUkMK6gGkQpqOPWoabr72g==}
+    peerDependencies:
+      vue: ^3.5.0
+
+  '@vueuse/metadata@13.5.0':
+    resolution: {integrity: sha512-euhItU3b0SqXxSy8u1XHxUCdQ8M++bsRs+TYhOLDU/OykS7KvJnyIFfep0XM5WjIFry9uAPlVSjmVHiqeshmkw==}
+
+  '@vueuse/shared@13.5.0':
+    resolution: {integrity: sha512-K7GrQIxJ/ANtucxIXbQlUHdB0TPA8c+q5i+zbrjxuhJCnJ9GtBg75sBSnvmLSxHKPg2Yo8w62PWksl9kwH0Q8g==}
+    peerDependencies:
+      vue: ^3.5.0
 
   abbrev@2.0.0:
     resolution: {integrity: sha512-6/mh1E2u2YgEsCHdY0Yx5oW+61gZU+1vXaoiHHrpKeuRNNgFvS+/jrwHiQhB5apAf5oB7UB7E19ol2R2LKH8hQ==}
@@ -2776,7 +2795,7 @@ snapshots:
     dependencies:
       mapbox-gl: 3.13.0
 
-  '@codemonger-io/passquito-client-js@0.0.1-ae9a869':
+  '@codemonger-io/passquito-client-js@0.0.2-dcbed6b':
     dependencies:
       '@github/webauthn-json': 2.1.1
 
@@ -3215,6 +3234,8 @@ snapshots:
 
   '@types/tough-cookie@4.0.5': {}
 
+  '@types/web-bluetooth@0.0.21': {}
+
   '@types/yauzl@2.10.3':
     dependencies:
       '@types/node': 22.15.34
@@ -3483,6 +3504,19 @@ snapshots:
   '@vue/tsconfig@0.7.0(typescript@5.8.3)(vue@3.5.17(typescript@5.8.3))':
     optionalDependencies:
       typescript: 5.8.3
+      vue: 3.5.17(typescript@5.8.3)
+
+  '@vueuse/core@13.5.0(vue@3.5.17(typescript@5.8.3))':
+    dependencies:
+      '@types/web-bluetooth': 0.0.21
+      '@vueuse/metadata': 13.5.0
+      '@vueuse/shared': 13.5.0(vue@3.5.17(typescript@5.8.3))
+      vue: 3.5.17(typescript@5.8.3)
+
+  '@vueuse/metadata@13.5.0': {}
+
+  '@vueuse/shared@13.5.0(vue@3.5.17(typescript@5.8.3))':
+    dependencies:
       vue: 3.5.17(typescript@5.8.3)
 
   abbrev@2.0.0: {}
