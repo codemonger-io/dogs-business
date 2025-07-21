@@ -8,12 +8,24 @@ importers:
 
   .:
     dependencies:
+      '@codemonger-io/cdk-cors-utils':
+        specifier: 0.4.0-8678c3d
+        version: 0.4.0-8678c3d(aws-cdk-lib@2.202.0(constructs@10.4.2))
+      '@codemonger-io/cdk-rest-api-with-spec':
+        specifier: 0.4.0-7c11d76
+        version: 0.4.0-7c11d76(aws-cdk-lib@2.202.0(constructs@10.4.2))(constructs@10.4.2)
+      '@codemonger-io/mapping-template-compose':
+        specifier: 0.2.0-aecf920
+        version: 0.2.0-aecf920
       '@codemonger-io/passquito-cdk-construct':
-        specifier: 0.0.2-ae9a869
-        version: 0.0.2-ae9a869(aws-cdk-lib@2.202.0(constructs@10.4.2))(constructs@10.4.2)
+        specifier: 0.0.3-dcbed6b
+        version: 0.0.3-dcbed6b(aws-cdk-lib@2.202.0(constructs@10.4.2))(constructs@10.4.2)
       aws-cdk-lib:
         specifier: 2.202.0
         version: 2.202.0(constructs@10.4.2)
+      cargo-lambda-cdk:
+        specifier: ^0.0.33
+        version: 0.0.33(aws-cdk-lib@2.202.0(constructs@10.4.2))(constructs@10.4.2)
       constructs:
         specifier: ^10.4.2
         version: 10.4.2
@@ -247,8 +259,8 @@ packages:
     resolution: {integrity: sha512-O+JNLjzK4sbps1mI60GwOfef3/alRXYqKeLnUVc7cNeY72AuYjTYFGAJAPlumT5SopuGfCviZ4tThABScQKN2A==, tarball: https://npm.pkg.github.com/download/@codemonger-io/mapping-template-compose/0.2.0-aecf920/9501a5b477f9a6ffe5111b43513df5276a3185fe}
     engines: {node: '>=12.0.0'}
 
-  '@codemonger-io/passquito-cdk-construct@0.0.2-ae9a869':
-    resolution: {integrity: sha512-3HNbsBieCw8o9CDdjzAU+qVL3o9zfLOij+BxgrXzewh+ZmfY+go0qum49DIG4IPB4mJ94J7MfzO6+jRWjq7r7A==, tarball: https://npm.pkg.github.com/download/@codemonger-io/passquito-cdk-construct/0.0.2-ae9a869/9b1c12b05fddf2628b003dd696757f99a64b0f2e}
+  '@codemonger-io/passquito-cdk-construct@0.0.3-dcbed6b':
+    resolution: {integrity: sha512-T9LxCZIs2prpquzhEIiASvXAwpOwGCPUyKycLJttmYEBY0+LFlz2tnc92hOVz44l7ahVz0w7+zc8d9JVsjCqAQ==, tarball: https://npm.pkg.github.com/download/@codemonger-io/passquito-cdk-construct/0.0.3-dcbed6b/73b619ac85c43945efdedddefe8ad87136a5cb5d}
     peerDependencies:
       aws-cdk-lib: '>=2.0.0'
       constructs: '>=10.0.0'
@@ -1730,7 +1742,7 @@ snapshots:
 
   '@codemonger-io/mapping-template-compose@0.2.0-aecf920': {}
 
-  '@codemonger-io/passquito-cdk-construct@0.0.2-ae9a869(aws-cdk-lib@2.202.0(constructs@10.4.2))(constructs@10.4.2)':
+  '@codemonger-io/passquito-cdk-construct@0.0.3-dcbed6b(aws-cdk-lib@2.202.0(constructs@10.4.2))(constructs@10.4.2)':
     dependencies:
       '@codemonger-io/cdk-cors-utils': 0.4.0-8678c3d(aws-cdk-lib@2.202.0(constructs@10.4.2))
       '@codemonger-io/cdk-ghost-string-parameter': 0.2.0-9e4f21e(aws-cdk-lib@2.202.0(constructs@10.4.2))(constructs@10.4.2)
