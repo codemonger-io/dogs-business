@@ -3,10 +3,22 @@
 The client web app for Dog's Business.
 This is a single page application powered by [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/api/), [Vue.js](https://vuejs.org), and [Buefy](https://buefy.org/).
 
-## Configuring the Mapbox access token
+## Configurations
 
-The Mapbox access token for guests is read from `src/configs/mapbox-config.ts`, which is never pushed to the repository.
-You can find an example in [`src/configs/mapbox-config.example.ts`](./src/configs/mapbox-config.example.ts).
+You have to configure the environment variables described in the following subsections.
+You can find an example configuration in [`.env.example`](./.env.example).
+
+### Configuring the base URL of the Credentials API
+
+You have to configure the environment variable `VITE_CREDENTIALS_API_BASE_URL` to the base URL of the Credentials API.
+
+### Configuring the base URL of the Dog's Business API
+
+You have to configure the environment variable `VITE_DOGS_BUSINESS_API_BASE_URL` to the base URL of the Dog's Business API.
+
+### Configuring the Mapbox access token
+
+You have to configure the environment variable `VITE_MAPBOX_GUEST_ACCESS_TOKEN` to the Mapbox access token for guests.
 
 ## Running dev server
 
