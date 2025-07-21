@@ -11,25 +11,30 @@ const accountManager = useAccountManager()
 
 // if the user is identified,
 // redirects to the map unless it is already under /map
-watch(() => accountManager.accountInfo, (account) => {
-  if (account == null) {
-    return
-  }
-  switch (account.type) {
-    case 'guest':
-      if (!route.path.startsWith('/map')) {
-        router.push({ name: 'map' })
-      }
-      break
-    case 'no-account':
-      break // does nothing
-    default: {
-      // exhaustive cases must not lead here
-      const unreachable: never = account
-      throw new Error(`unknown account type: ${unreachable}`)
+watch(
+  () => accountManager.accountInfo,
+  (account) => {
+    if (account == null) {
+      return
     }
-  }
-})
+    switch (account.type) {
+      case 'guest':
+      case 'online':
+        if (!route.path.startsWith('/map')) {
+          router.push({ name: 'map' })
+        }
+        break
+      case 'no-account':
+        break // does nothing
+      default: {
+        // exhaustive cases must not lead here
+        const unreachable: never = account
+        throw new Error(`unknown account type: ${unreachable}`)
+      }
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>

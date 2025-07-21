@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import {
+  checkPasskeyAuthenticationSupported,
   checkPasskeyRegistrationSupported
 } from '@codemonger-io/passquito-client-js'
 
@@ -13,7 +14,8 @@ export const usePasskeyCapabilityStore = defineStore('passkey-capability', () =>
   const isIndeterminate =
     computed(() => _state.value === 'not-asked' || _state.value === 'asking')
 
-  const isRegistrationSupported = ref<boolean>(false)
+  const isRegistrationSupported = ref(false)
+  const isAuthenticationSupported = ref(false)
 
   // asks for passkey capabilities.
   // does nothing if capabilities are already known.
@@ -30,13 +32,26 @@ export const usePasskeyCapabilityStore = defineStore('passkey-capability', () =>
         console.log('starting to ask for passkey capabilities')
         _state.value = 'asking'
         isRegistrationSupported.value = false
+        isAuthenticationSupported.value = false
         try {
           isRegistrationSupported.value = await checkPasskeyRegistrationSupported()
         } catch (err) {
-          console.error(err)
-        } finally {
-          _state.value = 'asked'
+          console.error(
+            'usePasskeyCapabilityStore',
+            'failed to ask registration capability',
+            err
+          )
         }
+        try {
+          isAuthenticationSupported.value = await checkPasskeyAuthenticationSupported()
+        } catch (err) {
+          console.error(
+            'usePasskeyCapabilityStore',
+            'failed to ask authentication capability',
+            err
+          )
+        }
+        _state.value = 'asked'
         break
       }
       default: {
@@ -50,6 +65,7 @@ export const usePasskeyCapabilityStore = defineStore('passkey-capability', () =>
   return {
     _state,
     askForCapabilities,
+    isAuthenticationSupported,
     isIndeterminate,
     isRegistrationSupported,
   }

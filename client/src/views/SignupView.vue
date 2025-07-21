@@ -1,17 +1,23 @@
 <script setup lang="ts">
-import { getCurrentInstance, onMounted, ref } from 'vue'
+import { getCurrentInstance, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import ThePasskeys from '../components/ThePasskeys.vue'
+import { useAccountManager } from '../stores/account-manager'
 import { usePasskeyCapabilityStore } from '../stores/passkey-capability'
 import { usePassquitoClientStore } from '../stores/passquito-client'
 import { capitalize } from '../utils/strings'
+
+const router = useRouter()
 
 const { t } = useI18n()
 
 const passkeyCapabilityStore = usePasskeyCapabilityStore()
 
 const passquitoClientStore = usePassquitoClientStore()
+
+const accountManager = useAccountManager()
 
 const self = getCurrentInstance()
 if (self == null) {
@@ -21,18 +27,41 @@ if (self == null) {
 const username = ref('')
 const displayName = ref('')
 
+// checks the passkey capability on mounted
 onMounted(() => {
   passkeyCapabilityStore.askForCapabilities()
 })
 
+// attaches an authenticator UI to the account manager on mounted
+// and detaches it when the component is unmounted
+const detachAuthenticatorUi = ref<() => void>()
+onMounted(() => {
+  detachAuthenticatorUi.value = accountManager.attachAuthenticatorUi({
+    askSignIn: async () => {
+      console.log('SignupView', 'asking user to sign in')
+      window.location.href = router.resolve({ name: 'map' }).href
+    }
+  })
+})
+onUnmounted(() => {
+  detachAuthenticatorUi.value?.()
+})
+
 const onSubmit = async () => {
   try {
-    console.log('signing up')
-    await passquitoClientStore.client.doRegistrationCeremony({
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('SignupView', 'signing up')
+    }
+    const publicKeyInfo = await passquitoClientStore.client.doRegistrationCeremony({
       username: username.value,
       displayName: displayName.value
     })
-    console.log('finished registration')
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('SignupView', 'finished registration', publicKeyInfo)
+    }
+    await accountManager.updateCredentials({
+      publicKeyInfo
+    })
   } catch (err) {
     console.error(err)
   }

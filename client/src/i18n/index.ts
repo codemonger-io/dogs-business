@@ -27,6 +27,7 @@ export default {
     placeholder: {
       display_name: 'ポチの友達',
       dog_friend_name: 'ポチ',
+      passkey: '@:{\'term.passkey\'}の選択',
       username: 'User0123'
     },
     term: {
@@ -46,6 +47,7 @@ export default {
       pee: 'おしっこ💦',
       poo: 'うんち💩',
       privacy_policy: 'プライバシーポリシー',
+      signin: 'サインイン',
       signup: 'サインアップ',
       terms_of_service: '利用規約',
       undo: '取り消し',
@@ -56,6 +58,7 @@ export default {
     tooltip: {
       display_name: '@:{\'term.passkey\'}に紐づけられる表示名です',
       dog_friend_name: 'このアプリのメッセージをお友達(犬)に合わせてカスタマイズします。省略した場合は「お友達(犬)」と表示します。',
+      passkey: '@:{\'term.passkey\'}を選択して@:{\'term.dogs_business\'}にサインインします',
       username: '@:{\'term.passkey\'}を識別する名前としてお使いのデバイスに表示されます'
     }
   },
@@ -87,6 +90,7 @@ export default {
     placeholder: {
       display_name: 'Pooch\'s Friend',
       dog_friend_name: 'Pooch',
+      passkey: 'Select a @:term.passkey',
       username: 'User0123',
     },
     term: {
@@ -106,6 +110,7 @@ export default {
       pee: 'pee💦',
       poo: 'poo💩',
       privacy_policy: 'Privacy Policy',
+      signin: 'Sign-in',
       signup: 'Sign-up',
       terms_of_service: 'Terms of Service',
       undo: 'undo',
@@ -116,6 +121,7 @@ export default {
     tooltip: {
       display_name: 'Display name associated with your @:term.passkey',
       dog_friend_name: 'Customize messages on this app for your dog-friend. If omitted, we will displayed "your dog-friend" instead',
+      passkey: 'Select a passkey to sign in to @:term.dogs_business',
       username: 'Shown on your device as the identifier of your @:term.passkey'
     }
   },

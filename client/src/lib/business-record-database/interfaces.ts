@@ -1,4 +1,4 @@
-import type { GuestAccountInfo } from '../account-manager'
+import type { GuestAccountInfo } from '../../types/account-info'
 import type { BusinessRecordParamsOfDog } from './types'
 
 /** Interface of business record database managers. */

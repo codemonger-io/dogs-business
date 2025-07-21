@@ -7,14 +7,12 @@ import { createPinia } from 'pinia'
 import Buefy from 'buefy'
 
 import App from './App.vue'
-import { AccountManagerImpl } from './lib/account-manager'
 import { IndexedDBDriver } from './lib/indexeddb'
 import type {
   LocationTrackerEvent,
   LocationTrackerEventListener
 } from './lib/location-tracker'
 import {
-  accountManagerProvider,
   businessRecordDatabaseManagerProvider,
   dogDatabaseManagerProvider
 } from './stores/account-manager'
@@ -39,7 +37,6 @@ app.use(Buefy)
 
 const indexedDBDriver = new IndexedDBDriver()
 
-app.use(accountManagerProvider(new AccountManagerImpl()))
 app.use(dogDatabaseManagerProvider({
   async getGuestDogDatabase() {
     const connection = await indexedDBDriver.open()

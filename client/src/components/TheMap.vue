@@ -78,6 +78,8 @@ const mapboxAccessToken = computed(() => {
   switch (accountInfo.type) {
     case 'guest':
       return accountInfo.mapboxAccessToken
+    case 'online':
+      return accountInfo.userInfo?.mapboxAccessToken
     case 'no-account':
       return undefined
     default: {
