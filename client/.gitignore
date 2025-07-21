@@ -18,6 +18,8 @@ coverage
 /cypress/screenshots/
 
 # configuration files except for examples
+/.env*
+!/.env.example
 /src/configs/*
 !/src/configs/*.example.ts
 
