@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import ThePasskeys from '../components/ThePasskeys.vue'
-import { useAccountManager } from '../stores/account-manager'
+import { useAuthenticatorState } from '../stores/authenticator-state'
 import { usePasskeyCapabilityStore } from '../stores/passkey-capability'
 import { usePassquitoClientStore } from '../stores/passquito-client'
 import { capitalize } from '../utils/strings'
@@ -17,7 +17,7 @@ const passkeyCapabilityStore = usePasskeyCapabilityStore()
 
 const passquitoClientStore = usePassquitoClientStore()
 
-const accountManager = useAccountManager()
+const authenticatorState = useAuthenticatorState()
 
 const self = getCurrentInstance()
 if (self == null) {
@@ -36,7 +36,7 @@ onMounted(() => {
 // and detaches it when the component is unmounted
 const detachAuthenticatorUi = ref<() => void>()
 onMounted(() => {
-  detachAuthenticatorUi.value = accountManager.attachAuthenticatorUi({
+  detachAuthenticatorUi.value = authenticatorState.attachAuthenticatorUi({
     askSignIn: async () => {
       console.log('SignupView', 'asking user to sign in')
       window.location.href = router.resolve({ name: 'map' }).href
@@ -59,7 +59,7 @@ const onSubmit = async () => {
     if (process.env.NODE_ENV !== 'production') {
       console.log('SignupView', 'finished registration', publicKeyInfo)
     }
-    await accountManager.updateCredentials({
+    await authenticatorState.updateCredentials({
       publicKeyInfo
     })
   } catch (err) {

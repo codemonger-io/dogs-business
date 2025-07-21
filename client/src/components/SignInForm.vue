@@ -4,7 +4,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PublicKeyInfo } from '@codemonger-io/passquito-client-js'
 
-import { useAccountManager } from '../stores/account-manager'
+import { useAuthenticatorState } from '../stores/authenticator-state'
 import { usePasskeyCapabilityStore } from '../stores/passkey-capability'
 import { usePassquitoClientStore } from '../stores/passquito-client'
 import { capitalize } from '../utils/strings'
@@ -19,7 +19,7 @@ const passkeyCapabilityStore = usePasskeyCapabilityStore()
 
 const passquitoClientStore = usePassquitoClientStore()
 
-const accountManager = useAccountManager()
+const authenticatorState = useAuthenticatorState()
 
 // passkey input field which gets focused when mounted.
 const passkeyInput = ref<InstanceType<typeof BInput> | null>(null)
@@ -60,7 +60,7 @@ watch(
       if (process.env.NODE_ENV !== 'production') {
         console.log('SignInForm', 'authenticated', publicKeyInfo, tokens)
       }
-      accountManager.updateCredentials({
+      authenticatorState.updateCredentials({
         publicKeyInfo,
         tokens
       })

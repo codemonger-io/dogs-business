@@ -4,28 +4,14 @@ import { defineStore } from 'pinia'
 import {
   type App,
   type InjectionKey,
-  computed,
   inject,
   markRaw,
   ref,
-  watch,
-  watchEffect
+  watch
 } from 'vue'
 import type { CognitoTokens, PublicKeyInfo } from '@codemonger-io/passquito-client-js'
-import { useSessionStorage, useStorage } from '@vueuse/core'
+import { useStorage } from '@vueuse/core'
 
-import type {
-  AccountInfo,
-  GuestAccountInfo,
-  OnlineAccountCredentials,
-  UserInfo
-} from '../types/account-info'
-import { isAccountInfo, isSameUserInfo, isUserInfo } from '../types/account-info'
-import type { AuthenticatorState } from '../types/authenticator-state'
-import {
-  isAuthenticatorState,
-  isEquivalentCognitoTokens
-} from '../types/authenticator-state'
 import type {
   GenericBusinessRecord,
   BusinessRecordDatabaseManager,
@@ -38,7 +24,13 @@ import type {
 } from '../lib/dog-database'
 import { isGuestDog } from '../lib/dog-database'
 import { makeValidatingSerializer } from '../lib/storage-serializer'
-import { useCredentialsApi } from './credentials-api'
+import type { GuestAccountInfo, UserInfo } from '../types/account-info'
+import { isAccountInfo } from '../types/account-info'
+import {
+  isAuthenticatorState,
+  isEquivalentCognitoTokens
+} from '../types/authenticator-state'
+import { useAuthenticatorState } from './authenticator-state'
 
 /** Injection key for the dog database manager. */
 export const DOG_DATABASE_MANAGER_INJECTION_KEY =
@@ -47,33 +39,6 @@ export const DOG_DATABASE_MANAGER_INJECTION_KEY =
 /** Injection key for the business record database manager. */
 export const BUSINESS_RECORD_DATABASE_MANAGER_INJECTION_KEY =
   Symbol() as InjectionKey<BusinessRecordDatabaseManager>
-
-/**
- * User interface provider for authentication.
- *
- * @remarks
- *
- * While authentication needs user interaction, the store does not know how to
- * do it.
- * UI components responsible for user authentication should implement this
- * interface and attach it to the store using `attachAuthenticatorUi`.
- *
- * @beta
- */
-export interface AuthenticatorUi {
-  /**
-   * Asks the user to sign in.
-   *
-   * @remarks
-   *
-   * `AuthenticatorUi` is supposed to offer the user a sign-in form.
-   *
-   * @param publicKeyInfo -
-   *
-   *   Public key info of the user to sign in.
-   */
-  askSignIn(publicKeyInfo: PublicKeyInfo): void | Promise<void>
-}
 
 /**
  * Uses the provided account manager.
@@ -86,13 +51,14 @@ export interface AuthenticatorUi {
  * An instance of {@link BusinessRecordDatabaseManager} is supposed to be
  * provided by the host Veu application.
  *
+ * It calls `useAuthenticatorState` to access the global authenticator state.
+ *
  * @throws Error
  *
- *   If no account manager is provided,
- *   or if no dog database manager is provided,
+ *   If no dog database manager is provided,
  *   or if no business record database manager is provided.
  */
-export const useAccountManager = defineStore('accountManager', () => {
+export const useAccountManager = defineStore('account-manager', () => {
   const dogDatabaseManager = inject(DOG_DATABASE_MANAGER_INJECTION_KEY)
   if (dogDatabaseManager == null) {
     throw new Error('no dog database manager is provided')
@@ -103,7 +69,8 @@ export const useAccountManager = defineStore('accountManager', () => {
     throw new Error('no business record database manager is provided')
   }
 
-  const credentialsApi = useCredentialsApi()
+  // authenticator state
+  const authenticatorState = useAuthenticatorState()
 
   // remembers the last error.
   const lastError = ref<any>()
@@ -124,23 +91,8 @@ export const useAccountManager = defineStore('accountManager', () => {
     }
   }
 
-  // authenticator UI provides a way to ask the user to sign in.
-  const authenticatorUi = ref<AuthenticatorUi>()
-
-  // state of the authenticator.
-  // NOTE: update `authenticatorState` in an immutable manner; i.e., do not partially update
-  const authenticatorState = useSessionStorage(
-    'dogs-business.authenticator-state',
-    { type: 'loading' }, // loading by default
-    {
-      writeDefaults: false,
-      deep: false, // partial updates are not saved
-      serializer: makeValidatingSerializer(isAuthenticatorState)
-    }
-  )
-
   // account info is stored in the local storage.
-  // NOTE: update `accountInfo` in an immutable manner; i.e., do not partially update
+  // NOTE: update `accountInfo` in an immutable manner; i.e., do not partially update it
   const accountInfo = useStorage(
     'dogs-business.account',
     { type: 'no-account' }, // no account by default
@@ -152,89 +104,12 @@ export const useAccountManager = defineStore('accountManager', () => {
     }
   )
 
-  // initializes the authenticator state according to the account info.
-  watchEffect(() => {
-    switch (accountInfo.value.type) {
-      case 'no-account':
-        switch (authenticatorState.value.type) {
-          case 'loading':
-          case 'welcoming':
-            break // does nothing
-          case 'guest':
-          case 'authenticating':
-          case 'authenticated':
-          case 'authorized':
-            // TODO: due to a corrupted account info?
-            console.warn('useAccountManager', 'account info may have been corrupted')
-            authenticatorState.value = { type: 'welcoming' }
-            break
-          default: {
-            const unreachable: never = authenticatorState.value
-            throw new RangeError(`unknown authenticator state: ${unreachable}`)
-          }
-        }
-        break
-      case 'guest':
-        switch (authenticatorState.value.type) {
-          case 'loading':
-          case 'welcoming':
-            authenticatorState.value = { type: 'guest' }
-            break
-          case 'guest':
-            break // does nothing
-          case 'authenticating':
-          case 'authenticated':
-          case 'authorized':
-            // online account should not be directly switched to a guest
-            // TODO: handle as an error
-            console.error('useAccountManager', 'cannot switch to guest account from online account')
-            break
-          default: {
-            const unreachable: never = authenticatorState.value
-            throw new RangeError(`unknown authenticator state: ${unreachable}`)
-          }
-        }
-        break
-      case 'online':
-        switch (authenticatorState.value.type) {
-          case 'loading':
-          case 'welcoming':
-            // if the Cognito tokens are available → authenticated state
-            // otherwise → authenticating state
-            if (accountInfo.value.tokens != null) {
-              authenticatorState.value = {
-                type: 'authenticated',
-                publicKeyInfo: accountInfo.value.publicKeyInfo,
-                tokens: accountInfo.value.tokens
-              }
-            } else {
-              authenticatorState.value = {
-                type: 'authenticating',
-                publicKeyInfo: accountInfo.value.publicKeyInfo
-              }
-            }
-            break
-          case 'authenticating':
-          case 'authenticated':
-          case 'authorized':
-            break // does nothing
-          case 'guest':
-            // guest should not be directly switched to an online account
-            // TODO: handle as an error
-            console.error('useAccountManager', 'cannot switch to online account from guest')
-            break
-          default: {
-            const unreachable: never = authenticatorState.value
-            throw new RangeError(`unknown authenticator state: ${unreachable}`)
-          }
-        }
-        break
-      default: {
-        const unreachable: never = accountInfo.value
-        throw new RangeError(`unknown account type: ${unreachable}`)
-      }
-    }
-  })
+  // syncs `authenticatorState` whenever `accountInfo` is updated.
+  watch(
+    accountInfo,
+    (account) => authenticatorState.syncStateWithAccountInfo(account),
+    { immediate: true }
+  )
 
   // updates the information on the online account.
   const _updateOnlineAccountInfo = (
@@ -243,7 +118,7 @@ export const useAccountManager = defineStore('accountManager', () => {
     userInfo?: UserInfo
   ) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.log('useAccountManager._updateOnlineAccountCredentials', 'updating credentials', publicKeyInfo, tokens)
+      console.log('useAccountManager._updateOnlineAccountCredentials', 'updating credentials', publicKeyInfo, tokens, userInfo)
     }
     if (accountInfo.value.type === 'online') {
       // updates the existing online account info
@@ -281,121 +156,19 @@ export const useAccountManager = defineStore('accountManager', () => {
     }
   }
 
-  // fetches the user information of the online account
-  const _fetchOnlineAccountUserInfo = async (
-    publicKeyInfo: PublicKeyInfo,
-    tokens: CognitoTokens
-  ) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('useAccountManager._fetchOnlineAccountUserInfo', 'fetching user info', publicKeyInfo, tokens)
-    }
-    if (isCognitoTokensExpired(tokens)) {
-      // refreshes the tokens first
-      // this watch function will be triggered again
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('useAccountManager._fetchOnlineAccountUserInfo', 'refreshing Cognito tokens')
-      }
-      try {
-        const newTokens = await credentialsApi.refreshTokens(tokens.refreshToken)
-        if (newTokens == null) {
-          throw new Error('failed to refresh Cognito tokens')
-        }
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('useAccountManager._fetchOnlineAccountUserInfo', 'refreshed Cognito tokens', tokens)
-        }
-        authenticatorState.value = {
-          type: 'authenticated',
-          publicKeyInfo,
-          tokens: newTokens
-        }
-      } catch (err) {
-        // TODO: unauthorized error should trigger a sign-in request
-        console.error('useAccountManager._fetchOnlineAccountUserInfo', 'failed to refresh Cognito tokens', err)
-        lastError.value = err
-      }
-      return
-    }
-    // updates the user information of the online account
-    try {
-      // TODO: what is the best way to provide the API access
-      const url = import.meta.env.VITE_DOGS_BUSINESS_API_BASE_URL + '/user'
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${tokens.idToken}`
-        }
-      })
-      const userInfo = await res.json()
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('useAccountManager._fetchOnlineAccountUserInfo', 'fetched user information', userInfo)
-      }
-      if (!isUserInfo(userInfo)) {
-        throw new Error('received invalid user information')
-      }
-      authenticatorState.value = {
-        type: 'authorized',
-        publicKeyInfo,
-        tokens,
-        userInfo
-      }
-    } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('useAccountManager._fetchOnlineAccountUserInfo', 'failed to fetch user information', err)
-      }
-      lastError.value = err
-    }
-  }
-
-  // changes of the authenticator state should trigger authenticator events.
+  // updates and saves `accountInfo` whenever `authenticatorState` is updated.
   watch(
-    authenticatorState,
-    (state, oldState) => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('userAccountManager', 'authenticator state changed', `${oldState?.type} → ${state.type}`)
+    () => authenticatorState.state,
+    (state) => {
+      if (state.type === 'authenticated') {
+        _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens)
+      } else if (state.type === 'authorized') {
+        _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens, state.userInfo)
+      } else {
+        // does nothing
       }
-      switch (state.type) {
-        case 'loading':
-        case 'welcoming':
-          break // does nothing
-        case 'guest':
-          break // end of the event chain
-        case 'authenticating':
-          break // asks the user to sign in when the authenticator UI is attached
-        case 'authenticated':
-          // updates the account info
-          _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens)
-          // fetches the user information from the Dog's Business API
-          _fetchOnlineAccountUserInfo(state.publicKeyInfo, state.tokens)
-          break
-        case 'authorized':
-          // updates the account info
-          _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens, state.userInfo)
-          break // end of the event chain
-        default: {
-          const unreachable: never = state
-          throw new RangeError(`unknown authenticator state: ${unreachable}`)
-        }
-      }
-    },
-    { immediate: true }
+    }
   )
-
-  // authenticates the online account when the authenticator UI is attached.
-  watchEffect(() => {
-    if (authenticatorState.value.type !== 'authenticating') {
-      return
-    }
-    if (authenticatorUi.value == null) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('useAccountManager', 'no authenticator UI is attached yet')
-      }
-      return
-    }
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('useAccountManager', 'asking sign-in with public key info', authenticatorState.value.publicKeyInfo)
-    }
-    authenticatorUi.value.askSignIn(authenticatorState.value.publicKeyInfo)
-  })
 
   const currentDog = ref<GenericDog>()
   const isLoadingDog = ref<boolean>(false)
@@ -495,60 +268,6 @@ export const useAccountManager = defineStore('accountManager', () => {
     }
   }
 
-  // updates credentials for an online account.
-  const updateCredentials = async (credentials: OnlineAccountCredentials) => {
-    switch (authenticatorState.value.type) {
-      case 'loading':
-      case 'welcoming':
-        authenticatorState.value = {
-          type: 'authenticating',
-          publicKeyInfo: credentials.publicKeyInfo
-        }
-        break
-      case 'guest':
-        // TODO: handle as an error
-        console.warn(`useAccountManager.updateCredentials@${authenticatorState.value.type}`, 'no credentials are expected')
-        break
-      case 'authenticating':
-        if (credentials.tokens != null) {
-          authenticatorState.value = {
-            type: 'authenticated',
-            publicKeyInfo: credentials.publicKeyInfo,
-            tokens: credentials.tokens
-          }
-        } else {
-          // TODO: maybe switching to discoverable authentication
-          console.warn(`useAccountManager.updateCredentials@{authenticatorState.value.type}`, 'Cognito tokens are expected')
-        }
-        break
-      case 'authenticated':
-      case 'authorized':
-        if (credentials.tokens != null) {
-          // Cognito tokens may have been refreshed
-          if (!isEquivalentCognitoTokens(authenticatorState.value.tokens, credentials.tokens)) {
-            authenticatorState.value = {
-              type: 'authenticated',
-              publicKeyInfo: authenticatorState.value.publicKeyInfo,
-              tokens: credentials.tokens
-            }
-          } else {
-            // public key info may not change in this state
-            // TODO: handle as an error
-            console.warn(`useAccountManager.updateCredentials@${authenticatorState.value.type}`, 'refreshed Cognito tokens are expected')
-          }
-        } else {
-          // public key info may not change in this state
-          // TODO: handle as an error
-          console.warn(`useAccountManager.updateCredentials@${authenticatorState.value.type}`, 'refreshed Cognito tokens are expected')
-        }
-        break
-      default: {
-        const unreachable: never = authenticatorState.value
-        throw new RangeError(`unknown authenticator state: ${unreachable}`)
-      }
-    }
-  }
-
   const _registerNewDogFriendOfGuest = async (
     accountInfo: GuestAccountInfo,
     dogParams: DogParams
@@ -645,48 +364,15 @@ export const useAccountManager = defineStore('accountManager', () => {
     }
   }
 
-  // attaches a given `AuthenticatorUi` to the underlying account manager.
-  //
-  // the provider of the `AuthenticatorUi` should call the returned function
-  // to detach the `AuthenticatorUi` when it is unmounted.
-  const attachAuthenticatorUi = (newAuthenticatorUi: AuthenticatorUi) => {
-    return runAndCaptureError(() => {
-      if (authenticatorUi.value != null) {
-        throw new Error('only one authenticator UI can be attached at a time')
-      }
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('useAccountManager', 'attaching authenticator UI')
-      }
-      authenticatorUi.value = newAuthenticatorUi
-      // function to detach the authenticator UI
-      // `detached` is to prevent multiple detachments
-      let detached = false
-      return () => {
-        if (detached) {
-          console.warn('useAccountManager', 'autheticator UI is already detached')
-          return
-        }
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('useAccountManager', 'detaching authenticator UI')
-        }
-        authenticatorUi.value = undefined
-        detached = true
-      }
-    })
-  }
-
   return {
     accountInfo,
     activeBusinessRecords,
     addBusinessRecord,
-    attachAuthenticatorUi,
-    authenticatorState,
     createGuestAccount,
     currentDog,
     isLoadingDog,
     lastError,
-    registerNewDogFriend,
-    updateCredentials
+    registerNewDogFriend
   }
 })
 
@@ -739,10 +425,4 @@ export const businessRecordDatabaseManagerProvider = (businessRecordDatabaseMana
       )
     }
   }
-}
-
-// returns if given Cognito tokens are expired.
-function isCognitoTokensExpired(tokens: CognitoTokens): boolean {
-  const { activatedAt, expiresIn } = tokens
-  return (Date.now() - activatedAt) >= (expiresIn * 1000)
 }

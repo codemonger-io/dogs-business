@@ -1,27 +1,24 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
-import { useAccountManager } from '../stores/account-manager'
-import type { AuthenticatorState } from '../types/authenticator-state'
+import { useAuthenticatorState } from '../stores/authenticator-state'
 import RegistrationWelcome from './RegistrationWelcome.vue'
 import SignInForm from './SignInForm.vue'
 
-const accountManager = useAccountManager()
-
-const authenticatorState = computed(() => accountManager.authenticatorState)
+const authenticatorState = useAuthenticatorState()
 
 // attaches the authenticator UI to the account manager on mounted
 // and detaches it when the component is unmounted
 const detachAuthenticatorUi = ref<() => void>()
 onMounted(() => {
-  detachAuthenticatorUi.value = accountManager.attachAuthenticatorUi({
+  detachAuthenticatorUi.value = authenticatorState.attachAuthenticatorUi({
     askSignIn: () => {
       if (process.env.NODE_ENV !== 'production') {
         console.log('TheAuthenticator', 'asking the user to sign in')
       }
       // reloads the page to show a fresh sign-in form
-      // as Safari has some weird constraints on passkey authentication
-      // to avoid infinite reloading, it appends a "signin=true" query parameter
+      // as Safari has some weird constraints on passkey authentication.
+      // appends a "signin=true" query parameter to avoid infinite reloading
       const SIGN_IN_QUERY_PARAM = 'signin'
       const params = new URLSearchParams(window.location.search)
       if (params.get(SIGN_IN_QUERY_PARAM) !== 'true') {
@@ -44,12 +41,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <RegistrationWelcome v-if="authenticatorState.type === 'welcoming'" />
+  <RegistrationWelcome v-if="authenticatorState.state.type === 'welcoming'" />
   <SignInForm
-    v-else-if="authenticatorState.type === 'authenticating'"
-    :publicKeyInfo="authenticatorState.publicKeyInfo"
+    v-else-if="authenticatorState.state.type === 'authenticating'"
+    :publicKeyInfo="authenticatorState.state.publicKeyInfo"
   />
-  <div v-else-if="authenticatorState.type === 'authenticated'">
+  <div v-else-if="authenticatorState.state.type === 'authenticated'">
     Authenticated!
   </div>
   <template v-else>
