@@ -1,8 +1,8 @@
-@import 'mapbox-gl/dist/mapbox-gl.css';
+@import 'maplibre-gl/dist/maplibre-gl.css';
 @import './base.scss';
 /* base.css must be imported before */
 @import './buefy-patch.scss';
-@import './mapbox-extension.scss';
+@import './maplibre-extension.scss';
 
 :root {
   background-color: var(--dogs-theme);
@@ -16,10 +16,10 @@
   --b-scheme-invert-bis: var(--paper-invert-bis);
   --b-scheme-invert-ter: var(--paper-invert-ter);
 
-  .mapboxgl-popup-tip {
+  .maplibregl-popup-tip {
     border-top-color: var(--paper-color);
   }
-  .mapboxgl-popup-content {
+  .maplibregl-popup-content {
     background-color: var(--paper-color);
   }
 }

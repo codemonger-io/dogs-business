@@ -1,0 +1,19 @@
+/* Overrides the marker color by its state. */
+.marker-within-range {
+  & svg {
+    & g:first-child {
+      & g:nth-child(2) {
+        fill: var(--dogs-warning);
+      }
+    }
+  }
+}
+.marker-out-of-range {
+  & svg {
+    & g:first-child {
+      & g:nth-child(2) {
+        fill: var(--dogs-danger);
+      }
+    }
+  }
+}

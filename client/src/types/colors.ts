@@ -1,5 +1,5 @@
-import type { RGBA } from 'mapbox-geo-circle-layer'
-export type { RGBA } from 'mapbox-geo-circle-layer'
+import type { RGBA } from '@codemonger-io/maplibre-geo-circle-layer'
+export type { RGBA } from '@codemonger-io/maplibre-geo-circle-layer'
 
 /** RGB components. */
 export type RGB = Omit<RGBA, 'alpha'>

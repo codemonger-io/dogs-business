@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { boxesIntersect, collectCollisionBoxesAndFeatures } from '@codemonger-io/mapbox-collision-boxes'
-import { GeoCircleLayer } from 'mapbox-geo-circle-layer'
-import mapboxgl from 'mapbox-gl'
-import '../types/mapbox-gl'
+import { boxesIntersect, collectCollisionBoxesAndFeatures } from '@codemonger-io/maplibre-collision-boxes'
+import { GeoCircleLayer } from '@codemonger-io/maplibre-geo-circle-layer'
+import maplibregl from 'maplibre-gl'
+import type { GeoJSONSource } from 'maplibre-gl'
 import {
   computed,
   getCurrentInstance,
@@ -44,14 +44,14 @@ if (self == null) {
 }
 
 const mapContainer = ref<HTMLElement>()
-const map = ref<mapboxgl.Map>()
+const map = ref<maplibregl.Map>()
 const isMapLoaded = ref(false)
-const locationMarker = ref<mapboxgl.Marker>()
+const locationMarker = ref<maplibregl.Marker>()
 let jumpToLocation = true // intentionally non-reactive
 const actionsPopupContainer = ref<HTMLElement>()
-const actionsPopup = ref<mapboxgl.Popup>()
+const actionsPopup = ref<maplibregl.Popup>()
 const isDraggingMarker = ref(false)
-const pinnedLocation = ref<mapboxgl.LngLat>()
+const pinnedLocation = ref<maplibregl.LngLat>()
 const isOutOfRange = ref(false)
 
 // layer to show the region within the user can adjust the marker
@@ -69,41 +69,13 @@ const isLoadingDog = computed(() => {
   return accountManager.isLoadingDog
 })
 
-// current Mapbox access token
-const mapboxAccessToken = computed(() => {
-  const accountInfo = accountManager.accountInfo
-  if (accountInfo == null) {
-    return undefined
-  }
-  switch (accountInfo.type) {
-    case 'guest':
-      return accountInfo.mapboxAccessToken
-    case 'online':
-      return accountInfo.userInfo?.mapboxAccessToken
-    case 'no-account':
-      return undefined
-    default: {
-      // exhaustive cases must not lead here
-      const unreachable: never = accountInfo
-      throw new Error(`unknown account type: ${unreachable}`)
-    }
-  }
-})
-
 const getBusinessIconUrl = (businessType: string) => {
   return new URL(`../assets/icons/${businessType}.png`, import.meta.url).href
 }
 const requestedImages = new Set<string>()
 
-// initializes the map when the Mapbox access token becomes available
+// initializes the map when necessary resources are changed
 watchEffect(() => {
-  if (mapboxAccessToken.value == null) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('TheMap', 'Mapbox access token is not ready')
-    }
-    return
-  }
-  mapboxgl.accessToken = mapboxAccessToken.value
   // initializes the map if the map is not initialized yet
   if (map.value != null) {
     if (process.env.NODE_ENV !== 'production') {
@@ -123,9 +95,9 @@ watchEffect(() => {
     }
     return
   }
-  map.value = markRaw(new mapboxgl.Map({
+  map.value = markRaw(new maplibregl.Map({
     container: mapContainer.value,
-    style: 'mapbox://styles/mapbox/streets-v12',
+    style: 'https://tiles.openfreemap.org/styles/liberty',
     center: [139.7671, 35.6812], // Tokyo station
     zoom: 16
   }))
@@ -143,24 +115,25 @@ watchEffect(() => {
       if (process.env.NODE_ENV !== 'production') {
         console.log('TheMap', 'loading image:', url)
       }
-      map.value!.loadImage(url, (err, image) => {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('TheMap', 'loaded image:', image)
-        }
-        if (err != null || image == null) {
+      map.value!.loadImage(url)
+        .then((res) => {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('TheMap', 'loaded image:', res)
+          }
+          map.value!.addImage(id, res.data)
+        })
+        .catch((err) => {
           console.error('TheMap', 'failed to load icon', err)
           requestedImages.delete(id)
           throw err
-        }
-        map.value!.addImage(id, image)
-      })
+        })
       requestedImages.add(id)
     }
   })
   map.value.on('load', () => {
     isMapLoaded.value = true
   })
-  actionsPopup.value = markRaw(new mapboxgl.Popup())
+  actionsPopup.value = markRaw(new maplibregl.Popup())
   actionsPopup.value
     .setDOMContent(actionsPopupContainer.value)
     .addClassName('paper')
@@ -190,7 +163,7 @@ watchEffect(() => {
     if (source.type !== 'geojson') {
       throw new Error('active-business source must be "geojson"')
     }
-    source.setData(data)
+    (source as GeoJSONSource).setData(data)
   } else {
     map.value.addSource(ACTIVE_BUSINESS_SOURCE_ID, {
       type: 'geojson',
@@ -298,7 +271,7 @@ watchEffect(() => {
     return
   }
   if (locationMarker.value == null) {
-    locationMarker.value = markRaw(new mapboxgl.Marker({
+    locationMarker.value = markRaw(new maplibregl.Marker({
       color: DOGS_BUSINESS_PRIMARY,
       draggable: true
     }))
