@@ -16,12 +16,12 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@codemonger-io/mapbox-collision-boxes": "0.3.0-5dc75ee",
+    "@codemonger-io/maplibre-collision-boxes": "0.1.0-48c016f",
+    "@codemonger-io/maplibre-geo-circle-layer": "0.1.0-e0d4986",
     "@codemonger-io/passquito-client-js": "0.0.2-dcbed6b",
     "@vueuse/core": "^13.5.0",
     "buefy": "npm:@buefy/buefy@1.0.0-4f1274eb674fbe66ae6b3f1f743de7b446b5b7a6",
-    "mapbox-geo-circle-layer": "github:codemonger-io/mapbox-geo-circle-layer#v0.2.0",
-    "mapbox-gl": "^3.13.0",
+    "maplibre-gl": "^5.6.2",
     "pinia": "^3.0.3",
     "vue": "^3.5.17",
     "vue-i18n": "^11.1.7",
