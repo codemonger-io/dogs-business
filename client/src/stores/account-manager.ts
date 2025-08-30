@@ -24,7 +24,11 @@ import type {
 } from '../lib/dog-database'
 import { isGuestDog } from '../lib/dog-database'
 import { makeValidatingSerializer } from '../lib/storage-serializer'
-import type { GuestAccountInfo, UserInfo } from '../types/account-info'
+import type {
+  GuestAccountInfo,
+  OnlineAccountInfo,
+  UserInfo
+} from '../types/account-info'
 import { isAccountInfo } from '../types/account-info'
 import {
   isAuthenticatorState,
@@ -91,6 +95,19 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
   }
 
+  // runs a given async function and captures any error.
+  const runAndCaptureErrorAsync = async <T>(f: () => Promise<T>, finally_?: () => void) => {
+    try {
+      return await f()
+    } catch (err) {
+      console.error('useAccountManager', 'captured error', err)
+      lastError.value = err
+      throw err
+    } finally {
+      finally_?.()
+    }
+  }
+
   // account info is stored in the local storage.
   // NOTE: update `accountInfo` in an immutable manner; i.e., do not partially update it
   const accountInfo = useStorage(
@@ -107,7 +124,12 @@ export const useAccountManager = defineStore('account-manager', () => {
   // syncs `authenticatorState` whenever `accountInfo` is updated.
   watch(
     accountInfo,
-    (account) => authenticatorState.syncStateWithAccountInfo(account),
+    (account, oldAccount) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('useAccountManager', 'accountInfo updated', `${oldAccount?.type} → ${account.type}`)
+      }
+      authenticatorState.syncStateWithAccountInfo(account)
+    },
     { immediate: true }
   )
 
@@ -180,17 +202,36 @@ export const useAccountManager = defineStore('account-manager', () => {
   // does nothing if the account has no dog friend, or if the dog friend has
   // already been loaded.
   const _loadGuestDogFriend = async (account: GuestAccountInfo) => {
-    const dogKey = account.activeDogKey
-    if (dogKey == null) {
+    const dogId = account.activeDogId
+    if (dogId == null) {
       return
     }
-    if (currentDog.value?.key === dogKey) {
+    if (currentDog.value?.dogId === dogId) {
       return
     }
     const dogDb = await dogDatabaseManager.getGuestDogDatabase(account)
-    const dog = await dogDb.getDog(dogKey)
+    const dog = await dogDb.getDog(dogId)
     if (dog == null) {
-      throw new Error(`no dog friend with key: ${dogKey}`)
+      throw new Error(`no dog friend with ID: ${dogId}`)
+    }
+    currentDog.value = dog
+  }
+
+  // loads the dog associated with the online account.
+  // does nothing if the account has no dog friend, or if the dog friend has
+  // already been loaded.
+  const _loadOnlineDogFriend = async (account: OnlineAccountInfo) => {
+    const dogId = account.activeDogId
+    if (dogId == null) {
+      return
+    }
+    if (currentDog.value?.dogId === dogId) {
+      return
+    }
+    const dogDb = await dogDatabaseManager.getOnlineDogDatabase(account)
+    const dog = await dogDb.getDog(dogId)
+    if (dog == null) {
+      throw new Error(`no dog friend with ID: ${dogId}`)
     }
     currentDog.value = dog
   }
@@ -199,12 +240,23 @@ export const useAccountManager = defineStore('account-manager', () => {
   watch(
     accountInfo,
     (account) => {
-      if (account.type !== 'guest') {
+      if (account.type !== 'guest' && account.type !== 'online') {
         return
       }
       isLoadingDog.value = true
-      runAndCaptureError(
-        () => _loadGuestDogFriend(account),
+      runAndCaptureErrorAsync(
+        () => {
+          switch (account.type) {
+            case 'guest':
+              return _loadGuestDogFriend(account)
+            case 'online':
+              return _loadOnlineDogFriend(account)
+            default: {
+              const unreachable: never = account
+              throw new Error(`unnacceptable account type: ${account}`)
+            }
+          }
+        },
         () => {
           isLoadingDog.value = false
         }
@@ -222,7 +274,7 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
     const recordDb = await businessRecordDatabaseManager
       .getGuestBusinessRecordDatabase(accountInfo)
-    const records = await recordDb.loadBusinessRecords(dog.key)
+    const records = await recordDb.loadBusinessRecords(dog.dogId)
     // marks the records as raw to reduce the reactivity overhead
     activeBusinessRecords.value = markRaw(records)
   }
@@ -269,18 +321,41 @@ export const useAccountManager = defineStore('account-manager', () => {
   }
 
   const _registerNewDogFriendOfGuest = async (
-    accountInfo: GuestAccountInfo,
+    guest: GuestAccountInfo,
     dogParams: DogParams
   ) => {
     try {
-      const dogDb = await dogDatabaseManager.getGuestDogDatabase(accountInfo)
-      // we have to update currentDog then accountInfo.activeDogKey
+      const dogDb = await dogDatabaseManager.getGuestDogDatabase(guest)
+      // we have to update currentDog then accountInfo.activeDogId
       // otherwise, the watcher of accountInfo will try to load the dog friend
       const dog = await dogDb.createDog(dogParams)
       currentDog.value = dog
-      accountInfo.activeDogKey = dog.key
+      accountInfo.value = {
+        ...guest,
+        activeDogId: dog.dogId
+      }
     } catch (err) {
       console.error('failed to register guest dog friend', err)
+      throw err
+    }
+  }
+
+  const _registerNewDogFriendOfOnlineAccount = async (
+    account: OnlineAccountInfo,
+    dogParams: DogParams
+  ) => {
+    try {
+      const dogDb = await dogDatabaseManager.getOnlineDogDatabase(account)
+      const dog = await dogDb.createDog(dogParams)
+      // we have to update currentDog then accountInfo.activeDogId
+      // otherwise, the watcher of accountInfo will try to load the dog friend
+      currentDog.value = dog
+      accountInfo.value = {
+        ...account,
+        activeDogId: dog.dogId
+      }
+    } catch (err) {
+      console.error('failed to register online dog friend', err)
       throw err
     }
   }
@@ -294,8 +369,7 @@ export const useAccountManager = defineStore('account-manager', () => {
         await _registerNewDogFriendOfGuest(accountInfo.value, dogParams)
         break
       case 'online':
-        // TODO: register a new dog friend of the online account
-        console.error('not yet implemented: registering new dog friend of online account')
+        await _registerNewDogFriendOfOnlineAccount(accountInfo.value, dogParams)
         break
       case 'no-account':
         throw new Error('account must be created first')
@@ -320,7 +394,7 @@ export const useAccountManager = defineStore('account-manager', () => {
       .getGuestBusinessRecordDatabase(accountInfo)
     const record = await recordDb.createBusinessRecord({
       ...recordParams,
-      dogKey: dog.key
+      dogId: dog.dogId
     })
     // prepends the new record to `activeBusinessRecords`
     // avoids deep reactivity to reduce the overhead

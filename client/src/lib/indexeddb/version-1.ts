@@ -4,8 +4,8 @@ export const DOG_STORE_NAME = 'dogs'
 /** Name of the IndexedDB store for business records. */
 export const BUSINESS_RECORD_STORE_NAME = 'business-records'
 
-/** Name of the index for `dogKey` in the business record store. */
-export const BUSINESS_RECORD_DOG_KEY_INDEX = 'dogKey'
+/** Name of the index for `dogId` in the business record store. */
+export const BUSINESS_RECORD_DOG_ID_INDEX = 'dogId'
 
 /**
  * Initializes the version 1 database.
@@ -37,7 +37,7 @@ export function initialize(db: IDBDatabase) {
  */
 export function initializeDogStore(db: IDBDatabase): IDBObjectStore {
   const store = db.createObjectStore(DOG_STORE_NAME, {
-    keyPath: 'key',
+    keyPath: 'dogId',
     autoIncrement: true
   })
   return store
@@ -57,9 +57,9 @@ export function initializeDogStore(db: IDBDatabase): IDBObjectStore {
  */
 export function initializeBusinessRecordStore(db: IDBDatabase): IDBObjectStore {
   const store = db.createObjectStore(BUSINESS_RECORD_STORE_NAME, {
-    keyPath: 'key',
+    keyPath: 'recordId',
     autoIncrement: true
   })
-  store.createIndex(BUSINESS_RECORD_DOG_KEY_INDEX, 'dogKey')
+  store.createIndex(BUSINESS_RECORD_DOG_ID_INDEX, 'dogId')
   return store
 }

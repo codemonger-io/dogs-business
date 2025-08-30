@@ -21,13 +21,13 @@ export interface BusinessRecordParams {
 /**
  * Parameters for a business record of a specific dog.
  *
- * @typeParam DogKey
+ * @typeParam DogId
  *
- *   Type representing dog keys.
+ *   Type representing dog IDs.
  */
-export interface BusinessRecordParamsOfDog<DogKey>
+export interface BusinessRecordParamsOfDog<DogId>
   extends BusinessRecordParams
 {
-  /** Key of the dog who carried out the business. */
-  dogKey: DogKey
+  /** ID of the dog who carried out the business. */
+  dogId: DogId
 }

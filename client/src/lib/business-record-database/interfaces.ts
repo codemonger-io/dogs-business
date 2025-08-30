@@ -23,22 +23,22 @@ export interface BusinessRecordDatabaseManager {
 /**
  * Interface of business record databases.
  *
- * @typeParam RecordKey
+ * @typeParam RecordId
  *
- *   Type representing record keys.
+ *   Type representing record IDs.
  *
- * @typeParam DogKey
+ * @typeParam DogId
  *
- *   Type representing dog keys.
+ *   Type representing dog IDs.
  */
 export interface BusinessRecordDatabase<
-  RecordKey extends number | string,
-  DogKey extends number | string = RecordKey
+  RecordId extends number | string,
+  DogId extends number | string = RecordId
 > {
   /** Creates a new business record in the database. */
   createBusinessRecord(
-    record: BusinessRecordParamsOfDog<DogKey>
-  ): Promise<BusinessRecord<RecordKey, DogKey>>
+    record: BusinessRecordParamsOfDog<DogId>
+  ): Promise<BusinessRecord<RecordId, DogId>>
 
   /**
    * Loads business records of a given dog from the database.
@@ -48,8 +48,8 @@ export interface BusinessRecordDatabase<
    * Business records must be sorted in descending order of the timestamps.
    */
   loadBusinessRecords(
-    dogKey: DogKey
-  ): Promise<BusinessRecord<RecordKey, DogKey>[]>
+    dogId: DogId
+  ): Promise<BusinessRecord<RecordId, DogId>[]>
 }
 
 /** Interface of business record databases for guest accounts. */
@@ -57,13 +57,13 @@ export interface GuestBusinessRecordDatabase extends BusinessRecordDatabase<numb
 
 /** Interface of business records stored in databases. */
 export interface BusinessRecord<
-  RecordKey extends number | string,
-  DogKey extends number | string
+  RecordId extends number | string,
+  DogId extends number | string
 >
-  extends BusinessRecordParamsOfDog<DogKey>
+  extends BusinessRecordParamsOfDog<DogId>
 {
-  /** Key to identify the record in the database. */
-  readonly key: RecordKey
+  /** ID to identify the record in the database. */
+  readonly recordId: RecordId
 }
 
 /** Generic business record. */

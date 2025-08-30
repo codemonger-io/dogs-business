@@ -1,4 +1,4 @@
-import type { GuestAccountInfo } from '../../types/account-info'
+import type { GuestAccountInfo, OnlineAccountInfo } from '../../types/account-info'
 import type { DogParams } from './types'
 
 /** Interface of dog database managers. */
@@ -16,16 +16,28 @@ export interface DogDatabaseManager {
    *   If the dog database cannot be created, or opened.
    */
   getGuestDogDatabase(guestInfo: GuestAccountInfo): Promise<GuestDogDatabase>
+
+  /**
+   * Returns the dog database for the online account.
+   *
+   * @remarks
+   *
+   * The dog database is supposed to be backed by the Dog's Business Resource
+   * API.
+   *
+   * @throws Error
+   */
+  getOnlineDogDatabase(accountInfo: OnlineAccountInfo): Promise<OnlineDogDatabase>
 }
 
 /**
  * Interface of dog databases.
  *
- * @typeParam Key
+ * @typeParam DogId
  *
- *   Type of keys to identify dogs in the database.
+ *   Type of IDs to identify dogs in the database.
  */
-export interface DogDatabase<Key extends number | string> {
+export interface DogDatabase<DogId extends number | string> {
   /**
    * Creates a new dog in the database.
    *
@@ -37,30 +49,33 @@ export interface DogDatabase<Key extends number | string> {
    *
    *   If any error happens.
    */
-  createDog(params: DogParams): Promise<Dog<Key>>
+  createDog(params: DogParams): Promise<Dog<DogId>>
 
   /**
-   * Returns the dog with a given key.
+   * Returns the dog with a given ID.
    *
    * @returns
    *
-   *   Dog identified by `key`.
-   *   `undefined` if no dog is associated with `key`.
+   *   Dog identified by `dogId`.
+   *   `undefined` if no dog is associated with `dogId`.
    *
    * @throws Error
    *
    *   If any error happens.
    */
-  getDog(key: Key): Promise<Dog<Key> | undefined>
+  getDog(dogId: DogId): Promise<Dog<DogId> | undefined>
 }
 
 /** Interface of dog databases for guest accounts. */
 export interface GuestDogDatabase extends DogDatabase<number> {}
 
+/** Interface of dog databases for online accounts. */
+export interface OnlineDogDatabase extends DogDatabase<string> {}
+
 /** Interface of dogs in the database. */
-export interface Dog<Key extends number | string> extends DogParams {
-  /** Key to identify the dog in the database. */
-  readonly key: Key
+export interface Dog<DogId extends number | string> extends DogParams {
+  /** ID to identify the dog in the database. */
+  readonly dogId: DogId
 }
 
 /** Generic dog. */

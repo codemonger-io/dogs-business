@@ -9,7 +9,7 @@ import {
 } from '../business-record-database'
 
 import {
-  BUSINESS_RECORD_DOG_KEY_INDEX,
+  BUSINESS_RECORD_DOG_ID_INDEX,
   BUSINESS_RECORD_STORE_NAME
 } from './current-version'
 
@@ -71,17 +71,17 @@ export class BusinessRecordStore implements GuestBusinessRecordDatabase {
             )
           }
           const { result } = addRequest
-          const key = typeof result === 'number'
+          const recordId = typeof result === 'number'
             ? result
             : typeof result === 'string' ? parseInt(result) : NaN
-          if (isNaN(key)) {
+          if (isNaN(recordId)) {
             throw new Error(
-              `business record key must be a number but got ${result}`
+              `business record ID must be a number but got ${result}`
             )
           }
           storedRecord = {
             ...params,
-            key
+            recordId
           }
         }
         // does nothing onerror and onabort since transaction handles them
@@ -95,7 +95,7 @@ export class BusinessRecordStore implements GuestBusinessRecordDatabase {
   }
 
   /** Loads business records of a given dog. */
-  loadBusinessRecords(dogKey: number):
+  loadBusinessRecords(dogId: number):
     Promise<BusinessRecord<number, number>[]>
   {
     return new Promise((resolve, reject) => {
@@ -142,8 +142,8 @@ export class BusinessRecordStore implements GuestBusinessRecordDatabase {
           reject(new Error('loadBusinessRecords transaction aborted'))
         }
         const store = transaction.objectStore(BUSINESS_RECORD_STORE_NAME)
-        const index = store.index(BUSINESS_RECORD_DOG_KEY_INDEX)
-        const getAllRequest = index.getAll(dogKey)
+        const index = store.index(BUSINESS_RECORD_DOG_ID_INDEX)
+        const getAllRequest = index.getAll(dogId)
         getAllRequest.onsuccess = (event) => {
           if (process.env.NODE_ENV !== 'production') {
             console.log(

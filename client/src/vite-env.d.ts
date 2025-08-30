@@ -10,8 +10,11 @@ interface ImportMetaEnv {
   // base URL of the Credentials API.
   readonly VITE_CREDENTIALS_API_BASE_URL: string
 
-  // base URL of the Dog's Business API.
-  readonly VITE_DOGS_BUSINESS_API_BASE_URL: string
+  // base URL of the Dog's Business Resource API.
+  readonly VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL: string
+
+  // base URL of the Dog's Business Map API.
+  readonly VITE_DOGS_BUSINESS_MAP_API_BASE_URL: string
 
   // Mapbox access token for guests.
   readonly VITE_MAPBOX_GUEST_ACCESS_TOKEN: string

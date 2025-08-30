@@ -29,6 +29,9 @@ import MapActionsPopup from './MapActionsPopup.vue'
 const ACTIVE_BUSINESS_SOURCE_ID = 'active-business'
 const ACTIVE_BUSINESS_LAYER_ID = 'active-business'
 
+const REMOTE_BUSINESS_SOURCE_ID = 'remote-business'
+const REMOTE_BUSINESS_LAYER_ID = 'business-records'
+
 const MARKER_RANGE_LAYER_ID = 'marker-range'
 const MAX_MARKER_RANGE_IN_METERS = 50
 const MARKER_RANGE_LAYER_ALPHA = 0.25
@@ -183,14 +186,14 @@ watchEffect(() => {
       if (process.env.NODE_ENV !== 'production') {
         console.log('TheMap', 'business record clicked', event)
       }
-      const clickedRecordKey = event.features?.[0].id
-      console.log('clicked record key', clickedRecordKey)
+      const clickedRecordId = event.features?.[0].id
+      console.log('clicked record ID', clickedRecordId)
       const collisionBoxes = await collectCollisionBoxesAndFeatures(
         map.value!,
         ACTIVE_BUSINESS_LAYER_ID
       )
       const clickedBox = collisionBoxes
-        .find((box) => box.feature.id=== clickedRecordKey)
+        .find((box) => box.feature.id=== clickedRecordId)
       if (clickedBox == null) {
         console.warn('TheMap', 'clicked business record not found')
         return
@@ -199,9 +202,39 @@ watchEffect(() => {
         return box !== clickedBox && boxesIntersect(box.box, clickedBox.box)
       })
       for (const box of hiddenBoxes) {
-        console.log('hidden record key', box.feature.id)
+        console.log('hidden record ID', box.feature.id)
       }
     })
+  }
+})
+
+// configures the layer for remote business records
+watchEffect(() => {
+  if (!isMapLoaded.value) {
+    return
+  }
+  if (map.value == null) {
+    console.error('TheMap', 'map is loaded but no instance exists')
+    return
+  }
+  const source = map.value.getSource(REMOTE_BUSINESS_SOURCE_ID)
+  if (source == null) {
+    map.value.addSource(REMOTE_BUSINESS_SOURCE_ID, {
+      type: 'vector',
+      tiles: [`${import.meta.env.VITE_DOGS_BUSINESS_MAP_API_BASE_URL}/tile/{z}/{x}/{y}/tile.mvt`]
+    })
+    map.value.addLayer({
+      id: REMOTE_BUSINESS_LAYER_ID,
+      type: 'symbol',
+      source: REMOTE_BUSINESS_SOURCE_ID,
+      'source-layer': 'business_records',
+      layout: {
+        'icon-image': ['concat', 'dogs-business-', ['get', 'businessType']],
+        'icon-size': 0.25
+      }
+    })
+  } else {
+    console.log('TheMap', 'source for remote business records already exists')
   }
 })
 

@@ -7,6 +7,7 @@ import { createPinia } from 'pinia'
 import Buefy from 'buefy'
 
 import App from './App.vue'
+import { OnlineDogDatabaseImpl } from './lib/dog-database/online'
 import { IndexedDBDriver } from './lib/indexeddb'
 import type {
   LocationTrackerEvent,
@@ -17,6 +18,7 @@ import {
   dogDatabaseManagerProvider
 } from './stores/account-manager'
 import { locationTrackerProvider } from './stores/location-tracker'
+import type { OnlineAccountInfo } from './types/account-info'
 import router from './router'
 import messages from './i18n'
 
@@ -41,6 +43,9 @@ app.use(dogDatabaseManagerProvider({
   async getGuestDogDatabase() {
     const connection = await indexedDBDriver.open()
     return connection.getDogStore()
+  },
+  async getOnlineDogDatabase(account: OnlineAccountInfo) {
+    return new OnlineDogDatabaseImpl(account)
   }
 }))
 app.use(businessRecordDatabaseManagerProvider({

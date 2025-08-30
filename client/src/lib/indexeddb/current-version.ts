@@ -1,5 +1,5 @@
 export {
-  BUSINESS_RECORD_DOG_KEY_INDEX,
+  BUSINESS_RECORD_DOG_ID_INDEX,
   BUSINESS_RECORD_STORE_NAME,
   DOG_STORE_NAME,
   initialize as initializeCurrentVersion

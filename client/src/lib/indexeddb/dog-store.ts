@@ -38,15 +38,15 @@ export class DogStore implements GuestDogDatabase {
             console.log('DogStore', 'createDog', 'addRequest.onsuccess', event)
           }
           const { result } = addRequest
-          const key = typeof result === 'number'
+          const dogId = typeof result === 'number'
             ? result
             : typeof result === 'string' ? parseInt(result) : NaN
-          if (isNaN(key)) {
-            throw new Error(`dog key must be a number but got ${result}`)
+          if (isNaN(dogId)) {
+            throw new Error(`dog ID must be a number but got ${result}`)
           }
           storedDog = {
             ...params,
-            key
+            dogId
           }
         }
         // does nothing onerror and onabort since transaction handles them
@@ -59,8 +59,8 @@ export class DogStore implements GuestDogDatabase {
     })
   }
 
-  /** Returns the dog with a given key. */
-  getDog(key: number): Promise<Dog<number> | undefined> {
+  /** Returns the dog with a given ID. */
+  getDog(dogId: number): Promise<Dog<number> | undefined> {
     return new Promise((resolve, reject) => {
       try {
         // uses an array to make sure there is no problem with data retrieval
@@ -85,7 +85,7 @@ export class DogStore implements GuestDogDatabase {
           reject(new Error('getDog transaction aborted'))
         }
         const store = transaction.objectStore(DOG_STORE_NAME)
-        const getRequest = store.get(key)
+        const getRequest = store.get(dogId)
         getRequest.onsuccess = (event) => {
           if (process.env.NODE_ENV !== 'production') {
             console.log('DogStore', 'getDog', 'getRequest.onsuccess', event)

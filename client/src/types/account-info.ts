@@ -36,8 +36,8 @@ export interface GuestAccountInfo {
   /** Mapbox access token for the guest. */
   mapboxAccessToken: string
 
-  /** Key of the active dog. */
-  activeDogKey?: number
+  /** ID of the active dog. */
+  activeDogId?: number
 }
 
 /**
@@ -80,6 +80,9 @@ export interface OnlineAccountInfo extends OnlineAccountCredentials {
 
   /** User information. */
   userInfo?: UserInfo
+
+  /** Active dog ID. */
+  activeDogId?: string
 }
 
 /**
@@ -116,8 +119,8 @@ function isTrueGuestAccountInfo(accountInfo: GuestAccountInfo): boolean {
     return false
   }
   if (
-    accountInfo.activeDogKey != null &&
-    typeof accountInfo.activeDogKey !== 'number'
+    accountInfo.activeDogId != null &&
+    typeof accountInfo.activeDogId !== 'number'
   ) {
     return false
   }
@@ -131,6 +134,12 @@ function isTrueOnlineAccountInfo(accountInfo: OnlineAccountInfo): boolean {
     return false
   }
   if (accountInfo.userInfo != null && !isTrueUserInfo(accountInfo.userInfo)) {
+    return false
+  }
+  if (
+    accountInfo.activeDogId != null &&
+    typeof accountInfo.activeDogId !== 'string'
+  ) {
     return false
   }
   return true

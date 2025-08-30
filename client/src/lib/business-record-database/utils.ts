@@ -20,10 +20,10 @@ export function isBusinessRecord(value: unknown):
     return false
   }
   const maybeRecord = value as Partial<GenericBusinessRecord>
-  if (maybeRecord.key === undefined) {
+  if (maybeRecord.recordId === undefined) {
     return false
   }
-  if (maybeRecord.dogKey === undefined) {
+  if (maybeRecord.dogId === undefined) {
     return false
   }
   if (!isBusinessType(maybeRecord.businessType)) {
@@ -50,10 +50,10 @@ export function isBusinessRecord(value: unknown):
 export function isGuestBusinessRecord(
   record: GenericBusinessRecord
 ): record is BusinessRecord<number, number> {
-  if (typeof record.key !== 'number') {
+  if (typeof record.recordId !== 'number') {
     return false
   }
-  if (typeof record.dogKey !== 'number') {
+  if (typeof record.dogId !== 'number') {
     return false
   }
   return true
@@ -62,19 +62,19 @@ export function isGuestBusinessRecord(
 /**
  * Converts given business records into a GeoJSON FeatureCollection.
  *
- * @typeParam RecordKey
+ * @typeParam RecordId
  *
- *   Type representing the key of a business record.
+ *   Type representing the ID of a business record.
  *
- * @typeParam DogKey
+ * @typeParam DogId
  *
- *   Type representing the key of a dog who carried out the business.
+ *   Type representing the ID of a dog who carried out the business.
  */
 export function convertBusinessRecordsToGeoJSON<
-  RecordKey extends number | string,
-  DogKey extends number | string
+  RecordId extends number | string,
+  DogId extends number | string
 >(
-  businessRecords: BusinessRecord<RecordKey, DogKey>[]
+  businessRecords: BusinessRecord<RecordId, DogId>[]
 ): FeatureCollection {
   const features: Feature[] =
     businessRecords.map(convertBusinessRecordToFeature)
@@ -89,43 +89,44 @@ export function convertBusinessRecordsToGeoJSON<
  *
  * @remarks
  *
- * `key` of the given business record is used as `id` of the returned feature.
+ * `recordId` of the given business record is used as `id` of the returned
+ * feature.
  *
  * `timestamp` is represented as the number of milliseconds elapsed since
  * 00:00:00 UTC on January 1, 1970.
  *
- * @typeParam RecordKey
+ * @typeParam RecordId
  *
- *   Type representing the key of a business record.
+ *   Type representing the ID of a business record.
  *
- * @typeParam DogKey
+ * @typeParam DogId
  *
- *   Type representing the key of a dog who carried out the business.
+ *   Type representing the ID of a dog who carried out the business.
  */
 export function convertBusinessRecordToFeature<
-  RecordKey extends number | string,
-  DogKey extends number | string
+  RecordId extends number | string,
+  DogId extends number | string
 >(
-  businessRecord: BusinessRecord<RecordKey, DogKey>
+  businessRecord: BusinessRecord<RecordId, DogId>
 ): Feature {
   const {
     businessType,
-    dogKey,
-    key: recordKey,
+    dogId,
+    recordId,
     location,
     timestamp
   } = businessRecord
   const { latitude, longitude } = location
   return {
     type: 'Feature',
-    id: recordKey,
+    id: recordId,
     geometry: {
       type: 'Point',
       coordinates: [longitude, latitude]
     },
     properties: {
-      recordKey,
-      dogKey,
+      recordId,
+      dogId,
       businessType,
       timestamp: timestamp.getTime()
     }

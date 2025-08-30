@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { getCurrentInstance, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 
 import TheDogsBusinessLogo from './TheDogsBusinessLogo.vue'
 import TheFunctionalities from './TheFunctionalities.vue'
@@ -9,6 +9,8 @@ import ThePrivacyPolicy from './ThePrivacyPolicy.vue'
 import TheTermsOfService from './TheTermsOfService.vue'
 
 const { t } = useI18n()
+
+const router = useRouter()
 
 const self = getCurrentInstance()
 if (self == null) {
@@ -51,6 +53,15 @@ const showFunctionalities = () => {
     customClass: 'is-full-screen-mobile',
     onCancel: () => scrollToContents('instant')
   })
+}
+
+const signIn = () => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('signing in')
+  }
+  // opens a fresh sign-in page
+  // as Safari has some weird constraints on passkey authentication.
+  window.location.href = router.resolve({ name: 'sign-in' }).href
 }
 
 // scrolls to the contents after 1 second
@@ -103,6 +114,16 @@ onMounted(() => {
                 {{ t('message.sign_up') }}
               </b-button>
             </RouterLink>
+          </p>
+        </section>
+        <section class="section">
+          <p class="block">
+            {{ t('message.sign_in_if_you_have_account') }}
+          </p>
+          <p class="block is-flex is-justify-content-center">
+            <b-button type="is-primary" @click="signIn">
+              {{ t('message.sign_in') }}
+            </b-button>
           </p>
         </section>
         <section class="section">

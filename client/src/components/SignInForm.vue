@@ -10,7 +10,15 @@ import { usePassquitoClientStore } from '../stores/passquito-client'
 import { capitalize } from '../utils/strings'
 
 const props = defineProps<{
-  publicKeyInfo: PublicKeyInfo
+  // if specified and the user ID is known, an authentication ceremony for the
+  // specified user will be performed.
+  // otherwise, a discoverable authentication ceremony will be performed.
+  publicKeyInfo?: PublicKeyInfo
+}>()
+
+const emit = defineEmits<{
+  // when the authentication ceremony has succeeded
+  (e: 'authenticated'): void
 }>()
 
 const { t } = useI18n()
@@ -50,7 +58,7 @@ watch(
     }
     // aborts the authentication ceremony that might be running
     abortAuthentication.value('starting new authentication ceremony')
-    const userId = props.publicKeyInfo.userHandle
+    const userId = props.publicKeyInfo?.userHandle
     const { abort, credentials } = userId != null
       ? passquitoClientStore.client.doAuthenticationCeremonyForUser(userId)
       : passquitoClientStore.client.doAuthenticationCeremony()
@@ -64,6 +72,7 @@ watch(
         publicKeyInfo,
         tokens
       })
+      emit('authenticated')
     } catch (err) {
       // TODO: check error causes
       console.error('SignInForm', 'authentication failed', err)

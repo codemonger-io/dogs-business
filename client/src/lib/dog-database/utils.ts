@@ -5,7 +5,7 @@ export function isDog(value: unknown): value is GenericDog {
   if (typeof value !== 'object' || value === null) {
     return false
   }
-  if (!('key' in value)) {
+  if (!('dogId' in value)) {
     return false
   }
   if (typeof (value as GenericDog).name !== 'string') {
@@ -16,5 +16,5 @@ export function isDog(value: unknown): value is GenericDog {
 
 /** Returns if a given `Dog` may represent a dog friend of a guest. */
 export function isGuestDog(dog: GenericDog): dog is Dog<number> {
-  return typeof dog.key === 'number'
+  return typeof dog.dogId === 'number'
 }

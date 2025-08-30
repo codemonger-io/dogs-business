@@ -79,6 +79,8 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
       case 'no-account':
         switch (state.value.type) {
           case 'loading':
+            state.value = { type: 'welcoming' }
+            break
           case 'welcoming':
             break // does nothing
           case 'guest':
@@ -137,8 +139,21 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
             break
           case 'authenticating':
           case 'authenticated':
+            break // authentication or authorization shall go on
           case 'authorized':
-            break // does nothing
+            // refreshes the tokens and fetches the user info again,
+            // if the tokens have been expired
+            if (isCognitoTokensExpired(state.value.tokens)) {
+              if (process.env.NODE_ENV !== 'production') {
+                console.log('useAuthenticatorState.syncStateWithAccountInfo', 'tokens have been expired')
+              }
+              state.value = {
+                type: 'authenticated',
+                publicKeyInfo: state.value.publicKeyInfo,
+                tokens: state.value.tokens
+              }
+            }
+            break
           case 'guest':
             // guest should not be directly switched to an online account
             // TODO: handle as an error
@@ -194,7 +209,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     // updates the user information of the online account
     try {
       // TODO: what is the best way to provide the API access
-      const url = import.meta.env.VITE_DOGS_BUSINESS_API_BASE_URL + '/user'
+      const url = import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL + '/user'
       const res = await fetch(url, {
         method: 'GET',
         headers: {
