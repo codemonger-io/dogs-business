@@ -12,16 +12,18 @@ import {
   makeMethodResponsesAllowCors,
 } from '@codemonger-io/cdk-cors-utils';
 import { RestApiWithSpec, augmentAuthorizer } from '@codemonger-io/cdk-rest-api-with-spec';
-import { composeMappingTemplate } from '@codemonger-io/mapping-template-compose';
+import type { KeyValue } from '@codemonger-io/mapping-template-compose';
+import { composeMappingTemplate, ifThen } from '@codemonger-io/mapping-template-compose';
 
+import type { ResourceTable } from './resource-table';
 import type { SsmParameters } from './ssm-parameters';
 
 /**
- * Props for {@link DogsBusinessApi}.
+ * Props for {@link ResourceApi}.
  *
  * @beta
  */
-export interface DogsBusinessApiProps {
+export interface ResourceApiProps {
   /** Base path. */
   readonly basePath: string;
 
@@ -34,6 +36,9 @@ export interface DogsBusinessApiProps {
    */
   readonly allowOrigins: string[];
 
+  /** Resource table. */
+  readonly resourceTable: ResourceTable;
+
   /** User pool for authentication. */
   readonly userPool: cognito.UserPool;
 
@@ -42,27 +47,34 @@ export interface DogsBusinessApiProps {
 }
 
 /**
- * CDK construct that provisions the Dog's Business API.
+ * CDK construct that provisions the Dog's Business Resource API.
  *
  * @beta
  */
-export class DogsBusinessApi extends Construct {
+export class ResourceApi extends Construct {
   /** Lambda function to obtain user information. */
   readonly getUserInfoLambda: lambda.IFunction;
+
+  /** Lambda function to create a new dog. */
+  readonly createDogLambda: lambda.IFunction;
+
+  /** Lambda function to get a dog friend. */
+  readonly getDogLambda: lambda.IFunction;
 
   /** API Gateway REST API. */
   readonly api: RestApiWithSpec;
 
-  constructor(scope: Construct, id: string, readonly props: DogsBusinessApiProps) {
+  constructor(scope: Construct, id: string, readonly props: ResourceApiProps) {
     super(scope, id);
 
     const {
       allowOrigins,
       basePath,
       ssmParameters,
+      resourceTable,
       userPool,
     } = props;
-    const manifestPath = path.join('lambda', 'dogs-business-api', 'Cargo.toml');
+    const manifestPath = path.join('lambda', 'resource-api', 'Cargo.toml');
 
     // Lambda functions
     // - get user information
@@ -77,14 +89,38 @@ export class DogsBusinessApi extends Construct {
       }
     });
     ssmParameters.mapboxAccessTokenParameter.grantRead(this.getUserInfoLambda);
+    // - create dog
+    this.createDogLambda = new RustFunction(this, 'CreateDogLambda', {
+      manifestPath,
+      binaryName: 'create-dog',
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 128,
+      timeout: Duration.seconds(5),
+      environment: {
+        RESOURCE_TABLE_NAME: resourceTable.table.tableName,
+      },
+    });
+    resourceTable.table.grantReadWriteData(this.createDogLambda);
+    // - get dog information
+    this.getDogLambda = new RustFunction(this, 'GetDogLambda', {
+      manifestPath,
+      binaryName: 'get-dog',
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 128,
+      timeout: Duration.seconds(5),
+      environment: {
+        RESOURCE_TABLE_NAME: resourceTable.table.tableName,
+      },
+    });
+    resourceTable.table.grantReadData(this.getDogLambda);
 
     // REST API
-    this.api = new RestApiWithSpec(this, 'DogsBusinessApi', {
-      description: "Dog's Business API",
+    this.api = new RestApiWithSpec(this, 'ResourceApi', {
+      description: "Dog's Business Resource API",
       openApiInfo: {
         version: '0.1.0',
       },
-      openApiOutputPath: path.join('openapi', 'dogs-business-api.json'),
+      openApiOutputPath: path.join('openapi', 'resource-api.json'),
       defaultCorsPreflightOptions: allowOrigins.length > 0 ? {
         allowHeaders: ['Authorization', 'Content-Type'],
         allowMethods: ['GET', 'POST'],
@@ -133,6 +169,11 @@ export class DogsBusinessApi extends Construct {
       },
     );
 
+    // building blocks for mapping templates
+    const mappingTemplateParts = {
+      userId: ['userId', '"$context.authorizer.claims["cognito:username"]"'] as KeyValue,
+    };
+
     // gets to the base path
     const root = basePath
       .split('/')
@@ -174,9 +215,75 @@ export class DogsBusinessApi extends Construct {
         ]),
       },
     );
+
+    // dog endpoints
+    const dog = root.addResource('dog');
+    // /dog
+    // - POST
+    dog.addMethod(
+      'POST', 
+      new apigw.LambdaIntegration(this.createDogLambda, {
+        proxy: false,
+        passthroughBehavior: apigw.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          'application/json': composeMappingTemplate([
+            mappingTemplateParts.userId,
+            ['name', '$input.json("$.name")'],
+          ]),
+        },
+        integrationResponses: makeIntegrationResponsesAllowCors([
+          {
+            statusCode: '200',
+          },
+        ]),
+      }),
+      {
+        description: 'Create a new dog friend for the user associated with the ID token',
+        authorizer,
+        authorizationType: apigw.AuthorizationType.COGNITO,
+        methodResponses: makeMethodResponsesAllowCors([
+          {
+            statusCode: '200',
+            description: 'New dog friend has successfully been created',
+          },
+        ]),
+      },
+    );
+    // /dog/{dogId}
+    const dogId = dog.addResource('{dogId}');
+    // - GET
+    dogId.addMethod(
+      'GET',
+      new apigw.LambdaIntegration(this.getDogLambda, {
+        proxy: false,
+        passthroughBehavior: apigw.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          'application/json': composeMappingTemplate([
+            mappingTemplateParts.userId,
+            ['dogId', `"$util.escapeJavaScript($input.params("dogId")).replaceAll("\\'","'")"`],
+          ]),
+        },
+        integrationResponses: makeIntegrationResponsesAllowCors([
+          {
+            statusCode: '200',
+          },
+        ]),
+      }),
+      {
+        description: 'Obtain the dog friend identified by a given ID for the user associated with the ID token',
+        authorizer,
+        authorizationType: apigw.AuthorizationType.COGNITO,
+        methodResponses: makeMethodResponsesAllowCors([
+          {
+            statusCode: '200',
+            description: 'Dog friend has successfully been obtained',
+          },
+        ]),
+      },
+    );
   }
 
-  /** Internal URL of the Dog's Business API. */
+  /** Internal URL of the Dog's Business Resource API. */
   get internalUrl(): string {
     return this.api.urlForPath(this.props.basePath);
   }

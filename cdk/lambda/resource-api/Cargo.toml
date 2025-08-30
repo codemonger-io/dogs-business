@@ -1,8 +1,8 @@
 [package]
-name = "dogs-business-api"
+name = "resource-api"
 version = "0.1.0"
 edition = "2021"
-description = "Dog's Business API"
+description = "Dog's Business Resource API"
 
 # Starting in Rust 1.62 you can use `cargo add` to add dependencies 
 # to your project.
@@ -16,12 +16,15 @@ description = "Dog's Business API"
 # and it will keep the alphabetic ordering for you.
 
 [dependencies]
-aws-config = "1.8.2"
-aws-sdk-ssm = "1.85.1"
+aws-config = "1.8"
+aws-sdk-dynamodb = "1.90"
+aws-sdk-ssm = "1.85"
+base64 = "0.22"
 
 lambda_runtime = "0.13"
 serde = "1"
 tokio = { version = "1", features = ["macros"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
+uuid = { version = "1.18", features = ["v4"] }
 

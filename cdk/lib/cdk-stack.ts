@@ -5,7 +5,8 @@ import { PassquitoCore } from '@codemonger-io/passquito-cdk-construct';
 
 import type { DeploymentStage } from './deployment-stage';
 import { Distribution } from './distribution';
-import { DogsBusinessApi } from './dogs-business-api';
+import { ResourceApi } from './resource-api';
+import { ResourceTable } from './resource-table';
 import { SsmParameters } from './ssm-parameters';
 
 export interface CdkStackProps extends StackProps {
@@ -29,9 +30,13 @@ export class CdkStack extends Stack {
     const ssmParameters = new SsmParameters(this, 'SsmParameters', {
       deploymentStage,
     });
-    const dogsBusinessApi = new DogsBusinessApi(this, 'DogsBusinessApi', {
-      basePath: '/dogs-business-api',
+    const resourceTable = new ResourceTable(this, 'ResourceTable', {
+      deploymentStage,
+    });
+    const resourceApi = new ResourceApi(this, 'ResourceApi', {
+      basePath: '/dogs-business-api/resource',
       allowOrigins: ['http://localhost:5174'],
+      resourceTable,
       userPool: passquito.userPool.userPool,
       ssmParameters,
     })
@@ -47,9 +52,9 @@ export class CdkStack extends Stack {
       description: 'Internal URL of the distribution',
       value: distribution.internalUrl,
     });
-    new CfnOutput(this, 'DogsBusinessApiInternalUrl', {
-      description: "Internal URL of the Dog's Business API",
-      value: dogsBusinessApi.internalUrl,
+    new CfnOutput(this, 'DogsBusinessResourceApiInternalUrl', {
+      description: "Internal URL of the Dog's Business Resource API",
+      value: resourceApi.internalUrl,
     });
     new CfnOutput(this, 'ContentsBucketName', {
       description: 'Name of the S3 bucket for the contents',
