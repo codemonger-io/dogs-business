@@ -38,6 +38,10 @@ export class BusinessRecordTable extends Construct {
    * - `pk`: "{recordId}"
    *   - `recordId`: unique ID of the business record
    * - `sk`: "public"
+   * - `maskedDogId`: (string) semi-unique ID of the dog who carried out the
+   *   business. used to calculate the anonymity level in map tiles.
+   * - `isAdvocated`: (boolean) whether the dog who carried out the business
+   *   opted in to be an advocate of the app. visible at any anonymity level.
    * - `timestamp`: (number) timestamp represented as the number of hours
    *   elapsed since 00:00:00 on January 1, 1970 UTC
    * - `businessType`: (string) type of the business. "pee" or "poo".
@@ -121,6 +125,10 @@ export class BusinessRecordTable extends Construct {
    * Every map tile GSI has the following projected attributes:
    * - `dogId`: (string) unique ID of the dog who carried out the business,
    *   which is missing in public records
+   * - `maskedDogId`: (string) semi-unique ID of the dog who carried out the
+   *   business, which is missing in private records
+   * - `isAdvocated`: (boolean) whether the business record is visible at any
+   *   anonymity level, which is missing in private records
    * - `businessType`: (string) type of the business. "pee" or "poo".
    * - `longitude`: (number) longitude of the location of the business record
    * - `latitude`: (number) latitude of the location of the business record
@@ -191,6 +199,8 @@ export class BusinessRecordTable extends Construct {
         projectionType: dynamodb.ProjectionType.INCLUDE,
         nonKeyAttributes: [
           'dogId',
+          'maskedDogId',
+          'isAdvocated',
           'businessType',
           'longitude',
           'latitude',

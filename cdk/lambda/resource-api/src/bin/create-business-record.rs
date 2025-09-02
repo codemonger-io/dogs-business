@@ -183,6 +183,9 @@ async fn function_handler(
         .await?;
     tracing::info!("consumed capacity: {}", res.consumed_capacity.and_then(|c| c.capacity_units).unwrap_or(f64::NAN));
 
+    // leaves the latter half of the dog ID as the masked (semi-unique) dog ID
+    let (_, masked_dog_id) = dog_id.split_at(dog_id.len() / 2);
+
     // creates a public business record
     tracing::info!("putting public business record");
     let request = shared_state
@@ -191,6 +194,8 @@ async fn function_handler(
         .table_name(&shared_state.business_record_table_name)
         .item("pk", AttributeValue::S(record_id.clone()))
         .item("sk", AttributeValue::S("public".to_string()))
+        .item("maskedDogId", AttributeValue::S(masked_dog_id.to_string()))
+        .item("isAdvocated", AttributeValue::Bool(true)) // TODO: use dog's advocacy setting
         .item("businessType", AttributeValue::S(business_type.to_string()))
         .item("longitude", AttributeValue::N(format_geo_coordinate(longitude)))
         .item("latitude", AttributeValue::N(format_geo_coordinate(latitude)))
