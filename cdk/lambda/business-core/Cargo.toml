@@ -1,0 +1,16 @@
+[package]
+name = "business-core"
+version = "0.1.0"
+edition = "2024"
+description = "Dog's Business core library"
+
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+criterion = "0.7"
+serde_json = "1.0"
+
+[[bench]]
+name = "web_mercator_calculation"
+harness = false
