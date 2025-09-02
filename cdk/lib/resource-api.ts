@@ -15,6 +15,7 @@ import { RestApiWithSpec, augmentAuthorizer } from '@codemonger-io/cdk-rest-api-
 import type { KeyValue } from '@codemonger-io/mapping-template-compose';
 import { composeMappingTemplate, ifThen } from '@codemonger-io/mapping-template-compose';
 
+import type { BusinessRecordTable } from './business-record-table';
 import type { ResourceTable } from './resource-table';
 import type { SsmParameters } from './ssm-parameters';
 
@@ -39,6 +40,9 @@ export interface ResourceApiProps {
   /** Resource table. */
   readonly resourceTable: ResourceTable;
 
+  /** Business record table. */
+  readonly businessRecordTable: BusinessRecordTable;
+
   /** User pool for authentication. */
   readonly userPool: cognito.UserPool;
 
@@ -61,6 +65,9 @@ export class ResourceApi extends Construct {
   /** Lambda function to get a dog friend. */
   readonly getDogLambda: lambda.IFunction;
 
+  /** Lambda function to create a business record. */
+  readonly createBusinessRecordLambda: lambda.IFunction;
+
   /** API Gateway REST API. */
   readonly api: RestApiWithSpec;
 
@@ -70,6 +77,7 @@ export class ResourceApi extends Construct {
     const {
       allowOrigins,
       basePath,
+      businessRecordTable,
       ssmParameters,
       resourceTable,
       userPool,
@@ -113,6 +121,20 @@ export class ResourceApi extends Construct {
       },
     });
     resourceTable.table.grantReadData(this.getDogLambda);
+    // - create business record
+    this.createBusinessRecordLambda = new RustFunction(this, 'CreateBusinessRecordLambda', {
+      manifestPath,
+      binaryName: 'create-business-record',
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 128,
+      timeout: Duration.seconds(5),
+      environment: {
+        RESOURCE_TABLE_NAME: resourceTable.table.tableName,
+        BUSINESS_RECORD_TABLE_NAME: businessRecordTable.table.tableName,
+      },
+    });
+    resourceTable.table.grantReadData(this.createBusinessRecordLambda);
+    businessRecordTable.table.grantReadWriteData(this.createBusinessRecordLambda);
 
     // REST API
     this.api = new RestApiWithSpec(this, 'ResourceApi', {
@@ -172,6 +194,7 @@ export class ResourceApi extends Construct {
     // building blocks for mapping templates
     const mappingTemplateParts = {
       userId: ['userId', '"$context.authorizer.claims["cognito:username"]"'] as KeyValue,
+      dogIdSegment: ['dogId', `"$util.escapeJavaScript($input.params("dogId")).replaceAll("\\'","'")"`] as KeyValue,
     };
 
     // gets to the base path
@@ -260,7 +283,7 @@ export class ResourceApi extends Construct {
         requestTemplates: {
           'application/json': composeMappingTemplate([
             mappingTemplateParts.userId,
-            ['dogId', `"$util.escapeJavaScript($input.params("dogId")).replaceAll("\\'","'")"`],
+            mappingTemplateParts.dogIdSegment,
           ]),
         },
         integrationResponses: makeIntegrationResponsesAllowCors([
@@ -277,6 +300,40 @@ export class ResourceApi extends Construct {
           {
             statusCode: '200',
             description: 'Dog friend has successfully been obtained',
+          },
+        ]),
+      },
+    );
+    // /dog/{dogId}/business-record
+    const businessRecord = dogId.addResource('business-record');
+    // - POST
+    businessRecord.addMethod(
+      'POST',
+      new apigw.LambdaIntegration(this.createBusinessRecordLambda, {
+        proxy: false,
+        passthroughBehavior: apigw.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          'application/json': composeMappingTemplate([
+            mappingTemplateParts.userId,
+            mappingTemplateParts.dogIdSegment,
+            ['businessType', '$input.json("$.businessType")'],
+            ['location', '$input.json("$.location")'],
+          ]),
+        },
+        integrationResponses: makeIntegrationResponsesAllowCors([
+          {
+            statusCode: '200',
+          },
+        ]),
+      }),
+      {
+        description: 'Create a new business record carried out by the dog friend identified by a given ID',
+        authorizer,
+        authorizationType: apigw.AuthorizationType.COGNITO,
+        methodResponses: makeMethodResponsesAllowCors([
+          {
+            statusCode: '200',
+            description: 'Business record has successfully been created',
           },
         ]),
       },

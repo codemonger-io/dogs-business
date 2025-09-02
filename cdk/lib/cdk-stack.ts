@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 
 import { PassquitoCore } from '@codemonger-io/passquito-cdk-construct';
 
+import { BusinessRecordTable } from './business-record-table';
 import type { DeploymentStage } from './deployment-stage';
 import { Distribution } from './distribution';
 import { MapApi } from './map-api';
@@ -34,10 +35,14 @@ export class CdkStack extends Stack {
     const resourceTable = new ResourceTable(this, 'ResourceTable', {
       deploymentStage,
     });
+    const businessRecordTable = new BusinessRecordTable(this, 'BusinessRecordTable', {
+      deploymentStage,
+    });
     const resourceApi = new ResourceApi(this, 'ResourceApi', {
       basePath: '/dogs-business-api/resource',
       allowOrigins: ['http://localhost:5174'],
       resourceTable,
+      businessRecordTable,
       userPool: passquito.userPool.userPool,
       ssmParameters,
     })
