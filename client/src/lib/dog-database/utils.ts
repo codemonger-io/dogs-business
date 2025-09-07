@@ -18,3 +18,8 @@ export function isDog(value: unknown): value is GenericDog {
 export function isGuestDog(dog: GenericDog): dog is Dog<number> {
   return typeof dog.dogId === 'number'
 }
+
+/** Returns if a given `Dog` may represent a dog friend of an online account. */
+export function isOnlineDog(dog: GenericDog): dog is Dog<string> {
+  return typeof dog.dogId === 'string'
+}

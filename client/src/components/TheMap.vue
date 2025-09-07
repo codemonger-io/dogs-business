@@ -461,7 +461,7 @@ const addBusinessRecordAtCurrentMarker = (businessType: BusinessType) => {
       longitude: lng,
       latitude: lat
     },
-    timestamp: new Date()
+    timestamp: Math.floor(Date.now() / 1000)
   })
 }
 

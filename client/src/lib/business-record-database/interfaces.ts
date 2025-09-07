@@ -1,4 +1,7 @@
-import type { GuestAccountInfo } from '../../types/account-info'
+import type {
+  GuestAccountInfo,
+  OnlineAccountInfo
+} from '../../types/account-info'
 import type { BusinessRecordParamsOfDog } from './types'
 
 /** Interface of business record database managers. */
@@ -18,6 +21,13 @@ export interface BusinessRecordDatabaseManager {
   getGuestBusinessRecordDatabase(
     guestInfo: GuestAccountInfo
   ): Promise<GuestBusinessRecordDatabase>
+
+  /**
+   * Returns the business record database for an online account.
+   */
+  getOnlineBusinessRecordDatabase(
+    onlineAccount: OnlineAccountInfo,
+  ): Promise<OnlineBusinessRecordDatabase>
 }
 
 /**
@@ -54,6 +64,9 @@ export interface BusinessRecordDatabase<
 
 /** Interface of business record databases for guest accounts. */
 export interface GuestBusinessRecordDatabase extends BusinessRecordDatabase<number> {}
+
+/** Interface of business record databases for online accounts. */
+export interface OnlineBusinessRecordDatabase extends BusinessRecordDatabase<string> {}
 
 /** Interface of business records stored in databases. */
 export interface BusinessRecord<

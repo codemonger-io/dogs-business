@@ -7,6 +7,9 @@ import { createPinia } from 'pinia'
 import Buefy from 'buefy'
 
 import App from './App.vue'
+import {
+  OnlineBusinessRecordDatabaseImpl
+} from './lib/business-record-database/online'
 import { OnlineDogDatabaseImpl } from './lib/dog-database/online'
 import { IndexedDBDriver } from './lib/indexeddb'
 import type {
@@ -52,6 +55,9 @@ app.use(businessRecordDatabaseManagerProvider({
   async getGuestBusinessRecordDatabase() {
     const connection = await indexedDBDriver.open()
     return connection.getBusinessRecordStore()
+  },
+  async getOnlineBusinessRecordDatabase(onlineAccount: OnlineAccountInfo) {
+    return new OnlineBusinessRecordDatabaseImpl(onlineAccount)
   }
 }))
 

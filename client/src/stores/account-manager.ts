@@ -22,7 +22,7 @@ import type {
   DogParams,
   GenericDog
 } from '../lib/dog-database'
-import { isGuestDog } from '../lib/dog-database'
+import { isGuestDog, isOnlineDog } from '../lib/dog-database'
 import { makeValidatingSerializer } from '../lib/storage-serializer'
 import type {
   GuestAccountInfo,
@@ -404,19 +404,38 @@ export const useAccountManager = defineStore('account-manager', () => {
     ])
   }
 
+  const _addBusinessRecordOfOnlineAccount = async (
+    accountInfo: OnlineAccountInfo,
+    dog: GenericDog,
+    recordParams: BusinessRecordParams
+  ) => {
+    if (!isOnlineDog(dog)) {
+      throw new Error('dog must be a dog friend of an online account')
+    }
+    const recordDb = await businessRecordDatabaseManager
+      .getOnlineBusinessRecordDatabase(accountInfo)
+    const record = await recordDb.createBusinessRecord({
+      ...recordParams,
+      dogId: dog.dogId
+    })
+    // TODO: should we add the record to `activeBusinessRecords`?
+  }
+
   const addBusinessRecord = async (recordParams: BusinessRecordParams) => {
-    if (accountInfo.value == null) {
+    const account = accountInfo.value
+    const dog = currentDog.value
+    if (account == null) {
       throw new Error('no account info available')
     }
-    if (currentDog.value == null) {
+    if (dog == null) {
       throw new Error('no current dog available')
     }
-    switch (accountInfo.value.type) {
+    switch (account.type) {
       case 'guest':
         try {
           await _addBusinessRecordOfGuest(
-            accountInfo.value,
-            currentDog.value,
+            account,
+            dog,
             recordParams
           )
         } catch (err) {
@@ -425,14 +444,19 @@ export const useAccountManager = defineStore('account-manager', () => {
         }
         break
       case 'online':
-        // TODO: add a business record of the online account
-        throw new Error('not yet implemented: adding business record of online account')
+        await runAndCaptureErrorAsync(
+          () => _addBusinessRecordOfOnlineAccount(
+            account,
+            dog,
+            recordParams
+          )
+        )
       case 'no-account':
         throw new Error('account must be created first')
         break
       default: {
         // exhaustive cases must not lead here
-        const unreachable: never = accountInfo.value
+        const unreachable: never = account
         throw new Error(`unknown account type: ${unreachable}`)
       }
     }

@@ -14,8 +14,15 @@ export interface BusinessRecordParams {
   /** Location where the business was carried out. */
   location: MinimalGeolocationCoordinates
 
-  /** Timestamp when the business was carried out. */
-  timestamp: Date
+  /**
+   * Timestamp when the business was carried out.
+   *
+   * @remarks
+   *
+   * Represented as the number of seconds elapsed since 00:00:00 on January 1,
+   * 1970 UTC.
+   */
+  timestamp: number
 }
 
 /**

@@ -5,8 +5,6 @@ import type { BusinessRecord, GenericBusinessRecord } from './interfaces'
 import type { BusinessType } from './types'
 import { BUSINESS_TYPES } from './types'
 
-const testDateFormatter = new Intl.DateTimeFormat()
-
 /** Returns if a given value is a {@link BusinessType}. */
 export function isBusinessType(value: unknown): value is BusinessType {
   return BUSINESS_TYPES.indexOf(value as BusinessType) !== -1
@@ -32,12 +30,7 @@ export function isBusinessRecord(value: unknown):
   if (!isMinimalGeolocationCoordinates(maybeRecord.location)) {
     return false
   }
-  if (typeof maybeRecord.timestamp !== 'object' || maybeRecord.timestamp == null) {
-    return false
-  }
-  try {
-    testDateFormatter.format(maybeRecord.timestamp)
-  } catch {
+  if (typeof maybeRecord.timestamp !== 'number') {
     return false
   }
   return true
@@ -92,8 +85,8 @@ export function convertBusinessRecordsToGeoJSON<
  * `recordId` of the given business record is used as `id` of the returned
  * feature.
  *
- * `timestamp` is represented as the number of milliseconds elapsed since
- * 00:00:00 UTC on January 1, 1970.
+ * `timestamp` is represented as the number of seconds elapsed since
+ * 00:00:00 on January 1, 1970 UTC.
  *
  * @typeParam RecordId
  *
@@ -128,7 +121,7 @@ export function convertBusinessRecordToFeature<
       recordId,
       dogId,
       businessType,
-      timestamp: timestamp.getTime()
+      timestamp,
     }
   }
 }
