@@ -15,7 +15,7 @@ pub struct BusinessRecord {
     pub record_id: String,
 
     /// ID of the dog who carried out the business.
-    pub dog_id: String,
+    pub dog_id: Option<String>,
 
     /// Business type.
     pub business_type: BusinessType,

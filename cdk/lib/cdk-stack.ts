@@ -49,6 +49,7 @@ export class CdkStack extends Stack {
     const mapApi = new MapApi(this, 'MapApi', {
       basePath: '/dogs-business-api/map',
       allowOrigins: ['http://localhost:5174'],
+      businessRecordTable,
       userPool: passquito.userPool.userPool,
     });
     const distribution = new Distribution(this, 'Distribution', {

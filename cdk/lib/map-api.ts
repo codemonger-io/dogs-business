@@ -15,6 +15,9 @@ import {
 import { RestApiWithSpec } from '@codemonger-io/cdk-rest-api-with-spec';
 import { composeMappingTemplate } from '@codemonger-io/mapping-template-compose';
 
+import type { BusinessRecordTable } from './business-record-table';
+import { INDEXED_ZOOM_LEVELS } from './business-record-table';
+
 /**
  * Props for {@link MapApi}.
  *
@@ -32,6 +35,9 @@ export interface MapApiProps {
    * No CORS preflight is performed if empty.
    */
   readonly allowOrigins: string[];
+
+  /** Business record table. */
+  readonly businessRecordTable: BusinessRecordTable;
 
   /** User pool for authentication. */
   readonly userPool: cognito.UserPool;
@@ -52,7 +58,7 @@ export class MapApi extends Construct {
   constructor(scope: Construct, id: string, readonly props: MapApiProps) {
     super(scope, id);
 
-    const { allowOrigins, basePath, userPool } = props;
+    const { allowOrigins, basePath, businessRecordTable, userPool } = props;
     const manifestPath = path.join('lambda', 'map-api', 'Cargo.toml');
 
     // Lambda functions
@@ -63,7 +69,12 @@ export class MapApi extends Construct {
       architecture: lambda.Architecture.ARM_64,
       memorySize: 128,
       timeout: Duration.seconds(5),
+      environment: {
+        BUSINESS_RECORD_TABLE_NAME: businessRecordTable.table.tableName,
+        INDEXED_ZOOM_LEVELS: INDEXED_ZOOM_LEVELS.join(','),
+      },
     });
+    businessRecordTable.table.grantReadData(this.getTileLambda);
 
     // REST API
     this.api = new RestApiWithSpec(this, 'MapApi', {

@@ -80,7 +80,9 @@ impl BusinessRecordBuffer {
     pub fn append_business_record(&mut self, record: BusinessRecord) -> Result<(), MvtError> {
         if self.contains_location(&record.location) {
             self.add_record_id(record.record_id.clone())?;
-            self.add_string_value(record.dog_id.clone());
+            if let Some(dog_id) = record.dog_id.as_ref() {
+                self.add_string_value(dog_id.clone());
+            }
             self.add_string_value(record.business_type.clone().to_string());
             self.add_i64_value(record.timestamp);
             self.records.push(record);
@@ -280,13 +282,17 @@ impl From<BusinessRecordBuffer> for Tile {
                 feature.tags = vec![
                     PROPERTY_KEY_RECORD_ID.0,
                     *string_value_to_index.get(&record.record_id).unwrap(),
-                    PROPERTY_KEY_DOG_ID.0,
-                    *string_value_to_index.get(&record.dog_id).unwrap(),
                     PROPERTY_KEY_BUSINESS_TYPE.0,
                     *string_value_to_index.get(&record.business_type.to_string()).unwrap(),
                     PROPERTY_KEY_TIMESTAMP.0,
                     *i64_value_to_index.get(&record.timestamp).unwrap(),
                 ];
+                if let Some(dog_id) = record.dog_id.as_ref() {
+                    feature.tags.extend_from_slice(&[
+                        PROPERTY_KEY_DOG_ID.0,
+                        *string_value_to_index.get(dog_id).unwrap(),
+                    ]);
+                }
                 feature
             })
             .collect::<>();
@@ -294,9 +300,9 @@ impl From<BusinessRecordBuffer> for Tile {
         if layer.features.len() > 0 {
             layer.keys = [
                 PROPERTY_KEY_RECORD_ID,
-                PROPERTY_KEY_DOG_ID,
                 PROPERTY_KEY_BUSINESS_TYPE,
                 PROPERTY_KEY_TIMESTAMP,
+                PROPERTY_KEY_DOG_ID,
             ]
                 .into_iter()
                 .enumerate()
@@ -323,12 +329,12 @@ impl From<BusinessRecordBuffer> for Tile {
 
 /// Key index and name for the `recordId` property.
 const PROPERTY_KEY_RECORD_ID: (u32, &str) = (0, "recordId");
-/// Key index and name for the `dogId` property.
-const PROPERTY_KEY_DOG_ID: (u32, &str) = (1, "dogId");
 /// Key index and name for the `businessType` property.
-const PROPERTY_KEY_BUSINESS_TYPE: (u32, &str) = (2, "businessType");
+const PROPERTY_KEY_BUSINESS_TYPE: (u32, &str) = (1, "businessType");
 /// Key index and name for the `timestamp` property.
-const PROPERTY_KEY_TIMESTAMP: (u32, &str) = (3, "timestamp");
+const PROPERTY_KEY_TIMESTAMP: (u32, &str) = (2, "timestamp");
+/// Key index and name for the `dogId` property. (optional)
+const PROPERTY_KEY_DOG_ID: (u32, &str) = (3, "dogId");
 
 #[cfg(test)]
 mod tests {
@@ -417,7 +423,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("test_record_1")
-                        .dog_id("dog_1")
+                        .dog_id(Some("dog_1".to_string()))
                         .business_type(BusinessType::Pee)
                         .location(TOKYO.clone())
                         .timestamp(1_755_317_141)
@@ -431,7 +437,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("test_record_2")
-                        .dog_id("dog_2")
+                        .dog_id(Some("dog_2".to_string()))
                         .business_type(BusinessType::Poo)
                         .location(PITTSBURGH.clone())
                         .timestamp(1_755_317_142)
@@ -454,7 +460,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("test_record_1")
-                        .dog_id("dog_1")
+                        .dog_id(Some("dog_1".to_string()))
                         .business_type(BusinessType::Pee)
                         .location(TOKYO.clone())
                         .timestamp(1_755_317_141)
@@ -468,7 +474,7 @@ mod tests {
                 buffer.append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("test_record_2")
-                        .dog_id("dog_2")
+                        .dog_id(Some("dog_2".to_string()))
                         .business_type(BusinessType::Poo)
                         .location(PITTSBURGH.clone())
                         .timestamp(1_755_317_142)
@@ -492,7 +498,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("duplicate_record_id")
-                        .dog_id("dog_1")
+                        .dog_id(Some("dog_1".to_string()))
                         .business_type(BusinessType::Pee)
                         .location(TOKYO.clone())
                         .timestamp(1_755_317_141)
@@ -506,7 +512,7 @@ mod tests {
                 buffer.append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("duplicate_record_id")
-                        .dog_id("dog_2")
+                        .dog_id(Some("dog_2".to_string()))
                         .business_type(BusinessType::Poo)
                         .location(PITTSBURGH.clone())
                         .timestamp(1_755_317_142)
@@ -633,7 +639,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("test_record_1")
-                        .dog_id("dog_1")
+                        .dog_id(Some("dog_1".to_string()))
                         .business_type(BusinessType::Pee)
                         .location(TOKYO.clone())
                         .timestamp(1_755_317_141)
@@ -647,7 +653,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("test_record_2")
-                        .dog_id("dog_2")
+                        .dog_id(Some("dog_2".to_string()))
                         .business_type(BusinessType::Poo)
                         .location(PITTSBURGH.clone())
                         .timestamp(1_755_317_142)
@@ -661,7 +667,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("test_record_3")
-                        .dog_id("dog_3")
+                        .dog_id(Some("dog_3".to_string()))
                         .business_type(BusinessType::Poo)
                         .location(BUENOS_AIRES.clone())
                         .timestamp(1_755_317_142)
@@ -675,7 +681,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("test_record_4")
-                        .dog_id("dog_3")
+                        .dog_id(Some("dog_3".to_string()))
                         .business_type(BusinessType::Poo)
                         .location(CAIRNS.clone())
                         .timestamp(1_597_562_418)
@@ -709,9 +715,9 @@ mod tests {
 
         let keys = &layer.keys;
         assert_eq!(keys[0], "recordId");
-        assert_eq!(keys[1], "dogId");
-        assert_eq!(keys[2], "businessType");
-        assert_eq!(keys[3], "timestamp");
+        assert_eq!(keys[1], "businessType");
+        assert_eq!(keys[2], "timestamp");
+        assert_eq!(keys[3], "dogId");
 
         // values are sorted by frequency in descending order
         // no guarantee about the order of values with the same frequency
@@ -739,9 +745,9 @@ mod tests {
         assert!(matches!(features[0].type_.unwrap().unwrap(), GeomType::POINT));
         assert_eq!(features[0].tags, vec![
             0, i_test_record_1,
-            1, i_dog_1,
-            2, i_pee,
-            3, i_1_755_317_141,
+            1, i_pee,
+            2, i_1_755_317_141,
+            3, i_dog_1,
         ]);
         assert_eq!(features[0].geometry, vec![
             9,
@@ -753,9 +759,9 @@ mod tests {
         assert!(matches!(features[1].type_.unwrap().unwrap(), GeomType::POINT));
         assert_eq!(features[1].tags, vec![
             0, i_test_record_2,
-            1, i_dog_2,
-            2, i_poo,
-            3, i_1_755_317_142,
+            1, i_poo,
+            2, i_1_755_317_142,
+            3, i_dog_2,
         ]);
         assert_eq!(features[1].geometry, vec![
             9,
@@ -767,9 +773,9 @@ mod tests {
         assert!(matches!(features[2].type_.unwrap().unwrap(), GeomType::POINT));
         assert_eq!(features[2].tags, vec![
             0, i_test_record_3,
-            1, i_dog_3,
-            2, i_poo,
-            3, i_1_755_317_142,
+            1, i_poo,
+            2, i_1_755_317_142,
+            3, i_dog_3,
         ]);
         assert_eq!(features[2].geometry, vec![
             9,
@@ -781,9 +787,9 @@ mod tests {
         assert!(matches!(features[3].type_.unwrap().unwrap(), GeomType::POINT));
         assert_eq!(features[3].tags, vec![
             0, i_test_record_4,
-            1, i_dog_3,
-            2, i_poo,
-            3, i_1_597_562_418,
+            1, i_poo,
+            2, i_1_597_562_418,
+            3, i_dog_3,
         ]);
         assert_eq!(features[3].geometry, vec![
             9,
@@ -807,7 +813,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("tokyo_station")
-                        .dog_id("dog_1")
+                        .dog_id(Some("dog_1".to_string()))
                         .business_type(BusinessType::Pee)
                         .location(TOKYO.clone())
                         .timestamp(1_755_317_141)
@@ -821,7 +827,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("shinjuku_station")
-                        .dog_id("dog_2")
+                        .dog_id(Some("dog_2".to_string()))
                         .business_type(BusinessType::Pee)
                         .location(SHINJUKU_STATION.clone())
                         .timestamp(1_755_317_141)
@@ -835,7 +841,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("kamata_station")
-                        .dog_id("dog_3")
+                        .dog_id(Some("dog_3".to_string()))
                         .business_type(BusinessType::Poo)
                         .location(KAMATA_STATION.clone())
                         .timestamp(1_755_317_141)
@@ -849,7 +855,7 @@ mod tests {
                 .append_business_record(
                     BusinessRecordBuilder::default()
                         .record_id("point_state_park")
-                        .dog_id("dog_4")
+                        .dog_id(Some("dog_4".to_string()))
                         .business_type(BusinessType::Poo)
                         .location(PITTSBURGH.clone())
                         .timestamp(1_755_317_142)
@@ -878,9 +884,9 @@ mod tests {
 
         let keys = &layer.keys;
         assert_eq!(keys[0], "recordId");
-        assert_eq!(keys[1], "dogId");
-        assert_eq!(keys[2], "businessType");
-        assert_eq!(keys[3], "timestamp");
+        assert_eq!(keys[1], "businessType");
+        assert_eq!(keys[2], "timestamp");
+        assert_eq!(keys[3], "dogId");
 
         // values are sorted by frequency in descending order
         // no guarantee about the order of values with the same frequency
@@ -906,9 +912,9 @@ mod tests {
         assert!(matches!(features[0].type_.unwrap().unwrap(), GeomType::POINT));
         assert_eq!(features[0].tags, vec![
             0, i_tokyo_station,
-            1, i_dog_1,
-            2, i_pee,
-            3, i_1_755_317_141,
+            1, i_pee,
+            2, i_1_755_317_141,
+            3, i_dog_1,
         ]);
         assert_eq!(features[0].geometry, vec![
             9,
@@ -920,9 +926,9 @@ mod tests {
         assert!(matches!(features[1].type_.unwrap().unwrap(), GeomType::POINT));
         assert_eq!(features[1].tags, vec![
             0, i_shinjuku_station,
-            1, i_dog_2,
-            2, i_pee,
-            3, i_1_755_317_141,
+            1, i_pee,
+            2, i_1_755_317_141,
+            3, i_dog_2,
         ]);
         assert_eq!(features[1].geometry, vec![
             9,
@@ -934,9 +940,9 @@ mod tests {
         assert!(matches!(features[2].type_.unwrap().unwrap(), GeomType::POINT));
         assert_eq!(features[2].tags, vec![
             0, i_kamata_station,
-            1, i_dog_3,
-            2, i_poo,
-            3, i_1_755_317_141,
+            1, i_poo,
+            2, i_1_755_317_141,
+            3, i_dog_3,
         ]);
         assert_eq!(features[2].geometry, vec![
             9,
