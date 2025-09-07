@@ -1643,6 +1643,7 @@ dependencies = [
  "aws-sdk-dynamodb",
  "aws-smithy-async",
  "base64 0.22.1",
+ "business-core",
  "criterion",
  "derive_builder",
  "futures",

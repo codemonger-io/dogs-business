@@ -1,7 +1,8 @@
 //! Library part of `maptiles`.
 
 use derive_builder::Builder;
-use std::fmt::Display;
+
+use business_core::types::BusinessType;
 
 pub mod mvt;
 pub mod protos;
@@ -45,23 +46,5 @@ impl<T> LonLat<T> {
     #[inline]
     pub const fn latitude(&self) -> &T {
         &self.1
-    }
-}
-
-/// Business type.
-#[derive(Clone, Debug)]
-pub enum BusinessType {
-    /// Pee.
-    Pee,
-    /// Poo.
-    Poo,
-}
-
-impl Display for BusinessType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        match self {
-            BusinessType::Pee => write!(f, "pee"),
-            BusinessType::Poo => write!(f, "poo"),
-        }
     }
 }

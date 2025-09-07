@@ -41,11 +41,11 @@ use futures::{
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
 use pin_project::pin_project;
 use protobuf::Message;
-use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use map_api::{BusinessRecord, BusinessRecordBuilder, BusinessType, LonLat};
+use business_core::types::BusinessType;
+use map_api::{BusinessRecord, BusinessRecordBuilder, LonLat};
 use map_api::mvt::{
     MvtError,
     TileCoordinates,

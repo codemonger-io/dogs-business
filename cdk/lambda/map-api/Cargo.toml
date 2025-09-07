@@ -20,6 +20,7 @@ aws-config.workspace = true
 aws-sdk-dynamodb.workspace = true
 aws-smithy-async.workspace = true
 base64 = "0.22"
+business-core.workspace = true
 derive_builder = "0.20"
 futures.workspace = true
 lambda_runtime = "0.13"
