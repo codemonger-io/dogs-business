@@ -1,0 +1,71 @@
+//! Mapbox Vector Tile (MVT).
+//!
+//! https://github.com/mapbox/vector-tile-spec
+
+use serde::Deserialize;
+
+/// Tile coordinates.
+#[derive(Clone, Debug, Deserialize)]
+pub struct TileCoordinates {
+    /// Zoom level of the tile.
+    pub zoom: u32,
+
+    /// X coordinate of the tile.
+    pub x: u32,
+
+    /// Y coordinate of the tile.
+    pub y: u32,
+}
+
+impl TileCoordinates {
+    /// Creates a new `TileCoordinates` that zooms out to a given level.
+    ///
+    /// Returns `None` if `new_zoom` is larger than the current zoom level.
+    pub fn zoom_out_to(&self, new_zoom: u32) -> Option<Self> {
+        if new_zoom > self.zoom {
+            return None;
+        }
+        let mut x = self.x;
+        let mut y = self.y;
+        let mut zoom = self.zoom;
+        while zoom > new_zoom {
+            x /= 2;
+            y /= 2;
+            zoom -= 1;
+        }
+        Some(Self { zoom, x, y })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tile_coordinates_zoom_out() {
+        // z = 1 → 0
+        let coords = TileCoordinates { zoom: 1, x: 1, y: 1 };
+        let new_coords = coords.zoom_out_to(0).unwrap();
+        assert_eq!(new_coords.zoom, 0);
+        assert_eq!(new_coords.x, 0);
+        assert_eq!(new_coords.y, 0);
+
+        // z = 12 → 10
+        let coords = TileCoordinates { zoom: 12, x: 1234, y: 3333 };
+        let new_coords = coords.zoom_out_to(10).unwrap();
+        assert_eq!(new_coords.zoom, 10);
+        assert_eq!(new_coords.x, 308);
+        assert_eq!(new_coords.y, 833);
+
+        // z = 16 → 16
+        let coords = TileCoordinates { zoom: 16, x: 58138, y: 25860 };
+        let new_coords = coords.zoom_out_to(16).unwrap();
+        assert_eq!(new_coords.zoom, 16);
+        assert_eq!(new_coords.x, 58138);
+        assert_eq!(new_coords.y, 25860);
+
+        // z = 0 → 1
+        let coords = TileCoordinates { zoom: 0, x: 0, y: 0 };
+        assert!(coords.zoom_out_to(1).is_none());
+    }
+}
