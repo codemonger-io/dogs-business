@@ -72,6 +72,16 @@ const isLoadingDog = computed(() => {
   return accountManager.isLoadingDog
 })
 
+// lookup table of active business record IDs
+// facilitates filtering remote business records
+const activeBusinessRecordIdTable = computed(() => {
+  const table: Record<string, true> = {}
+  accountManager.activeBusinessRecords?.forEach((r) => {
+    table[r.recordId] = true
+  })
+  return table
+})
+
 const getBusinessIconUrl = (businessType: string) => {
   return new URL(`../assets/icons/${businessType}.png`, import.meta.url).href
 }
@@ -231,7 +241,9 @@ watchEffect(() => {
       layout: {
         'icon-image': ['concat', 'dogs-business-', ['get', 'businessType']],
         'icon-size': 0.25
-      }
+      },
+      // excludes business records in the active business records
+      filter: ['!', ['has', ['get', 'recordId'], ['literal', activeBusinessRecordIdTable.value]]]
     })
   } else {
     console.log('TheMap', 'source for remote business records already exists')
