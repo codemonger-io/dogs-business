@@ -110,7 +110,7 @@ watchEffect(() => {
   }
   map.value = markRaw(new maplibregl.Map({
     container: mapContainer.value,
-    style: 'https://tiles.openfreemap.org/styles/liberty',
+    style: 'https://tiles.openfreemap.org/styles/bright',
     center: [139.7671, 35.6812], // Tokyo station
     zoom: 16
   }))
@@ -188,7 +188,7 @@ watchEffect(() => {
       source: ACTIVE_BUSINESS_SOURCE_ID,
       layout: {
         'icon-image': ['concat', 'dogs-business-', ['get', 'businessType']],
-        'icon-size': 0.25
+        'icon-size': 0.3
       }
     })
     // handles clicks on business records
@@ -240,7 +240,7 @@ watchEffect(() => {
       'source-layer': 'business_records',
       layout: {
         'icon-image': ['concat', 'dogs-business-', ['get', 'businessType']],
-        'icon-size': 0.25
+        'icon-size': 0.3
       },
       // excludes business records in the active business records
       filter: ['!', ['has', ['get', 'recordId'], ['literal', activeBusinessRecordIdTable.value]]]
