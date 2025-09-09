@@ -564,9 +564,15 @@ checksum = "46c5e41b57b8bba42a04676d81cb89e9ee8e859a1a66f80a5a72e1cb76b34d43"
 name = "business-core"
 version = "0.1.0"
 dependencies = [
+ "aws-sdk-dynamodb",
+ "aws-smithy-async",
  "criterion",
+ "derive_builder",
+ "futures",
+ "pin-project",
  "serde",
  "serde_json",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
@@ -2061,6 +2067,7 @@ dependencies = [
  "aws-sdk-ssm",
  "base64 0.22.1",
  "business-core",
+ "futures",
  "lambda_runtime",
  "serde",
  "tokio",

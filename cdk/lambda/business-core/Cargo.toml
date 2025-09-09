@@ -5,7 +5,13 @@ edition = "2024"
 description = "Dog's Business core library"
 
 [dependencies]
+aws-sdk-dynamodb.workspace = true
+aws-smithy-async.workspace = true
+derive_builder.workspace = true
+futures.workspace = true
+pin-project.workspace = true
 serde.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 criterion = "0.7"

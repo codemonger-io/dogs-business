@@ -6,6 +6,9 @@ import type { DeploymentStage } from './deployment-stage';
 /** Indexed zoom levels. */
 export const INDEXED_ZOOM_LEVELS = [0, 3, 6, 10, 15, 16, 17, 18];
 
+/** Name of the global secondary index for querying by dog IDs. */
+export const DOG_INDEX_NAME = 'DogIndex';
+
 /**
  * Properties for {@link BusinessRecordTable}.
  *
@@ -167,7 +170,7 @@ export class BusinessRecordTable extends Construct {
 
     // adds a global secondary index for business records of a specific dog
     this.table.addGlobalSecondaryIndex({
-      indexName: 'DogIndex',
+      indexName: DOG_INDEX_NAME,
       partitionKey: {
         name: 'dogId',
         type: dynamodb.AttributeType.STRING,

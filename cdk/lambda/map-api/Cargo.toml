@@ -21,13 +21,13 @@ aws-sdk-dynamodb.workspace = true
 aws-smithy-async.workspace = true
 base64 = "0.22"
 business-core.workspace = true
-derive_builder = "0.20"
+derive_builder.workspace = true
 futures.workspace = true
 lambda_runtime = "0.13"
 pin-project.workspace = true
 protobuf = "3.7"
 serde.workspace = true
-thiserror = "2.0"
+thiserror.workspace = true
 tokio = { version = "1", features = ["macros"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }

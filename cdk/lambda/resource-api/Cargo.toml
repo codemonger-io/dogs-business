@@ -21,6 +21,7 @@ aws-sdk-dynamodb.workspace = true
 aws-sdk-ssm = "1.85"
 base64 = "0.22"
 business-core.workspace = true
+futures.workspace = true
 lambda_runtime = "0.13"
 serde.workspace = true
 tokio = { version = "1", features = ["macros"] }
