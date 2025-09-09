@@ -279,6 +279,20 @@ export const useAccountManager = defineStore('account-manager', () => {
     activeBusinessRecords.value = markRaw(records)
   }
 
+  const _loadBusinessRecordsOfOnlineAccount = async (
+    accountInfo: OnlineAccountInfo,
+    dog: GenericDog
+  ) => {
+    if (!isOnlineDog(dog)) {
+      throw new Error('dog must be a dog friend of an online account')
+    }
+    const recordDb = await businessRecordDatabaseManager
+      .getOnlineBusinessRecordDatabase(accountInfo)
+    const records = await recordDb.loadBusinessRecords(dog.dogId)
+    // marks the records as raw to reduce the reactivity overhead
+    activeBusinessRecords.value = markRaw(records)
+  }
+
   // loads the business records associated with the current dog when the
   // current dog is updated.
   watch(
@@ -291,15 +305,18 @@ export const useAccountManager = defineStore('account-manager', () => {
       switch (accountInfo.value.type) {
         case 'guest': {
           const guestAccountInfo = accountInfo.value
-          runAndCaptureError(
+          runAndCaptureErrorAsync(
             () => _loadBusinessRecordsOfGuest(guestAccountInfo, dog)
           )
           break
         }
-        case 'online':
-          // TODO: maybe unnecessary, because business records are attached to map tiles
-          console.error('not yet implemented: loading business records of online account')
+        case 'online': {
+          const onlineAccountInfo = accountInfo.value
+          runAndCaptureErrorAsync(
+            () => _loadBusinessRecordsOfOnlineAccount(onlineAccountInfo, dog)
+          )
           break
+        }
         case 'no-account':
           activeBusinessRecords.value = undefined
           break
@@ -418,7 +435,12 @@ export const useAccountManager = defineStore('account-manager', () => {
       ...recordParams,
       dogId: dog.dogId
     })
-    // TODO: should we add the record to `activeBusinessRecords`?
+    // prepends the new record to `activeBusinessRecords`
+    // avoids deep reactivity to reduce the overhead
+    activeBusinessRecords.value = markRaw([
+      record,
+      ...(activeBusinessRecords.value ?? [])
+    ])
   }
 
   const addBusinessRecord = async (recordParams: BusinessRecordParams) => {
