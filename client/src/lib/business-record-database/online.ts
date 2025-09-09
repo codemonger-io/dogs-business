@@ -44,8 +44,25 @@ export class OnlineBusinessRecordDatabaseImpl implements OnlineBusinessRecordDat
 
   /** Loads business records of a given dog from the database. */
   async loadBusinessRecords(dogId: string): Promise<BusinessRecord<string, string>[]> {
-    console.warn('OnlineBusinessRecordDatabaseImpl.loadBusinessRecords', 'not yet implemented')
-    return []
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('OnlineBusinessRecordDatabaseImpl.loadBusinessRecords', dogId)
+    }
+    const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/dog/${dogId}/business-records`
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': this.getIdToken()
+      }
+    })
+    // TODO: handle errors
+    const records = await res.json()
+    if (!Array.isArray(records)) {
+      throw new Error('invalid business records response from server')
+    }
+    if (!records.every(isOnlineRecord)) {
+      throw new Error('invalid business records response from server')
+    }
+    return records
   }
 
   // returns the Cognito ID token for the account.
