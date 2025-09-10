@@ -2,8 +2,12 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::{BusinessRecord, LonLat};
-use crate::mvt::{zigzag, MvtError, TileCoordinates};
+use business_core::{
+    mvt::TileCoordinates,
+    types::{BusinessRecord, GeolocationCoordinates},
+};
+
+use crate::mvt::{zigzag, MvtError};
 use crate::protos::{
     PropertyValue,
     vector_tile::{Tile, tile::{Feature, GeomType, Layer}},
@@ -94,9 +98,9 @@ impl BusinessRecordBuffer {
 
     /// Returns if the tile contains a given location.
     #[inline]
-    fn contains_location(&self, location: &LonLat<f64>) -> bool {
-        self.lon_range.contains(location.longitude()) &&
-            self.lat_range.contains(location.latitude())
+    fn contains_location(&self, location: &GeolocationCoordinates) -> bool {
+        self.lon_range.contains(&location.longitude) &&
+            self.lat_range.contains(&location.latitude)
     }
 
     /// Adds a record ID to the buffer.
@@ -276,8 +280,8 @@ impl From<BusinessRecordBuffer> for Tile {
                 feature.set_type(GeomType::POINT);
                 feature.geometry = vec![
                     9, // MoveTo(1) | (Count(1) << 3)
-                    zigzag(buffer.u_from_longitude(*record.location.longitude())),
-                    zigzag(buffer.v_from_latitude(*record.location.latitude())),
+                    zigzag(buffer.u_from_longitude(record.location.longitude)),
+                    zigzag(buffer.v_from_latitude(record.location.latitude)),
                 ];
                 feature.tags = vec![
                     PROPERTY_KEY_RECORD_ID.0,
@@ -340,13 +344,26 @@ const PROPERTY_KEY_DOG_ID: (u32, &str) = (3, "dogId");
 mod tests {
     use super::*;
 
-    use crate::{BusinessRecordBuilder, BusinessType};
+    use business_core::types::{BusinessRecordBuilder, BusinessType};
+
     use crate::protos::vector_tile::tile::Value;
 
-    const TOKYO: LonLat<f64> = LonLat(139.7670506677, 35.6814709332);
-    const PITTSBURGH: LonLat<f64> = LonLat(-80.0078430744, 40.4417106826);
-    const BUENOS_AIRES: LonLat<f64> = LonLat(-58.381645119, -34.6035270547);
-    const CAIRNS: LonLat<f64> = LonLat(145.9737840892, -16.7596021497);
+    const TOKYO: GeolocationCoordinates = GeolocationCoordinates {
+        longitude: 139.7670506677,
+        latitude: 35.6814709332,
+    };
+    const PITTSBURGH: GeolocationCoordinates = GeolocationCoordinates {
+        longitude: -80.0078430744,
+        latitude: 40.4417106826,
+    };
+    const BUENOS_AIRES: GeolocationCoordinates = GeolocationCoordinates {
+        longitude: -58.381645119,
+        latitude: -34.6035270547,
+    };
+    const CAIRNS: GeolocationCoordinates = GeolocationCoordinates {
+        longitude: 145.9737840892,
+        latitude: -16.7596021497,
+    };
 
     #[test]
     fn test_business_record_buffer_contains_location() {
@@ -580,24 +597,24 @@ mod tests {
             x: 0,
             y: 0,
         });
-        assert_eq!(buffer.u_from_longitude(*TOKYO.longitude()), 3638);
-        assert_eq!(buffer.u_from_longitude(*PITTSBURGH.longitude()), 1137);
-        assert_eq!(buffer.u_from_longitude(*BUENOS_AIRES.longitude()), 1383);
-        assert_eq!(buffer.u_from_longitude(*CAIRNS.longitude()), 3708);
+        assert_eq!(buffer.u_from_longitude(TOKYO.longitude), 3638);
+        assert_eq!(buffer.u_from_longitude(PITTSBURGH.longitude), 1137);
+        assert_eq!(buffer.u_from_longitude(BUENOS_AIRES.longitude), 1383);
+        assert_eq!(buffer.u_from_longitude(CAIRNS.longitude), 3708);
 
         let buffer = BusinessRecordBuffer::new(TileCoordinates {
             zoom: 16,
             x: 58211,
             y: 25806,
         });
-        assert_eq!(buffer.u_from_longitude(*TOKYO.longitude()), 3338);
+        assert_eq!(buffer.u_from_longitude(TOKYO.longitude), 3338);
 
         let buffer = BusinessRecordBuffer::new(TileCoordinates {
             zoom: 22,
             x: 1164993,
             y: 1581136,
         });
-        assert_eq!(buffer.u_from_longitude(*PITTSBURGH.longitude()), 270);
+        assert_eq!(buffer.u_from_longitude(PITTSBURGH.longitude), 270);
     }
 
     #[test]
@@ -607,24 +624,24 @@ mod tests {
             x: 0,
             y: 0,
         });
-        assert_eq!(buffer.v_from_latitude(*TOKYO.latitude()), 1612);
-        assert_eq!(buffer.v_from_latitude(*PITTSBURGH.latitude()), 1544);
-        assert_eq!(buffer.v_from_latitude(*BUENOS_AIRES.latitude()), 2468);
-        assert_eq!(buffer.v_from_latitude(*CAIRNS.latitude()), 2241);
+        assert_eq!(buffer.v_from_latitude(TOKYO.latitude), 1612);
+        assert_eq!(buffer.v_from_latitude(PITTSBURGH.latitude), 1544);
+        assert_eq!(buffer.v_from_latitude(BUENOS_AIRES.latitude), 2468);
+        assert_eq!(buffer.v_from_latitude(CAIRNS.latitude), 2241);
 
         let buffer = BusinessRecordBuffer::new(TileCoordinates {
             zoom: 16,
             x: 58211,
             y: 25806,
         });
-        assert_eq!(buffer.v_from_latitude(*TOKYO.latitude()), 2387);
+        assert_eq!(buffer.v_from_latitude(TOKYO.latitude), 2387);
 
         let buffer = BusinessRecordBuffer::new(TileCoordinates {
             zoom: 22,
             x: 1164993,
             y: 1581136,
         });
-        assert_eq!(buffer.v_from_latitude(*PITTSBURGH.latitude()), 674);
+        assert_eq!(buffer.v_from_latitude(PITTSBURGH.latitude), 674);
     }
 
     #[test]
@@ -800,8 +817,14 @@ mod tests {
 
     #[test]
     fn test_business_record_buffer_into_tile_around_tokyo() {
-        const SHINJUKU_STATION: LonLat<f64> = LonLat(139.7005541230, 35.6898188583);
-        const KAMATA_STATION: LonLat<f64> = LonLat(139.7160516389, 35.5626801098);
+        const SHINJUKU_STATION: GeolocationCoordinates = GeolocationCoordinates {
+            longitude: 139.7005541230,
+            latitude: 35.6898188583,
+        };
+        const KAMATA_STATION: GeolocationCoordinates = GeolocationCoordinates {
+            longitude: 139.7160516389,
+            latitude: 35.5626801098,
+        };
 
         let mut buffer = BusinessRecordBuffer::new(TileCoordinates {
             zoom: 10,
