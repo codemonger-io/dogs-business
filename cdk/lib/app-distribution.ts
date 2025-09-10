@@ -9,17 +9,17 @@ import { Construct } from 'constructs';
 import type { DeploymentStage } from './deployment-stage';
 import * as servicePaths from './service-paths';
 
-/** Properties for {@link Distribution}. */
-export interface DistributionProps {
+/** Properties for {@link AppDistribution}. */
+export interface AppDistributionProps {
   /** Deployment stage. */
   readonly deploymentStage: DeploymentStage;
 }
 
 /**
- * CDK construct that provisions the resources necessary for contents
+ * CDK construct that provisions the resources necessary for app contents
  * distribution.
  */
-export class Distribution extends Construct {
+export class AppDistribution extends Construct {
   /**
    * S3 bucket for the contents.
    *
@@ -33,7 +33,7 @@ export class Distribution extends Construct {
   /** CloudFront distribution. */
   readonly distribution: cloudfront.Distribution;
 
-  constructor(scope: Construct, id: string, props: DistributionProps) {
+  constructor(scope: Construct, id: string, props: AppDistributionProps) {
     super(scope, id);
 
     const { deploymentStage } = props;
@@ -45,7 +45,7 @@ export class Distribution extends Construct {
     });
 
     this.distribution = new cloudfront.Distribution(this, 'Distribution', {
-      comment: `Dog's Business distribution (${deploymentStage})`,
+      comment: `Dog's Business App distribution (${deploymentStage})`,
       defaultBehavior: {
         origin: new origins.S3Origin(this.contentsBucket),
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,

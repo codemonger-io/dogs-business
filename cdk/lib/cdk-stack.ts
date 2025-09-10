@@ -5,7 +5,7 @@ import { PassquitoCore } from '@codemonger-io/passquito-cdk-construct';
 
 import { BusinessRecordTable } from './business-record-table';
 import type { DeploymentStage } from './deployment-stage';
-import { Distribution } from './distribution';
+import { AppDistribution } from './app-distribution';
 import { MapApi } from './map-api';
 import { ResourceApi } from './resource-api';
 import { ResourceTable } from './resource-table';
@@ -52,7 +52,7 @@ export class CdkStack extends Stack {
       businessRecordTable,
       userPool: passquito.userPool.userPool,
     });
-    const distribution = new Distribution(this, 'Distribution', {
+    const appDistribution = new AppDistribution(this, 'AppDistribution', {
       deploymentStage,
     });
 
@@ -60,9 +60,9 @@ export class CdkStack extends Stack {
       description: 'SSM parameter path for the Mapbox access token for online accounts',
       value: ssmParameters.mapboxAccessTokenParameterPath,
     });
-    new CfnOutput(this, 'DistributionInternalUrl', {
-      description: 'Internal URL of the distribution',
-      value: distribution.internalUrl,
+    new CfnOutput(this, 'AppDistributionInternalUrl', {
+      description: 'Internal URL of the app distribution',
+      value: appDistribution.internalUrl,
     });
     new CfnOutput(this, 'DogsBusinessResourceApiInternalUrl', {
       description: "Internal URL of the Dog's Business Resource API",
@@ -74,7 +74,7 @@ export class CdkStack extends Stack {
     });
     new CfnOutput(this, 'ContentsBucketName', {
       description: 'Name of the S3 bucket for the contents',
-      value: distribution.contentsBucket.bucketName,
+      value: appDistribution.contentsBucket.bucketName,
     });
     new CfnOutput(this, 'RelyingPartyOriginParameterPath', {
       description: 'SSM parameter path for the relying party origin for the Passkey authentication',
