@@ -12,7 +12,10 @@ pub struct BusinessRecord {
     /// ID of the business record.
     pub record_id: String,
     /// ID of the dog who carried out the business.
-    pub dog_id: String,
+    ///
+    /// Missing in public records.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dog_id: Option<String>,
     /// Type of the business.
     pub business_type: BusinessType,
     /// Location of the business.
@@ -120,7 +123,7 @@ mod tests {
         const EPSILON: f64 = 1e-11; // guarantees 10-digit precision for coordinates
         let input = BusinessRecord {
             record_id: "012345678901234567890".to_string(),
-            dog_id: "0123456789abcdefghijk".to_string(),
+            dog_id: Some("0123456789abcdefghijk".to_string()),
             business_type: BusinessType::Pee,
             location: GeolocationCoordinates {
                 longitude: 139.7650506677,
@@ -157,6 +160,45 @@ mod tests {
         assert_eq!(
             properties.get("timestamp").unwrap().as_i64().unwrap(),
             1757224548,
+        );
+
+        // missing dogId
+        let input = BusinessRecord {
+            record_id: "abcdefghij01234567890".to_string(),
+            dog_id: None,
+            business_type: BusinessType::Poo,
+            location: GeolocationCoordinates {
+                longitude: -58.381645119,
+                latitude: -34.6035270547,
+            },
+            timestamp: 1757463402,
+        };
+        let output = serde_json::to_string(&input).unwrap();
+        let value: serde_json::Value = serde_json::from_str(&output).unwrap();
+        let properties = value.as_object().unwrap();
+        assert_eq!(
+            properties.get("recordId").unwrap().as_str().unwrap(),
+            "abcdefghij01234567890",
+        );
+        assert!(properties.get("dogId").is_none());
+        assert_eq!(
+            properties.get("businessType").unwrap().as_str().unwrap(),
+            "poo",
+        );
+        let location = properties.get("location").unwrap();
+        assert_approx_eq!(
+            location.get("longitude").unwrap().as_f64().unwrap(),
+            -58.381645119,
+            EPSILON
+        );
+        assert_approx_eq!(
+            location.get("latitude").unwrap().as_f64().unwrap(),
+            -34.6035270547,
+            EPSILON
+        );
+        assert_eq!(
+            properties.get("timestamp").unwrap().as_i64().unwrap(),
+            1757463402,
         );
     }
 }

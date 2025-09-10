@@ -124,8 +124,9 @@ impl BusinessRecordTable {
             )
             .dog_id(
                 item.get("dogId")
-                    .ok_or_else(|| TableError::item_error("dogId is missing"))
-                    .and_then(|v| v.as_s().map_err(|_| TableError::item_error("dogId must be a string")))?,
+                    .map(|v| v.as_s().map_err(|_| TableError::item_error("dogId must be a string")))
+                    .transpose()?
+                    .cloned(),
             )
             .business_type(
                 item.get("businessType")
