@@ -14,6 +14,7 @@ use pin_project::pin_project;
 use std::collections::HashMap;
 use std::marker::{Send, Sync};
 
+use crate::mvt::TileCoordinates;
 use crate::types::{
     BusinessRecord,
     BusinessRecordBuilder,
@@ -111,6 +112,42 @@ impl BusinessRecordTable {
             })
             .try_flatten();
         Ok(records)
+    }
+
+    /// Queries public business records in a map tile at a given location.
+    ///
+    /// Fails if the zoom level is not indexed.
+    pub fn query_by_tile(
+        &self,
+        coordinates: &TileCoordinates,
+        max_records: usize,
+    ) -> impl Stream<Item = Result<BusinessRecord, TableError>> {
+        let paginator = self
+            .client
+            .query()
+            .table_name(&self.table_name)
+            // TODO: make the index name configurable
+            .index_name(format!("TileZ{}Index", coordinates.zoom))
+            .key_condition_expression("#tileAtZ = :tileXY")
+            .expression_attribute_names("#tileAtZ", format!("tileAtZ{}", coordinates.zoom))
+            .expression_attribute_values(
+                ":tileXY",
+                AttributeValue::S(format!("public#{}/{}", coordinates.x, coordinates.y))
+            )
+            .scan_index_forward(false) // newest first
+            .limit(max_records as i32)
+            .into_paginator()
+            .send();
+        PaginationStreamExt(paginator)
+            .and_then(|output| {
+                let items = output
+                    .items
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(Self::parse_business_record_item);
+                future::ok(stream::iter(items))
+            })
+            .try_flatten()
     }
 
     fn parse_business_record_item(
