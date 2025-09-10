@@ -91,6 +91,11 @@ export class MapApi extends Construct {
         allowOrigins,
         maxAge: Duration.days(1),
       } : undefined,
+      endpointConfiguration: {
+        // REGIONAL because the API is intended to be delivered through
+        // CloudFront
+        types: [apigw.EndpointType.REGIONAL],
+      },
       deploy: true,
       deployOptions: {
         description: 'Default deployment',
