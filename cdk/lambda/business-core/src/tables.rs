@@ -72,6 +72,9 @@ pub struct BusinessRecordTable {
     /// Table name.
     table_name: String,
     /// GSI name for querying by dog ID.
+    ///
+    /// Builder: `None` by default.
+    #[builder(default)]
     dog_index_name: Option<String>,
 }
 
