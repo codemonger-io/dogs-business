@@ -397,6 +397,11 @@ export class ResourceApi extends Construct {
     );
   }
 
+  /** Base path of the API. */
+  get basePath(): string {
+    return this.props.basePath;
+  }
+
   /** Internal URL of the Dog's Business Resource API. */
   get internalUrl(): string {
     return this.api.urlForPath(this.props.basePath);

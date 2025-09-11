@@ -5,6 +5,7 @@ import { PassquitoCore } from '@codemonger-io/passquito-cdk-construct';
 
 import { BusinessRecordTable } from './business-record-table';
 import type { DeploymentStage } from './deployment-stage';
+import { ApiDistribution } from './api-distribution';
 import { AppDistribution } from './app-distribution';
 import { MapApi } from './map-api';
 import { ResourceApi } from './resource-api';
@@ -52,6 +53,11 @@ export class CdkStack extends Stack {
       businessRecordTable,
       userPool: passquito.userPool.userPool,
     });
+    const apiDistribution = new ApiDistribution(this, 'ApiDistribution', {
+      resourceApi,
+      mapApi,
+      deploymentStage,
+    });
     const appDistribution = new AppDistribution(this, 'AppDistribution', {
       deploymentStage,
     });
@@ -66,11 +72,11 @@ export class CdkStack extends Stack {
     });
     new CfnOutput(this, 'DogsBusinessResourceApiInternalUrl', {
       description: "Internal URL of the Dog's Business Resource API",
-      value: resourceApi.internalUrl,
+      value: apiDistribution.resourceApiUrl,
     });
     new CfnOutput(this, 'DogsBusinessMapApiInternalUrl', {
       description: "Internal URL of the Dog's Business Map API",
-      value: mapApi.internalUrl,
+      value: apiDistribution.mapApiUrl,
     });
     new CfnOutput(this, 'ContentsBucketName', {
       description: 'Name of the S3 bucket for the contents',

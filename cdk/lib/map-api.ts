@@ -184,6 +184,11 @@ export class MapApi extends Construct {
     );
   }
 
+  /** Returns the base path of the API. */
+  get basePath(): string {
+    return this.props.basePath;
+  }
+
   /** Internal URL of the Dog's Business Map API. */
   get internalUrl(): string {
     return this.api.urlForPath(this.props.basePath);
