@@ -76,13 +76,18 @@ pub struct BusinessRecordTable {
     /// Builder: `None` by default.
     #[builder(default)]
     dog_index_name: Option<String>,
+    /// Prefix of the GSI names for querying by map tiles at specific zoom level.
+    ///
+    /// Builder: `None` by default.
+    #[builder(default)]
+    tile_index_name_prefix: Option<String>,
 }
 
 impl BusinessRecordTable {
     /// Queries business records carried out by a given dog.
     ///
-    /// Returns a [`TableError::BadConfiguration`] if no GSI name for dog IDs
-    /// is configured.
+    /// Fails with a [`TableError::BadConfiguration`] if no GSI name for dog
+    /// IDs is configured.
     pub fn query_by_dog_id(
         &self,
         dog_id: impl Into<String>,
@@ -119,18 +124,25 @@ impl BusinessRecordTable {
 
     /// Queries public business records in a map tile at a given location.
     ///
+    /// Fails with a [`TableError::BadConfiguration`] if no GSI name prefix for
+    /// map tiles at specific zoom levels is configured.
+    ///
     /// Fails if the zoom level is not indexed.
     pub fn query_by_tile(
         &self,
         coordinates: &TileCoordinates,
         max_records: usize,
-    ) -> impl Stream<Item = Result<BusinessRecord, TableError>> {
+    ) -> Result<impl Stream<Item = Result<BusinessRecord, TableError>>, TableError> {
+        let tile_index_name = self
+            .tile_index_name_prefix
+            .as_ref()
+            .map(|prefix| format!("{}{}", prefix, coordinates.zoom))
+            .ok_or_else(|| TableError::BadConfiguration("tile index name prefix must be set".into()))?;
         let paginator = self
             .client
             .query()
             .table_name(&self.table_name)
-            // TODO: make the index name configurable
-            .index_name(format!("TileZ{}Index", coordinates.zoom))
+            .index_name(tile_index_name)
             .key_condition_expression("#tileAtZ = :tileXY")
             .expression_attribute_names("#tileAtZ", format!("tileAtZ{}", coordinates.zoom))
             .expression_attribute_values(
@@ -141,7 +153,7 @@ impl BusinessRecordTable {
             .limit(max_records as i32)
             .into_paginator()
             .send();
-        PaginationStreamExt(paginator)
+        let records = PaginationStreamExt(paginator)
             .and_then(|output| {
                 let items = output
                     .items
@@ -150,7 +162,8 @@ impl BusinessRecordTable {
                     .map(Self::parse_business_record_item);
                 future::ok(stream::iter(items))
             })
-            .try_flatten()
+            .try_flatten();
+        Ok(records)
     }
 
     fn parse_business_record_item(

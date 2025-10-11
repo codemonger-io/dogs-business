@@ -10,6 +10,12 @@ export const INDEXED_ZOOM_LEVELS = [0, 3, 6, 10, 15, 16, 17, 18];
 export const DOG_INDEX_NAME = 'DogIndex';
 
 /**
+ * Prefix of the name of the global secondary index for tiles at specific zoom
+ * levels.
+ */
+export const TILE_INDEX_NAME_PREFIX = 'TileZIndex';
+
+/**
  * Properties for {@link BusinessRecordTable}.
  *
  * @beta
@@ -190,7 +196,7 @@ export class BusinessRecordTable extends Construct {
     // adds global secondary indices for map tile requests
     for (const zoom of INDEXED_ZOOM_LEVELS) {
       this.table.addGlobalSecondaryIndex({
-        indexName: `TileZ${zoom}Index`,
+        indexName: TILE_INDEX_NAME_PREFIX + zoom,
         partitionKey: {
           name: `tileAtZ${zoom}`,
           type: dynamodb.AttributeType.STRING,

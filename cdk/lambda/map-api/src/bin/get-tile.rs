@@ -7,6 +7,8 @@
 //!   business records
 //! - `INDEXED_ZOOM_LEVELS`: comma-separated zoom levels that are indexed. The
 //!   zoom level 0 must be included.
+//! - `TILE_INDEX_NAME_PREFIX`: prefix of the name of the global secondary
+//!   index for tiles at specific zoom levels.
 //!
 //! ## Input
 //!
@@ -48,11 +50,13 @@ struct SharedState {
     business_record_table_name: String,
     /// Indexed zoom levels.
     indexed_zoom_levels: Vec<u32>,
+    /// Prefix of the name of the GSI for tiles at specific zoom levels.
+    tile_index_name_prefix: String,
 }
 
 impl SharedState {
     async fn new() -> Result<Self, Error> {
-        // caches the table names
+        // caches the table name
         let business_record_table_name = std::env::var("BUSINESS_RECORD_TABLE_NAME")
             .map_err(|_| "BUSINESS_RECORD_TABLE_NAME env is not set")?;
 
@@ -73,6 +77,10 @@ impl SharedState {
                 Err("zoom level 0 must be indexed")
             })?;
 
+        // caches the index prefix
+        let tile_index_name_prefix = std::env::var("TILE_INDEX_NAME_PREFIX")
+            .map_err(|_| "TILE_INDEX_NAME_PREFIX env is not set")?;
+
         // caches the DynamoDB client
         let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
         let dynamodb_client = aws_sdk_dynamodb::Client::new(&config);
@@ -81,6 +89,7 @@ impl SharedState {
             dynamodb_client,
             business_record_table_name,
             indexed_zoom_levels,
+            tile_index_name_prefix,
         })
     }
 }
@@ -106,8 +115,9 @@ async fn function_handler(
     let record_table = BusinessRecordTableBuilder::default()
         .client(shared_state.dynamodb_client.clone())
         .table_name(&shared_state.business_record_table_name)
+        .tile_index_name_prefix(Some(shared_state.tile_index_name_prefix.clone()))
         .build()?;
-    let records: Vec<BusinessRecord> = record_table.query_by_tile(&indexed_coordinates, MAX_RECORDS_PER_TILE)
+    let records: Vec<BusinessRecord> = record_table.query_by_tile(&indexed_coordinates, MAX_RECORDS_PER_TILE)?
         .try_collect()
         .await?;
 

@@ -16,7 +16,10 @@ import { RestApiWithSpec } from '@codemonger-io/cdk-rest-api-with-spec';
 import { composeMappingTemplate } from '@codemonger-io/mapping-template-compose';
 
 import type { BusinessRecordTable } from './business-record-table';
-import { INDEXED_ZOOM_LEVELS } from './business-record-table';
+import {
+  INDEXED_ZOOM_LEVELS,
+  TILE_INDEX_NAME_PREFIX,
+} from './business-record-table';
 
 /**
  * Props for {@link MapApi}.
@@ -72,6 +75,7 @@ export class MapApi extends Construct {
       environment: {
         BUSINESS_RECORD_TABLE_NAME: businessRecordTable.table.tableName,
         INDEXED_ZOOM_LEVELS: INDEXED_ZOOM_LEVELS.join(','),
+        TILE_INDEX_NAME_PREFIX,
       },
     });
     businessRecordTable.table.grantReadData(this.getTileLambda);
