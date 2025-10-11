@@ -84,12 +84,15 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'welcoming':
             break // does nothing
           case 'guest':
-          case 'authenticating':
-          case 'authenticated':
-          case 'authorized':
             // TODO: due to a corrupted account info?
             console.warn(`useAuthenticatorState.syncStateWithAccountInfo@${state.value.type}`, 'account info may have been corrupted')
             state.value = { type: 'welcoming' }
+            break
+          case 'authenticating':
+          case 'authenticated':
+          case 'authorized':
+            // this may happen after the user signed up,
+            // because the subsequent sign-in involves reloading the page
             break
           default: {
             const unreachable: never = state.value
