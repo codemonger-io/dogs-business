@@ -76,14 +76,55 @@ pnpm cdk-deploy:production
 
 Replace `$DEPLOYMENT_STAGE` with "development" or "production" as needed.
 
+For development:
+
+```sh
+DEPLOYMENT_STAGE=development
+```
+
+For production:
+
+```sh
+DEPLOYMENT_STAGE=production
+```
+
 ### Obtaining the internal URL of the distribution
 
 ```sh
-aws cloudformation describe-stacks --stack-name dogs-business-$DEPLOYMENT_STAGE --query "Stacks[0].Outputs[?OutputKey=='DistributionInternalUrl'].OutputValue" --output text
+aws cloudformation describe-stacks --stack-name dogs-business-$DEPLOYMENT_STAGE --query "Stacks[0].Outputs[?OutputKey=='AppDistributionInternalUrl'].OutputValue" --output text
 ```
 
 ### Name of the S3 bucket for the contents
 
 ```sh
 aws cloudformation describe-stacks --stack-name dogs-business-$DEPLOYMENT_STAGE --query "Stacks[0].Outputs[?OutputKey=='ContentsBucketName'].OutputValue" --output text
+```
+
+### Configuring the Relying Party origin
+
+You have to configure the [(Webauthn) Relying Party](https://www.w3.org/TR/webauthn-3/#relying-party) origin to conduct passkey registration and authentication.
+It is stored in the Parameter Store of AWS Systems Manager.
+
+You can run the following command to configure the URL of the default CloudFront distribution as the Relying Party origin:
+
+```sh
+pnpm set-rp-origin
+```
+
+For production,
+
+```sh
+pnpm set-rp-origin -s production
+```
+
+If you are locally testing the server, you can run:
+
+```sh
+pnpm set-rp-origin http://localhost:5174
+```
+
+You can also check the parameter name for the Relying Party with the following command:
+
+```sh
+aws cloudformation describe-stacks --stack-name dogs-business-$DEPLOYMENT_STAGE --query "Stacks[0].Outputs[?OutputKey=='RelyingPartyOriginParameterPath'].OutputValue" --output text
 ```
