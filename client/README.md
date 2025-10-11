@@ -8,13 +8,35 @@ This is a single page application powered by [Mapbox GL JS](https://docs.mapbox.
 You have to configure the environment variables described in the following subsections.
 You can find an example configuration in [`.env.example`](./.env.example).
 
+### Generating a configuration file from the CloudFormation stack
+
+You can generate a configuration file from the CloudFormation stack.
+Run the `generate-env` script in the [`cdk`](../cdk) folder to generate a configuration file.
+
+Running the following command in the `cdk` folder generates `.env.development`.
+
+```sh
+pnpm generate-env development
+```
+
+The following command generates `.env.production`.
+
+```sh
+pnpm generate-env production
+```
+
+
 ### Configuring the base URL of the Credentials API
 
 You have to configure the environment variable `VITE_CREDENTIALS_API_BASE_URL` to the base URL of the Credentials API.
 
-### Configuring the base URL of the Dog's Business API
+### Configuring the base URL of the Dog's Business Resource API
 
-You have to configure the environment variable `VITE_DOGS_BUSINESS_API_BASE_URL` to the base URL of the Dog's Business API.
+You have to configure the environment variable `VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL` to the base URL of the Dog's Business Resource API.
+
+### Configuring the base URL of the Dog's Business Map API
+
+You have to configure the environment variable `VITE_DOGS_BUSINESS_MAP_API_BASE_URL` to the base URL of the Dog's Business Map API.
 
 ### Configuring the Mapbox access token
 
@@ -67,24 +89,30 @@ Please see the [`/cdk` folder](../cdk) for more details.
     DEPLOYMENT_STAGE=production
     ```
 
-2. Configure the app:
-
-    ```sh
-    cp src/configs/mapbox-config.$DEPLOYMENT_STAGE.ts src/configs/mapbox-config.ts
-    ```
-
-   Note that you have to prepare your own `src/configs/mapbox-config.$DEPLOYMENT_STAGE.ts`.
-
-3. Build the production bundle:
-
-    ```sh
-    pnpm build
-    ```
-
-4. Configure AWS_PROFILE:
+2. Configure AWS_PROFILE:
 
     ```sh
     export AWS_PROFILE=dogsbusiness-jp
+    ```
+
+3. Configure the app:
+
+    ```sh
+    cd ../cdk
+    ```
+
+    ```sh
+    pnpm generate-env $DEPLOYMENT_STAGE
+    ```
+
+    ```sh
+    cd ../client
+    ```
+
+4. Build the bundle:
+
+    ```sh
+    pnpm build --mode $DEPLOYMENT_STAGE
     ```
 
 5. Obtain the S3 bucket name:
