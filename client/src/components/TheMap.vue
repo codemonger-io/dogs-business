@@ -112,7 +112,7 @@ watchEffect(() => {
     container: mapContainer.value,
     style: 'https://tiles.openfreemap.org/styles/bright',
     center: [139.7671, 35.6812], // Tokyo station
-    zoom: 16
+    zoom: 18
   }))
   map.value.on('styleimagemissing', (e) => {
     const { id } = e
@@ -446,11 +446,19 @@ watch(() => locationTracker.state, (state) => {
   }
 }, { immediate: true })
 
+const hideActionsPopup = () => {
+  const popup = actionsPopup.value
+  if (popup != null && popup.isOpen()) {
+    popup.remove()
+  }
+}
+
 const placePee = () => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('TheMap', 'placing pee')
   }
   addBusinessRecordAtCurrentMarker('pee')
+  hideActionsPopup()
   askCleanup()
 }
 
@@ -459,6 +467,7 @@ const placePoo = () => {
     console.log('TheMap', 'placing poo')
   }
   addBusinessRecordAtCurrentMarker('poo')
+  hideActionsPopup()
   askCleanup()
 }
 
