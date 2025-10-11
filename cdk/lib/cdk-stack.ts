@@ -1,4 +1,5 @@
-import { CfnOutput, Stack, type StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Stack, aws_dynamodb as dynamodb } from 'aws-cdk-lib';
+import type { StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
 import { PassquitoCore } from '@codemonger-io/passquito-cdk-construct';
@@ -43,6 +44,16 @@ export class CdkStack extends Stack {
         config: deploymentStage,
       },
       allowOrigins,
+      // TODO: allow more request units for production
+      billingForSessionTable: dynamodb.Billing.onDemand({
+        maxReadRequestUnits: 2,
+        maxWriteRequestUnits: 2,
+      }),
+      // TODO: allow more request units for production
+      billingForCredentialTable: dynamodb.Billing.onDemand({
+        maxReadRequestUnits: 2,
+        maxWriteRequestUnits: 2,
+      }),
     });
     const ssmParameters = new SsmParameters(this, 'SsmParameters', {
       deploymentStage,

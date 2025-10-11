@@ -164,12 +164,10 @@ export class BusinessRecordTable extends Construct {
         name: 'sk',
         type: dynamodb.AttributeType.STRING,
       },
-      // TODO: on-demand for production
-      billing: dynamodb.Billing.provisioned({
-        readCapacity: dynamodb.Capacity.fixed(2),
-        writeCapacity: dynamodb.Capacity.autoscaled({
-          maxCapacity: 2,
-        }),
+      // TODO: increase the caps for production
+      billing: dynamodb.Billing.onDemand({
+        maxReadRequestUnits: 2,
+        maxWriteRequestUnits: 2,
       }),
       // TODO: enable point-in-time recovery for production
     });
