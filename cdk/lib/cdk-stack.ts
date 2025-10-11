@@ -15,20 +15,34 @@ import { SsmParameters } from './ssm-parameters';
 export interface CdkStackProps extends StackProps {
   /** Deployment stage. */
   readonly deploymentStage: DeploymentStage;
+  /**
+   * Domain name of the CloudFront distribution for the app contents.
+   *
+   * @remarks
+   *
+   * Used to configure CORS.
+   * You may leave this empty at the first deployment.
+   */
+  readonly appDistributionDomainName?: string;
 }
 
 export class CdkStack extends Stack {
   constructor(scope: Construct, id: string, props: CdkStackProps) {
     super(scope, id, props);
 
-    const { deploymentStage } = props;
+    const { appDistributionDomainName, deploymentStage } = props;
+
+    const allowOrigins = [
+      ...(appDistributionDomainName ? [`https://${appDistributionDomainName}`] : []),
+      'http://localhost:5174',
+    ];
 
     const passquito = new PassquitoCore(this, 'Passquito', {
       ssmParametersProps: {
         group: 'dogs-business',
         config: deploymentStage,
       },
-      allowOrigins: ['http://localhost:5174'],
+      allowOrigins,
     });
     const ssmParameters = new SsmParameters(this, 'SsmParameters', {
       deploymentStage,
@@ -41,7 +55,7 @@ export class CdkStack extends Stack {
     });
     const resourceApi = new ResourceApi(this, 'ResourceApi', {
       basePath: '/dogs-business-api/resource',
-      allowOrigins: ['http://localhost:5174'],
+      allowOrigins,
       resourceTable,
       businessRecordTable,
       userPool: passquito.userPool.userPool,
@@ -49,13 +63,14 @@ export class CdkStack extends Stack {
     })
     const mapApi = new MapApi(this, 'MapApi', {
       basePath: '/dogs-business-api/map',
-      allowOrigins: ['http://localhost:5174'],
+      allowOrigins,
       businessRecordTable,
       userPool: passquito.userPool.userPool,
     });
     const apiDistribution = new ApiDistribution(this, 'ApiDistribution', {
       resourceApi,
       mapApi,
+      allowOrigins,
       deploymentStage,
     });
     const appDistribution = new AppDistribution(this, 'AppDistribution', {
@@ -65,6 +80,10 @@ export class CdkStack extends Stack {
     new CfnOutput(this, 'MapboxAccessTokenParameterPath', {
       description: 'SSM parameter path for the Mapbox access token for online accounts',
       value: ssmParameters.mapboxAccessTokenParameterPath,
+    });
+    new CfnOutput(this, 'AppDistributionDomainName', {
+      description: 'Domain name of the CloudFront distribution for the app contents',
+      value: appDistribution.distribution.domainName,
     });
     new CfnOutput(this, 'AppDistributionInternalUrl', {
       description: 'Internal URL of the app distribution',

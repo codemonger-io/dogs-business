@@ -19,6 +19,15 @@ export interface ApiDistributionProps {
 
   /** Dog's Business Map API. */
   readonly mapApi: MapApi;
+
+  /**
+   * CORS allowed origins.
+   *
+   * @remarks
+   *
+   * No CORS is allowed if omitted or empty.
+   */
+  readonly allowOrigins?: string[];
 }
 
 /**
@@ -32,7 +41,7 @@ export class ApiDistribution extends Construct {
   constructor(scope: Construct, id: string, readonly props: ApiDistributionProps) {
     super(scope, id);
 
-    const { deploymentStage, mapApi, resourceApi } = props;
+    const { allowOrigins, deploymentStage, mapApi, resourceApi } = props;
 
     // cache policy for the Resource API
     const resourceApiCachePolicy = new cloudfront.CachePolicy(
@@ -74,10 +83,9 @@ export class ApiDistribution extends Construct {
             '*',
           ],
           accessControlAllowMethods: ['ALL'],
-          // TODO: specify exact origins
-          accessControlAllowOrigins: ['*'],
+          accessControlAllowOrigins: allowOrigins ?? [],
           accessControlAllowCredentials: false,
-          originOverride: true,
+          originOverride: true, // overrides API Gateway CORS headers
         },
       },
     );
