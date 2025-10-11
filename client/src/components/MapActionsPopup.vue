@@ -28,28 +28,24 @@ const dogName = computed(() => {
     </p>
     <div class="block is-flex is-justify-content-center">
       <div class="action-item">
-        <b-tooltip :label="capitalize(t('term.pee'))" type="is-info">
-          <button
-            class="button poo-button is-rounded is-circle-icon"
-            @click="emit('pee')"
-          >
-            <span class="icon">
-              <IconPee />
-            </span>
-          </button>
-        </b-tooltip>
+        <button
+          class="button poo-button is-rounded is-circle-icon"
+          @click="emit('pee')"
+        >
+          <span class="icon">
+            <IconPee />
+          </span>
+        </button>
       </div>
       <div class="action-item">
-        <b-tooltip :label="capitalize(t('term.poo'))" type="is-info">
-          <button
-            class="button poo-button is-rounded is-circle-icon"
-            @click="emit('poo')"
-          >
-            <span class="icon">
-              <IconPoo />
-            </span>
-          </button>
-        </b-tooltip>
+        <button
+          class="button poo-button is-rounded is-circle-icon"
+          @click="emit('poo')"
+        >
+          <span class="icon">
+            <IconPoo />
+          </span>
+        </button>
       </div>
     </div>
   </div>
