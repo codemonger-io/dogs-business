@@ -13,23 +13,30 @@
     "cdk-synth": "cdk synth -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-development",
     "cdk-synth:production": "cdk synth -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-production",
     "cdk-deploy": "cdk deploy -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-development",
-    "cdk-deploy:production": "cdk deploy -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-production"
+    "cdk-deploy:production": "cdk deploy -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-production",
+    "set-rp-origin": "tsx bin/set-rp-origin.ts",
+    "generate-env": "tsx bin/generate-env.ts"
   },
   "devDependencies": {
+    "@aws-sdk/client-cloudformation": "^3.886.0",
+    "@aws-sdk/client-ssm": "^3.887.0",
     "@types/jest": "^30.0.0",
     "@types/node": "22.15.33",
+    "@types/yargs": "^17.0.33",
     "aws-cdk": "2.1019.1",
     "jest": "^30.0.3",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "tsx": "^4.20.5",
+    "typescript": "^5.8.3",
+    "yargs": "^18.0.0"
   },
   "dependencies": {
     "@codemonger-io/cdk-cors-utils": "0.4.0-8678c3d",
     "@codemonger-io/cdk-ghost-string-parameter": "0.2.0-9e4f21e",
     "@codemonger-io/cdk-rest-api-with-spec": "0.4.0-7c11d76",
     "@codemonger-io/mapping-template-compose": "0.2.0-aecf920",
-    "@codemonger-io/passquito-cdk-construct": "0.0.3-dcbed6b",
+    "@codemonger-io/passquito-cdk-construct": "0.0.5-524438d",
     "aws-cdk-lib": "2.202.0",
     "cargo-lambda-cdk": "^0.0.33",
     "constructs": "^10.4.2",
