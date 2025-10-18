@@ -41,25 +41,6 @@ export interface GuestAccountInfo {
 }
 
 /**
- * Credentials for an online account.
- *
- * @beta
- */
-export interface OnlineAccountCredentials {
-  /** Public key info of the online account. */
-  publicKeyInfo: PublicKeyInfo
-
-  /**
-   * Cognito tokens of the online account.
-   *
-   * @remarks
-   *
-   * Maybe `undefined` if the user is not authenticated yet.
-   */
-  tokens?: CognitoTokens
-}
-
-/**
  * User information associated with an online account.
  *
  * @beta
@@ -74,12 +55,18 @@ export interface UserInfo {
  *
  * @beta
  */
-export interface OnlineAccountInfo extends OnlineAccountCredentials {
+export interface OnlineAccountInfo {
   /** Type: always 'online'. */
   type: 'online'
 
+  /** Public key info of the online account. */
+  publicKeyInfo: PublicKeyInfo
+
+  /** Cognito tokens of the online account. */
+  tokens: CognitoTokens
+
   /** User information. */
-  userInfo?: UserInfo
+  userInfo: UserInfo
 
   /** Active dog ID. */
   activeDogId?: string
@@ -130,28 +117,19 @@ function isTrueGuestAccountInfo(accountInfo: GuestAccountInfo): boolean {
 // returns if a given value is truely an `OnlineAccountInfo`.
 // this function is intended to be used when only `type` is known to be "online".
 function isTrueOnlineAccountInfo(accountInfo: OnlineAccountInfo): boolean {
-  if (!isTrueOnlineAccountCredentials(accountInfo)) {
+  if (!isPublicKeyInfo(accountInfo.publicKeyInfo)) {
     return false
   }
-  if (accountInfo.userInfo != null && !isTrueUserInfo(accountInfo.userInfo)) {
+  if (!isCognitoTokens(accountInfo.tokens)) {
+    return false
+  }
+  if (!isTrueUserInfo(accountInfo.userInfo)) {
     return false
   }
   if (
     accountInfo.activeDogId != null &&
     typeof accountInfo.activeDogId !== 'string'
   ) {
-    return false
-  }
-  return true
-}
-
-// returns if a given value is truely an `AuthenticationProperties`.
-// this function is intended to be used when only `type` is known to be "online".
-function isTrueOnlineAccountCredentials(credentials: OnlineAccountCredentials): boolean {
-  if (!isPublicKeyInfo(credentials.publicKeyInfo)) {
-    return false
-  }
-  if (credentials.tokens != null && !isCognitoTokens(credentials.tokens)) {
     return false
   }
   return true

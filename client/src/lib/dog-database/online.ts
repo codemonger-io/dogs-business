@@ -1,4 +1,4 @@
-import type { OnlineAccountInfo } from '../../types/account-info'
+import type { OnlineAccountProvider } from '../../types/online-account-provider'
 import type { Dog, OnlineDogDatabase } from './interfaces'
 import type { DogParams } from './types'
 
@@ -9,7 +9,7 @@ import type { DogParams } from './types'
  */
 export class OnlineDogDatabaseImpl implements OnlineDogDatabase {
   /** Initializes with a given credential provider. */
-  constructor(private account: OnlineAccountInfo) {}
+  constructor(private accountProvider: OnlineAccountProvider) {}
 
   /** Creates a new friend dog for the account. */
   async createDog(params: DogParams): Promise<Dog<string>> {
@@ -21,16 +21,23 @@ export class OnlineDogDatabaseImpl implements OnlineDogDatabase {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': this.getIdToken()
+        'Authorization': await this.accountProvider.requestIdToken()
       },
       body: JSON.stringify(params)
     })
-    // TODO: handle errors
-    const dog = await res.json()
-    if (!isOnlineDog(dog)) {
-      throw new Error('invalid dog response from server')
+    if (res.ok) {
+      const dog = await res.json()
+      if (!isOnlineDog(dog)) {
+        throw new Error('invalid dog response from server')
+      }
+      return dog
+    } else {
+      if (res.status === 401) {
+        this.accountProvider.handleUnauthorized()
+      }
+      const message = await res.text()
+      throw new Error(`failed to create dog: ${res.status} ${message}`)
     }
-    return dog
   }
 
   /**
@@ -46,24 +53,22 @@ export class OnlineDogDatabaseImpl implements OnlineDogDatabase {
     const res = await fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': this.getIdToken()
+        'Authorization': await this.accountProvider.requestIdToken()
       }
     })
-    // TODO: handle errors
-    const dog = await res.json()
-    if (!isOnlineDog(dog) || dog.dogId !== dogId) {
-      throw new Error('invalid dog response from server')
+    if (res.ok) {
+      const dog = await res.json()
+      if (!isOnlineDog(dog) || dog.dogId !== dogId) {
+        throw new Error('invalid dog response from server')
+      }
+      return dog
+    } else {
+      if (res.status === 401) {
+        this.accountProvider.handleUnauthorized()
+      }
+      const message = await res.text()
+      throw new Error(`failed to fetch dog: ${res.status} ${message}`)
     }
-    return dog
-  }
-
-  // returns the Cognito ID token for the account.
-  private getIdToken(): string {
-    const token = this.account.tokens?.idToken
-    if (token == null) {
-      throw new Error('missing Cognito ID token')
-    }
-    return token
   }
 }
 

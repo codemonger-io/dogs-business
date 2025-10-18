@@ -22,6 +22,7 @@ export type AuthenticatorState =
   | AuthenticatingAuthenticatorState
   | AuthenticatedAuthenticatorState
   | AuthorizedAuthenticatorState
+  | RefreshingTokensState
 
 /**
  * Authenticator state is being loaded.
@@ -96,6 +97,21 @@ export interface AuthorizedAuthenticatorState {
 }
 
 /**
+ * Refreshing the Cognito tokens.
+ *
+ * @beta
+ */
+export interface RefreshingTokensState {
+  type: 'refreshing-tokens'
+
+  /** Public key info of the authorized user. */
+  publicKeyInfo: PublicKeyInfo
+
+  /** Cognito tokens of the authorized user. */
+  tokens: CognitoTokens
+}
+
+/**
  * Returns if a given value is an instance of `AuthenticatorState`.
  *
  * @remarks
@@ -126,6 +142,8 @@ export function isAuthenticatorState(value: unknown): value is AuthenticatorStat
       return isTrueAuthenticatedAuthenticatorState(maybeAuthenticatorState)
     case 'authorized':
       return isTrueAuthorizedAuthenticatorState(maybeAuthenticatorState)
+    case 'refreshing-tokens':
+      return isTrueRefreshingTokensState(maybeAuthenticatorState)
     default: {
       const _: never = maybeAuthenticatorState // ensures exhaustive type checking
       return false
@@ -160,6 +178,15 @@ function isTrueAuthorizedAuthenticatorState(
   return isPublicKeyInfo(state.publicKeyInfo) &&
     isCognitoTokens(state.tokens) &&
     isUserInfo(state.userInfo)
+}
+
+// returns if a given value is truely `RefreshingTokensState`.
+// this function is intended to be used when only `type` is known to be
+// "refreshing-tokens".
+function isTrueRefreshingTokensState(
+  state: RefreshingTokensState
+): boolean {
+  return isPublicKeyInfo(state.publicKeyInfo) && isCognitoTokens(state.tokens)
 }
 
 /**

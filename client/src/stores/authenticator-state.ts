@@ -7,12 +7,13 @@ import type {
 import { useSessionStorage } from '@vueuse/core'
 
 import { makeValidatingSerializer } from '../lib/storage-serializer'
-import type { AccountInfo, OnlineAccountCredentials } from '../types/account-info'
+import type { AccountInfo } from '../types/account-info'
 import { isUserInfo } from '../types/account-info'
 import {
   isAuthenticatorState,
   isEquivalentCognitoTokens
 } from '../types/authenticator-state'
+import { isCognitoTokensExpiring } from '../utils/passquito'
 import { useCredentialsApi } from './credentials-api'
 
 /**
@@ -40,6 +41,21 @@ export interface AuthenticatorUi {
    *   Public key info of the user to sign in.
    */
   askSignIn(publicKeyInfo: PublicKeyInfo): void | Promise<void>
+}
+
+// Request waiting for Cognito tokens refreshing.
+type RefreshCognitoTokensRequest = {
+  resolve: (tokens: CognitoTokens) => void
+  reject: (reason?: any) => void
+}
+
+// Updated credentials.
+type UpdatedCredentials = {
+  // public key info of the online account
+  publicKeyInfo: PublicKeyInfo
+
+  // optional Cognito tokens of the online account
+  tokens?: CognitoTokens
 }
 
 /**
@@ -84,15 +100,18 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'welcoming':
             break // does nothing
           case 'guest':
+          case 'authorized':
+          case 'refreshing-tokens':
             // TODO: due to a corrupted account info?
             console.warn(`useAuthenticatorState.syncStateWithAccountInfo@${state.value.type}`, 'account info may have been corrupted')
             state.value = { type: 'welcoming' }
             break
           case 'authenticating':
           case 'authenticated':
-          case 'authorized':
-            // this may happen after the user signed up,
-            // because the subsequent sign-in involves reloading the page
+            // this may happen just after the user signed in,
+            // because signing-in involves reloading the page and the initial
+            // account info may be "no-account"
+            // the initialization of the account info may also delay
             break
           default: {
             const unreachable: never = state.value
@@ -111,6 +130,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'authenticating':
           case 'authenticated':
           case 'authorized':
+          case 'refreshing-tokens':
             // online account should not be directly switched to a guest
             // TODO: handle as an error
             console.error(`useAuthenticatorState.syncStateWithAccountInfo@${state.value.type}`, 'cannot switch to guest account from online account')
@@ -142,16 +162,17 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
             break
           case 'authenticating':
           case 'authenticated':
-            break // authentication or authorization shall go on
+          case 'refreshing-tokens':
+            break // authentication, authorization, or re-authentication shall go on
           case 'authorized':
             // refreshes the tokens and fetches the user info again,
             // if the tokens have been expired
-            if (isCognitoTokensExpired(state.value.tokens)) {
+            if (isCognitoTokensExpiring(state.value.tokens)) {
               if (process.env.NODE_ENV !== 'production') {
                 console.log('useAuthenticatorState.syncStateWithAccountInfo', 'tokens have been expired')
               }
               state.value = {
-                type: 'authenticated',
+                type: 'refreshing-tokens',
                 publicKeyInfo: state.value.publicKeyInfo,
                 tokens: state.value.tokens
               }
@@ -175,6 +196,90 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     }
   }
 
+  // requests waiting for Cognito tokens refreshing.
+  const _refreshCognitoTokensRequests = ref<RefreshCognitoTokensRequest[]>([]);
+
+  // refreshes the Cognito tokens.
+  //
+  // multiple calls to this function during the `refreshing-tokens` state
+  // won't run multiple processes but wait for the current refreshing to be done
+  const refreshCognitoTokens = async (): Promise<CognitoTokens> => {
+    const currentState = state.value
+    switch (currentState.type) {
+      case 'refreshing-tokens':
+        // waits until the current refreshing is done
+        return new Promise((resolve, reject) => {
+          _refreshCognitoTokensRequests.value.push({ resolve, reject })
+        })
+      case 'authenticated':
+      case 'authorized':
+        // transitions to the refreshing-tokens state
+        // and waits until the refreshing is done
+        return new Promise((resolve, reject) => {
+          _refreshCognitoTokensRequests.value.push({ resolve, reject })
+          state.value = {
+            type: 'refreshing-tokens',
+            publicKeyInfo: currentState.publicKeyInfo,
+            tokens: currentState.tokens
+          }
+        })
+      case 'loading':
+      case 'welcoming':
+      case 'guest':
+      case 'authenticating':
+        // Cognito tokens should not be available in these states
+        console.error(`useAuthenticatorState.refreshCognitoTokens@${currentState.type}`, 'no Cognito tokens to refresh')
+        throw new Error('no Cognito tokens to refresh')
+      default: {
+        const unreachable: never = currentState
+        throw new RangeError(`unknown authenticator state: ${unreachable}`)
+      }
+    }
+  }
+
+  // actually refreshes the Cognito tokens.
+  //
+  // calling this function during other than the `refreshing-tokens` state
+  // throws an error.
+  const _refreshCognitoTokens = async () => {
+    if (state.value.type !== 'refreshing-tokens') {
+      throw new Error(`_refreshCognitoTokens was called in a wrong state: ${state.value.type}`)
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('useAuthenticatorState._refreshCognitoTokens', 'refreshing Cognito tokens')
+    }
+    const { publicKeyInfo, tokens } = state.value
+    try {
+      const newTokens = await credentialsApi.refreshTokens(tokens.refreshToken)
+      if (newTokens == null) {
+        throw new Error('failed to refresh Cognito tokens')
+      }
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('useAuthenticatorState._refreshCognitoTokens', 'refreshed Cognito tokens', tokens)
+      }
+      _refreshCognitoTokensRequests.value.forEach(async (request) => request.resolve(newTokens))
+      state.value = {
+        type: 'authenticated',
+        publicKeyInfo,
+        tokens: newTokens
+      }
+    } catch (err) {
+      // rejects requests waiting for the refreshing
+      _refreshCognitoTokensRequests.value.forEach(async (request) => request.reject(err))
+      // transitions back to the authenticating state anyway
+      // TODO: deal with errors other than Unauthorized (401)
+      console.error('useAuthenticatorState._refreshCognitoTokens', 'failed to refresh Cognito tokens', err)
+      lastError.value = err
+      state.value = {
+        type: 'authenticating',
+        publicKeyInfo,
+      }
+    } finally {
+      _refreshCognitoTokensRequests.value = []
+    }
+    return
+  }
+
   // fetches the user information of the online account.
   const _fetchOnlineAccountUserInfo = async (
     publicKeyInfo: PublicKeyInfo,
@@ -183,29 +288,12 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     if (process.env.NODE_ENV !== 'production') {
       console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'fetching user info', publicKeyInfo, tokens)
     }
-    if (isCognitoTokensExpired(tokens)) {
-      // refreshes the tokens first
-      // this function shall be called again
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'refreshing Cognito tokens')
-      }
-      try {
-        const newTokens = await credentialsApi.refreshTokens(tokens.refreshToken)
-        if (newTokens == null) {
-          throw new Error('failed to refresh Cognito tokens')
-        }
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'refreshed Cognito tokens', tokens)
-        }
-        state.value = {
-          type: 'authenticated',
-          publicKeyInfo,
-          tokens: newTokens
-        }
-      } catch (err) {
-        // TODO: unauthorized error should trigger a sign-in request
-        console.error('useAuthenticatorState._fetchOnlineAccountUserInfo', 'failed to refresh Cognito tokens', err)
-        lastError.value = err
+    if (isCognitoTokensExpiring(tokens)) {
+      // transitions to the refreshing-tokens state to refresh the tokens first
+      state.value = {
+        type: 'refreshing-tokens',
+        publicKeyInfo,
+        tokens
       }
       return
     }
@@ -219,24 +307,37 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           Authorization: `Bearer ${tokens.idToken}`
         }
       })
-      const userInfo = await res.json()
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'fetched user information', userInfo)
-      }
-      if (!isUserInfo(userInfo)) {
-        throw new Error('received invalid user information')
-      }
-      state.value = {
-        type: 'authorized',
-        publicKeyInfo,
-        tokens,
-        userInfo
+      if (res.ok) {
+        const userInfo = await res.json()
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'fetched user information', userInfo)
+        }
+        if (!isUserInfo(userInfo)) {
+          throw new Error('received invalid user information')
+        }
+        state.value = {
+          type: 'authorized',
+          publicKeyInfo,
+          tokens,
+          userInfo
+        }
+      } else {
+        // re-authenticates if the error is Unauthorized (401)
+        if (res.status === 401) {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'tokens are no longer valid, re-authenticating')
+          }
+          state.value = {
+            type: 'authenticating',
+            publicKeyInfo
+          }
+        } else {
+          throw new Error(`failed to fetch user information: ${res.status} ${await res.text()}`)
+        }
       }
     } catch (err) {
-      // TODO: transition to a proper state
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('useAuthenticatorState._fetchOnlineAccountUserInfo', 'failed to fetch user information', err)
-      }
+      // TODO: deal with errors other than Unauthorized (401)
+      console.error('useAuthenticatorState._fetchOnlineAccountUserInfo', err)
       lastError.value = err
     }
   }
@@ -262,6 +363,10 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           break
         case 'authorized':
           break // end of the event chain
+        case 'refreshing-tokens':
+          // refreshes the Cognito tokens
+          _refreshCognitoTokens()
+          break
         default: {
           const unreachable: never = state
           throw new RangeError(`unknown authenticator state: ${unreachable}`)
@@ -289,7 +394,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
   })
 
   // updates credentials for an online account.
-  const updateCredentials = async (credentials: OnlineAccountCredentials) => {
+  const updateCredentials = async (credentials: UpdatedCredentials) => {
     switch (state.value.type) {
       case 'loading':
       case 'welcoming':
@@ -345,6 +450,10 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'refreshed Cognito tokens are expected')
         }
         break
+      case 'refreshing-tokens':
+        // credentials should not be updated in this state
+        console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'credentials should not be updated')
+        break
       default: {
         const unreachable: never = state.value
         throw new RangeError(`unknown authenticator state: ${unreachable}`)
@@ -380,17 +489,31 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     }
   }
 
+  // triggers re-authentication
+  //
+  // calling this function during other than the `authenticated` or `authorized`
+  // state throws an error.
+  const triggerReAuthentication = () => {
+    if (state.value.type !== 'authenticated' && state.value.type !== 'authorized') {
+      throw new Error(`re-authentication must be triggered in the authenticated or authorized state: ${state.value.type}`)
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('useAuthenticatorState.triggerReAuthenticating', 'triggering re-authentication')
+    }
+    state.value = {
+      type: 'authenticating',
+      publicKeyInfo: state.value.publicKeyInfo
+    }
+  }
+
   return {
     attachAuthenticatorUi,
+    refreshCognitoTokens,
     state,
     syncStateWithAccountInfo,
+    triggerReAuthentication,
     updateCredentials,
-    _authenticatorUi
+    _authenticatorUi,
+    _refreshCognitoTokensRequests
   }
 })
-
-// returns if given Cognito tokens are expired.
-function isCognitoTokensExpired(tokens: CognitoTokens): boolean {
-  const { activatedAt, expiresIn } = tokens
-  return (Date.now() - activatedAt) >= (expiresIn * 1000)
-}

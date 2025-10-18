@@ -34,6 +34,7 @@ import {
   isAuthenticatorState,
   isEquivalentCognitoTokens
 } from '../types/authenticator-state'
+import { isCognitoTokensExpiring } from '../utils/passquito'
 import { useAuthenticatorState } from './authenticator-state'
 
 /** Injection key for the dog database manager. */
@@ -137,27 +138,27 @@ export const useAccountManager = defineStore('account-manager', () => {
   const _updateOnlineAccountInfo = (
     publicKeyInfo: PublicKeyInfo,
     tokens: CognitoTokens,
-    userInfo?: UserInfo
+    userInfo: UserInfo
   ) => {
     if (process.env.NODE_ENV !== 'production') {
       console.log('useAccountManager._updateOnlineAccountCredentials', 'updating credentials', publicKeyInfo, tokens, userInfo)
     }
     if (accountInfo.value.type === 'online') {
       // updates the existing online account info
-      // if the user ID (`userHandle`) is the same, retains the other information
+      // if the user ID (`userHandle`) is the same, retains non-credential information
       // otherwise, simply replaces the account info
       if (accountInfo.value.publicKeyInfo.userHandle === publicKeyInfo.userHandle) {
         const {
           publicKeyInfo: _1,
           tokens: _2,
-          userInfo: oldUserInfo,
+          userInfo: _3,
           ...rest
         } = accountInfo.value
         accountInfo.value = {
           ...rest,
           publicKeyInfo,
           tokens,
-          userInfo: userInfo ?? oldUserInfo
+          userInfo
         }
       } else {
         accountInfo.value = {
@@ -178,13 +179,11 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
   }
 
-  // updates and saves `accountInfo` whenever `authenticatorState` is updated.
+  // updates and saves `accountInfo` when `authenticatorState` becomes "authorized".
   watch(
     () => authenticatorState.state,
     (state) => {
-      if (state.type === 'authenticated') {
-        _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens)
-      } else if (state.type === 'authorized') {
+      if (state.type === 'authorized') {
         _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens, state.userInfo)
       } else {
         // does nothing
@@ -228,7 +227,14 @@ export const useAccountManager = defineStore('account-manager', () => {
     if (currentDog.value?.dogId === dogId) {
       return
     }
-    const dogDb = await dogDatabaseManager.getOnlineDogDatabase(account)
+    const dogDb = await dogDatabaseManager.getOnlineDogDatabase({
+      requestIdToken() {
+        return _requestIdToken()
+      },
+      handleUnauthorized() {
+        authenticatorState.triggerReAuthentication()
+      }
+    })
     const dog = await dogDb.getDog(dogId)
     if (dog == null) {
       throw new Error(`no dog friend with ID: ${dogId}`)
@@ -265,6 +271,22 @@ export const useAccountManager = defineStore('account-manager', () => {
     { immediate: true }
   )
 
+  const _requestIdToken = async (): Promise<string> => {
+    if (accountInfo.value.type !== 'online') {
+      throw new Error('current account is not an online account')
+    }
+    const { tokens } = accountInfo.value
+    if (tokens == null) {
+      throw new Error('no Cognito tokens available')
+    }
+    if (!isCognitoTokensExpiring(tokens)) {
+      return tokens.idToken
+    } else {
+      const tokens = await authenticatorState.refreshCognitoTokens()
+      return tokens.idToken
+    }
+  }
+
   const _loadBusinessRecordsOfGuest = async (
     accountInfo: GuestAccountInfo,
     dog: GenericDog
@@ -279,15 +301,19 @@ export const useAccountManager = defineStore('account-manager', () => {
     activeBusinessRecords.value = markRaw(records)
   }
 
-  const _loadBusinessRecordsOfOnlineAccount = async (
-    accountInfo: OnlineAccountInfo,
-    dog: GenericDog
-  ) => {
+  const _loadBusinessRecordsOfOnlineAccount = async (dog: GenericDog) => {
     if (!isOnlineDog(dog)) {
       throw new Error('dog must be a dog friend of an online account')
     }
     const recordDb = await businessRecordDatabaseManager
-      .getOnlineBusinessRecordDatabase(accountInfo)
+      .getOnlineBusinessRecordDatabase({
+        requestIdToken() {
+          return _requestIdToken()
+        },
+        handleUnauthorized() {
+          authenticatorState.triggerReAuthentication()
+        }
+      })
     const records = await recordDb.loadBusinessRecords(dog.dogId)
     // marks the records as raw to reduce the reactivity overhead
     activeBusinessRecords.value = markRaw(records)
@@ -311,9 +337,8 @@ export const useAccountManager = defineStore('account-manager', () => {
           break
         }
         case 'online': {
-          const onlineAccountInfo = accountInfo.value
           runAndCaptureErrorAsync(
-            () => _loadBusinessRecordsOfOnlineAccount(onlineAccountInfo, dog)
+            () => _loadBusinessRecordsOfOnlineAccount(dog)
           )
           break
         }
@@ -358,21 +383,30 @@ export const useAccountManager = defineStore('account-manager', () => {
   }
 
   const _registerNewDogFriendOfOnlineAccount = async (
-    account: OnlineAccountInfo,
     dogParams: DogParams
   ) => {
     try {
-      const dogDb = await dogDatabaseManager.getOnlineDogDatabase(account)
+      const dogDb = await dogDatabaseManager.getOnlineDogDatabase({
+        requestIdToken() {
+          return _requestIdToken()
+        },
+        handleUnauthorized() {
+          authenticatorState.triggerReAuthentication()
+        }
+      })
       const dog = await dogDb.createDog(dogParams)
-      // we have to update currentDog then accountInfo.activeDogId
-      // otherwise, the watcher of accountInfo will try to load the dog friend
-      currentDog.value = dog
-      accountInfo.value = {
-        ...account,
-        activeDogId: dog.dogId
+      // makes sure that the account info is still online after the API call
+      if (accountInfo.value.type === 'online') {
+        // we have to update currentDog then accountInfo.activeDogId
+        // otherwise, the watcher of accountInfo will try to load the dog friend
+        currentDog.value = dog
+        accountInfo.value = {
+          ...accountInfo.value,
+          activeDogId: dog.dogId
+        }
       }
     } catch (err) {
-      console.error('failed to register online dog friend', err)
+      console.error('useAccountManager._registerNewDogFriendOfOnlineAccount', err)
       throw err
     }
   }
@@ -386,7 +420,7 @@ export const useAccountManager = defineStore('account-manager', () => {
         await _registerNewDogFriendOfGuest(accountInfo.value, dogParams)
         break
       case 'online':
-        await _registerNewDogFriendOfOnlineAccount(accountInfo.value, dogParams)
+        await _registerNewDogFriendOfOnlineAccount(dogParams)
         break
       case 'no-account':
         throw new Error('account must be created first')
@@ -422,7 +456,6 @@ export const useAccountManager = defineStore('account-manager', () => {
   }
 
   const _addBusinessRecordOfOnlineAccount = async (
-    accountInfo: OnlineAccountInfo,
     dog: GenericDog,
     recordParams: BusinessRecordParams
   ) => {
@@ -430,7 +463,14 @@ export const useAccountManager = defineStore('account-manager', () => {
       throw new Error('dog must be a dog friend of an online account')
     }
     const recordDb = await businessRecordDatabaseManager
-      .getOnlineBusinessRecordDatabase(accountInfo)
+      .getOnlineBusinessRecordDatabase({
+        requestIdToken() {
+          return _requestIdToken()
+        },
+        handleUnauthorized() {
+          authenticatorState.triggerReAuthentication()
+        }
+      })
     const record = await recordDb.createBusinessRecord({
       ...recordParams,
       dogId: dog.dogId
@@ -455,11 +495,7 @@ export const useAccountManager = defineStore('account-manager', () => {
     switch (account.type) {
       case 'guest':
         try {
-          await _addBusinessRecordOfGuest(
-            account,
-            dog,
-            recordParams
-          )
+          await _addBusinessRecordOfGuest(account, dog, recordParams)
         } catch (err) {
           console.error('failed to add business record of guest', err)
           throw err
@@ -467,11 +503,7 @@ export const useAccountManager = defineStore('account-manager', () => {
         break
       case 'online':
         await runAndCaptureErrorAsync(
-          () => _addBusinessRecordOfOnlineAccount(
-            account,
-            dog,
-            recordParams
-          )
+          () => _addBusinessRecordOfOnlineAccount(dog, recordParams)
         )
       case 'no-account':
         throw new Error('account must be created first')

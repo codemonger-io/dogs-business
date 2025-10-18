@@ -1,4 +1,5 @@
-import type { GuestAccountInfo, OnlineAccountInfo } from '../../types/account-info'
+import type { GuestAccountInfo } from '../../types/account-info'
+import type { OnlineAccountProvider } from '../../types/online-account-provider'
 import type { DogParams } from './types'
 
 /** Interface of dog database managers. */
@@ -27,7 +28,7 @@ export interface DogDatabaseManager {
    *
    * @throws Error
    */
-  getOnlineDogDatabase(accountInfo: OnlineAccountInfo): Promise<OnlineDogDatabase>
+  getOnlineDogDatabase(accountProvider: OnlineAccountProvider): Promise<OnlineDogDatabase>
 }
 
 /**

@@ -1,4 +1,5 @@
-import type { OnlineAccountInfo } from '../../types/account-info'
+import type { OnlineAccountProvider } from '../../types/online-account-provider'
+import { isCognitoTokensExpiring } from '../../utils/passquito'
 import type { BusinessRecord, OnlineBusinessRecordDatabase } from './interfaces'
 import type { BusinessRecordParamsOfDog } from './types'
 import { isBusinessRecord } from './utils'
@@ -9,8 +10,7 @@ import { isBusinessRecord } from './utils'
  * @beta
  */
 export class OnlineBusinessRecordDatabaseImpl implements OnlineBusinessRecordDatabase {
-  constructor(private readonly onlineAccount: OnlineAccountInfo) {
-  }
+  constructor(private readonly accountProvider: OnlineAccountProvider) {}
 
   /** Creates a new business record in the database. */
   async createBusinessRecord(
@@ -24,7 +24,7 @@ export class OnlineBusinessRecordDatabaseImpl implements OnlineBusinessRecordDat
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': this.getIdToken()
+        'Authorization': await this.accountProvider.requestIdToken()
       },
       body: JSON.stringify({
         businessType: params.businessType,
@@ -34,12 +34,19 @@ export class OnlineBusinessRecordDatabaseImpl implements OnlineBusinessRecordDat
         },
       })
     })
-    // TODO: handle errors
-    const record = await res.json()
-    if (!isOnlineRecord(record)) {
-      throw new Error('invalid business record response from server')
+    if (res.ok) {
+      const record = await res.json()
+      if (!isOnlineRecord(record)) {
+        throw new Error('invalid business record response from server')
+      }
+      return record
+    } else {
+      if (res.status === 401) {
+        this.accountProvider.handleUnauthorized()
+      }
+      const message = await res.text()
+      throw new Error(`failed to create business record: ${res.status} ${message}`)
     }
-    return record
   }
 
   /** Loads business records of a given dog from the database. */
@@ -51,27 +58,25 @@ export class OnlineBusinessRecordDatabaseImpl implements OnlineBusinessRecordDat
     const res = await fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': this.getIdToken()
+        'Authorization': await this.accountProvider.requestIdToken()
       }
     })
-    // TODO: handle errors
-    const records = await res.json()
-    if (!Array.isArray(records)) {
-      throw new Error('invalid business records response from server')
+    if (res.ok) {
+      const records = await res.json()
+      if (!Array.isArray(records)) {
+        throw new Error('invalid business records response from server')
+      }
+      if (!records.every(isOnlineRecord)) {
+        throw new Error('invalid business records response from server')
+      }
+      return records
+    } else {
+      if (res.status === 401) {
+        this.accountProvider.handleUnauthorized()
+      }
+      const message = await res.text()
+      throw new Error(`failed to create business record: ${res.status} ${message}`)
     }
-    if (!records.every(isOnlineRecord)) {
-      throw new Error('invalid business records response from server')
-    }
-    return records
-  }
-
-  // returns the Cognito ID token for the account.
-  private getIdToken(): string {
-    const token = this.onlineAccount.tokens?.idToken
-    if (token == null) {
-      throw new Error('missing Cognito ID token')
-    }
-    return token
   }
 }
 

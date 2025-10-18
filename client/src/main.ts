@@ -21,7 +21,7 @@ import {
   dogDatabaseManagerProvider
 } from './stores/account-manager'
 import { locationTrackerProvider } from './stores/location-tracker'
-import type { OnlineAccountInfo } from './types/account-info'
+import type { OnlineAccountProvider } from './types/online-account-provider'
 import router from './router'
 import messages from './i18n'
 
@@ -47,8 +47,8 @@ app.use(dogDatabaseManagerProvider({
     const connection = await indexedDBDriver.open()
     return connection.getDogStore()
   },
-  async getOnlineDogDatabase(account: OnlineAccountInfo) {
-    return new OnlineDogDatabaseImpl(account)
+  async getOnlineDogDatabase(accountProvider: OnlineAccountProvider) {
+    return new OnlineDogDatabaseImpl(accountProvider)
   }
 }))
 app.use(businessRecordDatabaseManagerProvider({
@@ -56,8 +56,8 @@ app.use(businessRecordDatabaseManagerProvider({
     const connection = await indexedDBDriver.open()
     return connection.getBusinessRecordStore()
   },
-  async getOnlineBusinessRecordDatabase(onlineAccount: OnlineAccountInfo) {
-    return new OnlineBusinessRecordDatabaseImpl(onlineAccount)
+  async getOnlineBusinessRecordDatabase(accountProvider: OnlineAccountProvider) {
+    return new OnlineBusinessRecordDatabaseImpl(accountProvider)
   }
 }))
 

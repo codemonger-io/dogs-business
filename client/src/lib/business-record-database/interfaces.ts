@@ -1,7 +1,5 @@
-import type {
-  GuestAccountInfo,
-  OnlineAccountInfo
-} from '../../types/account-info'
+import type { GuestAccountInfo } from '../../types/account-info'
+import type { OnlineAccountProvider } from '../../types/online-account-provider'
 import type { BusinessRecordParamsOfDog } from './types'
 
 /** Interface of business record database managers. */
@@ -24,9 +22,14 @@ export interface BusinessRecordDatabaseManager {
 
   /**
    * Returns the business record database for an online account.
+   *
+   * @param accountProvider -
+   *
+   *   {@link OnlineAccountProvider} to handle requests for the credentials of
+   *   the online account.
    */
   getOnlineBusinessRecordDatabase(
-    onlineAccount: OnlineAccountInfo,
+    accountProvider: OnlineAccountProvider,
   ): Promise<OnlineBusinessRecordDatabase>
 }
 
