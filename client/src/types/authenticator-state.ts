@@ -13,6 +13,8 @@ import { isUserInfo } from '../types/account-info'
 /**
  * State of authenticator.
  *
+ * @remarks
+ *
  * @beta
  */
 export type AuthenticatorState =
@@ -20,7 +22,6 @@ export type AuthenticatorState =
   | WelcomingAuthenticatorState
   | GuestAuthenticatorState
   | AuthenticatingAuthenticatorState
-  | AuthenticatedAuthenticatorState
   | AuthorizedAuthenticatorState
   | RefreshingTokensState
 
@@ -61,21 +62,6 @@ export interface AuthenticatingAuthenticatorState {
 
   /** Public key info of the online account being authenticated. */
   publicKeyInfo: PublicKeyInfo
-}
-
-/**
- * Online account has been authenticated.
- *
- * @beta
- */
-export interface AuthenticatedAuthenticatorState {
-  type: 'authenticated'
-
-  /** Public key info of the authenticated user. */
-  publicKeyInfo: PublicKeyInfo
-
-  /** Cognito tokens of the authenticated user. */
-  tokens: CognitoTokens
 }
 
 /**
@@ -138,8 +124,6 @@ export function isAuthenticatorState(value: unknown): value is AuthenticatorStat
       return true // no futher checks are needed
     case 'authenticating':
       return isTrueAuthenticatingAuthenticatorState(maybeAuthenticatorState)
-    case 'authenticated':
-      return isTrueAuthenticatedAuthenticatorState(maybeAuthenticatorState)
     case 'authorized':
       return isTrueAuthorizedAuthenticatorState(maybeAuthenticatorState)
     case 'refreshing-tokens':
@@ -158,15 +142,6 @@ function isTrueAuthenticatingAuthenticatorState(
   state: AuthenticatingAuthenticatorState
 ): boolean {
   return isPublicKeyInfo(state.publicKeyInfo)
-}
-
-// returns if a given value is truely `AuthenticatedAuthenticatorState`.
-// this function is intended to be used when only `type` is known to be
-// "authenticated".
-function isTrueAuthenticatedAuthenticatorState(
-  state: AuthenticatedAuthenticatorState
-): boolean {
-  return isPublicKeyInfo(state.publicKeyInfo) && isCognitoTokens(state.tokens)
 }
 
 // returns if a given value is truely `AuthorizedAuthenticatorState`.

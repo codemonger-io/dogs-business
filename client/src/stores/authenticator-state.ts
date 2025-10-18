@@ -107,7 +107,6 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
             state.value = { type: 'welcoming' }
             break
           case 'authenticating':
-          case 'authenticated':
             // this may happen just after the user signed in,
             // because signing-in involves reloading the page and the initial
             // account info may be "no-account"
@@ -128,7 +127,6 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'guest':
             break // does nothing
           case 'authenticating':
-          case 'authenticated':
           case 'authorized':
           case 'refreshing-tokens':
             // online account should not be directly switched to a guest
@@ -145,14 +143,13 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         switch (state.value.type) {
           case 'loading':
           case 'welcoming':
-            // if the Cognito tokens are available → authenticated state
+            // if the Cognito tokens are available → fetches the user information
             // otherwise → authenticating state
             if (accountInfo.tokens != null) {
-              state.value = {
-                type: 'authenticated',
-                publicKeyInfo: accountInfo.publicKeyInfo,
-                tokens: accountInfo.tokens
-              }
+              _fetchOnlineAccountUserInfo(
+                accountInfo.publicKeyInfo,
+                accountInfo.tokens
+              )
             } else {
               state.value = {
                 type: 'authenticating',
@@ -161,11 +158,10 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
             }
             break
           case 'authenticating':
-          case 'authenticated':
           case 'refreshing-tokens':
-            break // authentication, authorization, or re-authentication shall go on
+            break // authentication, or token refreshing shall go on
           case 'authorized':
-            // refreshes the tokens and fetches the user info again,
+            // refreshes the tokens and fetches the user info again
             // if the tokens have been expired
             if (isCognitoTokensExpiring(state.value.tokens)) {
               if (process.env.NODE_ENV !== 'production') {
@@ -194,90 +190,6 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         throw new RangeError(`unknown account type: ${unreachable}`)
       }
     }
-  }
-
-  // requests waiting for Cognito tokens refreshing.
-  const _refreshCognitoTokensRequests = ref<RefreshCognitoTokensRequest[]>([]);
-
-  // refreshes the Cognito tokens.
-  //
-  // multiple calls to this function during the `refreshing-tokens` state
-  // won't run multiple processes but wait for the current refreshing to be done
-  const refreshCognitoTokens = async (): Promise<CognitoTokens> => {
-    const currentState = state.value
-    switch (currentState.type) {
-      case 'refreshing-tokens':
-        // waits until the current refreshing is done
-        return new Promise((resolve, reject) => {
-          _refreshCognitoTokensRequests.value.push({ resolve, reject })
-        })
-      case 'authenticated':
-      case 'authorized':
-        // transitions to the refreshing-tokens state
-        // and waits until the refreshing is done
-        return new Promise((resolve, reject) => {
-          _refreshCognitoTokensRequests.value.push({ resolve, reject })
-          state.value = {
-            type: 'refreshing-tokens',
-            publicKeyInfo: currentState.publicKeyInfo,
-            tokens: currentState.tokens
-          }
-        })
-      case 'loading':
-      case 'welcoming':
-      case 'guest':
-      case 'authenticating':
-        // Cognito tokens should not be available in these states
-        console.error(`useAuthenticatorState.refreshCognitoTokens@${currentState.type}`, 'no Cognito tokens to refresh')
-        throw new Error('no Cognito tokens to refresh')
-      default: {
-        const unreachable: never = currentState
-        throw new RangeError(`unknown authenticator state: ${unreachable}`)
-      }
-    }
-  }
-
-  // actually refreshes the Cognito tokens.
-  //
-  // calling this function during other than the `refreshing-tokens` state
-  // throws an error.
-  const _refreshCognitoTokens = async () => {
-    if (state.value.type !== 'refreshing-tokens') {
-      throw new Error(`_refreshCognitoTokens was called in a wrong state: ${state.value.type}`)
-    }
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('useAuthenticatorState._refreshCognitoTokens', 'refreshing Cognito tokens')
-    }
-    const { publicKeyInfo, tokens } = state.value
-    try {
-      const newTokens = await credentialsApi.refreshTokens(tokens.refreshToken)
-      if (newTokens == null) {
-        throw new Error('failed to refresh Cognito tokens')
-      }
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('useAuthenticatorState._refreshCognitoTokens', 'refreshed Cognito tokens', tokens)
-      }
-      _refreshCognitoTokensRequests.value.forEach(async (request) => request.resolve(newTokens))
-      state.value = {
-        type: 'authenticated',
-        publicKeyInfo,
-        tokens: newTokens
-      }
-    } catch (err) {
-      // rejects requests waiting for the refreshing
-      _refreshCognitoTokensRequests.value.forEach(async (request) => request.reject(err))
-      // transitions back to the authenticating state anyway
-      // TODO: deal with errors other than Unauthorized (401)
-      console.error('useAuthenticatorState._refreshCognitoTokens', 'failed to refresh Cognito tokens', err)
-      lastError.value = err
-      state.value = {
-        type: 'authenticating',
-        publicKeyInfo,
-      }
-    } finally {
-      _refreshCognitoTokensRequests.value = []
-    }
-    return
   }
 
   // fetches the user information of the online account.
@@ -342,6 +254,85 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     }
   }
 
+  // requests waiting for Cognito tokens refreshing.
+  const _refreshCognitoTokensRequests = ref<RefreshCognitoTokensRequest[]>([]);
+
+  // refreshes the Cognito tokens.
+  //
+  // multiple calls to this function during the `refreshing-tokens` state
+  // won't run multiple processes but wait for the current refreshing to be done
+  const refreshCognitoTokens = async (): Promise<CognitoTokens> => {
+    const currentState = state.value
+    switch (currentState.type) {
+      case 'refreshing-tokens':
+        // waits until the current refreshing is done
+        return new Promise((resolve, reject) => {
+          _refreshCognitoTokensRequests.value.push({ resolve, reject })
+        })
+      case 'authorized':
+        // transitions to the refreshing-tokens state
+        // and waits until the refreshing is done
+        return new Promise((resolve, reject) => {
+          _refreshCognitoTokensRequests.value.push({ resolve, reject })
+          state.value = {
+            type: 'refreshing-tokens',
+            publicKeyInfo: currentState.publicKeyInfo,
+            tokens: currentState.tokens
+          }
+        })
+      case 'loading':
+      case 'welcoming':
+      case 'guest':
+      case 'authenticating':
+        // Cognito tokens should not be available in these states
+        console.error(`useAuthenticatorState.refreshCognitoTokens@${currentState.type}`, 'no Cognito tokens to refresh')
+        throw new Error('no Cognito tokens to refresh')
+      default: {
+        const unreachable: never = currentState
+        throw new RangeError(`unknown authenticator state: ${unreachable}`)
+      }
+    }
+  }
+
+  // actually refreshes the Cognito tokens.
+  //
+  // calling this function during other than the `refreshing-tokens` state
+  // throws an error.
+  const _refreshCognitoTokens = async () => {
+    if (state.value.type !== 'refreshing-tokens') {
+      throw new Error(`_refreshCognitoTokens was called in a wrong state: ${state.value.type}`)
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('useAuthenticatorState._refreshCognitoTokens', 'refreshing Cognito tokens')
+    }
+    const { publicKeyInfo, tokens } = state.value
+    try {
+      const newTokens = await credentialsApi.refreshTokens(tokens.refreshToken)
+      if (newTokens == null) {
+        throw new Error('failed to refresh Cognito tokens')
+      }
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('useAuthenticatorState._refreshCognitoTokens', 'refreshed Cognito tokens', tokens)
+      }
+      _refreshCognitoTokensRequests.value.forEach(async (request) => request.resolve(newTokens))
+      _fetchOnlineAccountUserInfo(publicKeyInfo, newTokens)
+    } catch (err) {
+      // rejects requests waiting for the refreshing
+      _refreshCognitoTokensRequests.value.forEach(async (request) => request.reject(err))
+      // transitions back to the authenticating state anyway
+      // TODO: deal with errors other than Unauthorized (401)
+      console.error('useAuthenticatorState._refreshCognitoTokens', 'failed to refresh Cognito tokens', err)
+      lastError.value = err
+      state.value = {
+        type: 'authenticating',
+        publicKeyInfo,
+      }
+    } finally {
+      _refreshCognitoTokensRequests.value = []
+    }
+    return
+  }
+
   // changes of the state should trigger authenticator events.
   watch(
     state,
@@ -357,10 +348,6 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           break // end of the event chain
         case 'authenticating':
           break // asks the user to sign in when the authenticator UI is attached
-        case 'authenticated':
-          // fetches the user information from the Dog's Business API
-          _fetchOnlineAccountUserInfo(state.publicKeyInfo, state.tokens)
-          break
         case 'authorized':
           break // end of the event chain
         case 'refreshing-tokens':
@@ -398,14 +385,10 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     switch (state.value.type) {
       case 'loading':
       case 'welcoming':
-        // if Cognito tokens are available → authenticated state
+        // if Cognito tokens are available → fetches the user information
         // otherwise → authenticating state
         if (credentials.tokens != null) {
-          state.value = {
-            type: 'authenticated',
-            publicKeyInfo: credentials.publicKeyInfo,
-            tokens: credentials.tokens
-          }
+          _fetchOnlineAccountUserInfo(credentials.publicKeyInfo, credentials.tokens)
         } else {
           state.value = {
             type: 'authenticating',
@@ -419,36 +402,14 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         break
       case 'authenticating':
         if (credentials.tokens != null) {
-          state.value = {
-            type: 'authenticated',
-            publicKeyInfo: credentials.publicKeyInfo,
-            tokens: credentials.tokens
-          }
+          _fetchOnlineAccountUserInfo(credentials.publicKeyInfo, credentials.tokens)
         } else {
           // TODO: maybe switching to discoverable authentication
           console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'Cognito tokens are expected')
         }
         break
-      case 'authenticated':
       case 'authorized':
-        if (credentials.tokens != null) {
-          // Cognito tokens may have been refreshed
-          if (!isEquivalentCognitoTokens(state.value.tokens, credentials.tokens)) {
-            state.value = {
-              type: 'authenticated',
-              publicKeyInfo: state.value.publicKeyInfo,
-              tokens: credentials.tokens
-            }
-          } else {
-            // public key info may not change in this state
-            // TODO: handle as an error
-            console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'refreshed Cognito tokens are expected')
-          }
-        } else {
-          // public key info may not change in this state
-          // TODO: handle as an error
-          console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'refreshed Cognito tokens are expected')
-        }
+        console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'credentials should not be updated')
         break
       case 'refreshing-tokens':
         // credentials should not be updated in this state
@@ -491,10 +452,9 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
 
   // triggers re-authentication
   //
-  // calling this function during other than the `authenticated` or `authorized`
-  // state throws an error.
+  // calling this function during other than the "authorized" state throws an error.
   const triggerReAuthentication = () => {
-    if (state.value.type !== 'authenticated' && state.value.type !== 'authorized') {
+    if (state.value.type !== 'authorized') {
       throw new Error(`re-authentication must be triggered in the authenticated or authorized state: ${state.value.type}`)
     }
     if (process.env.NODE_ENV !== 'production') {

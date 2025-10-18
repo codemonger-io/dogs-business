@@ -144,8 +144,8 @@ export const useAccountManager = defineStore('account-manager', () => {
       console.log('useAccountManager._updateOnlineAccountCredentials', 'updating credentials', publicKeyInfo, tokens, userInfo)
     }
     if (accountInfo.value.type === 'online') {
-      // updates the existing online account info
-      // if the user ID (`userHandle`) is the same, retains non-credential information
+      // updates the existing online account info.
+      // if the user ID (`userHandle`) is the same, retains the non-credential information
       // otherwise, simply replaces the account info
       if (accountInfo.value.publicKeyInfo.userHandle === publicKeyInfo.userHandle) {
         const {
@@ -242,7 +242,7 @@ export const useAccountManager = defineStore('account-manager', () => {
     currentDog.value = dog
   }
 
-  // loads the remembered dog of the guest account.
+  // loads the remembered dog friend whenever `accountInfo` is updated.
   watch(
     accountInfo,
     (account) => {
@@ -324,6 +324,9 @@ export const useAccountManager = defineStore('account-manager', () => {
   watch(
     currentDog,
     async (dog) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('useAccountManager', 'currentDog updated', dog?.dogId)
+      }
       if (accountInfo.value == null || dog == null) {
         activeBusinessRecords.value = undefined
         return
@@ -505,6 +508,7 @@ export const useAccountManager = defineStore('account-manager', () => {
         await runAndCaptureErrorAsync(
           () => _addBusinessRecordOfOnlineAccount(dog, recordParams)
         )
+        break
       case 'no-account':
         throw new Error('account must be created first')
         break

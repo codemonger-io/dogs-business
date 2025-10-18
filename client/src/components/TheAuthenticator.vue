@@ -41,14 +41,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <RegistrationWelcome v-if="authenticatorState.state.type === 'welcoming'" />
+  <div v-if="authenticatorState.state.type === 'loading'">
+    Loading...
+  </div>
+  <RegistrationWelcome v-else-if="authenticatorState.state.type === 'welcoming'" />
   <SignInForm
     v-else-if="authenticatorState.state.type === 'authenticating'"
     :publicKeyInfo="authenticatorState.state.publicKeyInfo"
   />
-  <div v-else-if="authenticatorState.state.type === 'authenticated'">
-    Authenticated!
-  </div>
   <template v-else>
     <slot></slot>
   </template>
