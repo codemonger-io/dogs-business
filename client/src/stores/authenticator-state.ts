@@ -100,7 +100,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'welcoming':
             break // does nothing
           case 'guest':
-          case 'authorized':
+          case 'authenticated':
           case 'refreshing-tokens':
             // TODO: due to a corrupted account info?
             console.warn(`useAuthenticatorState.syncStateWithAccountInfo@${state.value.type}`, 'account info may have been corrupted')
@@ -127,7 +127,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'guest':
             break // does nothing
           case 'authenticating':
-          case 'authorized':
+          case 'authenticated':
           case 'refreshing-tokens':
             // online account should not be directly switched to a guest
             // TODO: handle as an error
@@ -160,7 +160,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'authenticating':
           case 'refreshing-tokens':
             break // authentication, or token refreshing shall go on
-          case 'authorized':
+          case 'authenticated':
             // refreshes the tokens and fetches the user info again
             // if the tokens have been expired
             if (isCognitoTokensExpiring(state.value.tokens)) {
@@ -228,7 +228,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           throw new Error('received invalid user information')
         }
         state.value = {
-          type: 'authorized',
+          type: 'authenticated',
           publicKeyInfo,
           tokens,
           userInfo
@@ -269,7 +269,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         return new Promise((resolve, reject) => {
           _refreshCognitoTokensRequests.value.push({ resolve, reject })
         })
-      case 'authorized':
+      case 'authenticated':
         // transitions to the refreshing-tokens state
         // and waits until the refreshing is done
         return new Promise((resolve, reject) => {
@@ -348,7 +348,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           break // end of the event chain
         case 'authenticating':
           break // asks the user to sign in when the authenticator UI is attached
-        case 'authorized':
+        case 'authenticated':
           break // end of the event chain
         case 'refreshing-tokens':
           // refreshes the Cognito tokens
@@ -408,7 +408,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'Cognito tokens are expected')
         }
         break
-      case 'authorized':
+      case 'authenticated':
         console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'credentials should not be updated')
         break
       case 'refreshing-tokens':
@@ -452,10 +452,10 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
 
   // triggers re-authentication
   //
-  // calling this function during other than the "authorized" state throws an error.
+  // calling this function during other than the "authenticated" state throws an error.
   const triggerReAuthentication = () => {
-    if (state.value.type !== 'authorized') {
-      throw new Error(`re-authentication must be triggered in the authenticated or authorized state: ${state.value.type}`)
+    if (state.value.type !== 'authenticated') {
+      throw new Error(`re-authentication must be triggered in the authenticated state: ${state.value.type}`)
     }
     if (process.env.NODE_ENV !== 'production') {
       console.log('useAuthenticatorState.triggerReAuthenticating', 'triggering re-authentication')

@@ -22,7 +22,7 @@ export type AuthenticatorState =
   | WelcomingAuthenticatorState
   | GuestAuthenticatorState
   | AuthenticatingAuthenticatorState
-  | AuthorizedAuthenticatorState
+  | AuthenticatedAuthenticatorState
   | RefreshingTokensState
 
 /**
@@ -65,20 +65,20 @@ export interface AuthenticatingAuthenticatorState {
 }
 
 /**
- * User has been authorized to access the application.
+ * Online account has been authenticated.
  *
  * @beta
  */
-export interface AuthorizedAuthenticatorState {
-  type: 'authorized'
+export interface AuthenticatedAuthenticatorState {
+  type: 'authenticated'
 
-  /** Public key info of the authorized user. */
+  /** Public key info of the online account. */
   publicKeyInfo: PublicKeyInfo
 
-  /** Cognito tokens of the authorized user. */
+  /** Cognito tokens of the online account. */
   tokens: CognitoTokens
 
-  /** Information on the authorized user. */
+  /** User information on the online account. */
   userInfo: UserInfo
 }
 
@@ -124,8 +124,8 @@ export function isAuthenticatorState(value: unknown): value is AuthenticatorStat
       return true // no futher checks are needed
     case 'authenticating':
       return isTrueAuthenticatingAuthenticatorState(maybeAuthenticatorState)
-    case 'authorized':
-      return isTrueAuthorizedAuthenticatorState(maybeAuthenticatorState)
+    case 'authenticated':
+      return isTrueAuthenticatedAuthenticatorState(maybeAuthenticatorState)
     case 'refreshing-tokens':
       return isTrueRefreshingTokensState(maybeAuthenticatorState)
     default: {
@@ -144,11 +144,11 @@ function isTrueAuthenticatingAuthenticatorState(
   return isPublicKeyInfo(state.publicKeyInfo)
 }
 
-// returns if a given value is truely `AuthorizedAuthenticatorState`.
+// returns if a given value is truely `AuthenticatedAuthenticatorState`.
 // this function is intended to be used when only `type` is known to be
-// "authorized".
-function isTrueAuthorizedAuthenticatorState(
-  state: AuthorizedAuthenticatorState
+// "authenticated".
+function isTrueAuthenticatedAuthenticatorState(
+  state: AuthenticatedAuthenticatorState
 ): boolean {
   return isPublicKeyInfo(state.publicKeyInfo) &&
     isCognitoTokens(state.tokens) &&

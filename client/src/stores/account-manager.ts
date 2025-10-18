@@ -179,11 +179,11 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
   }
 
-  // updates and saves `accountInfo` when `authenticatorState` becomes "authorized".
+  // updates and saves `accountInfo` when `authenticatorState` becomes "authenticated".
   watch(
     () => authenticatorState.state,
     (state) => {
-      if (state.type === 'authorized') {
+      if (state.type === 'authenticated') {
         _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens, state.userInfo)
       } else {
         // does nothing
