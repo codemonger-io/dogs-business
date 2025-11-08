@@ -63,7 +63,7 @@ describe('stores.authenticator-state', () => {
       })
 
       describe('after syncStateWithAccountInfo(online)', () => {
-        // TODO: mock the Credentials API
+        // TODO: mock the Dog's Business Resource API
         describe.skip('with valid tokens', () => {
           describe('with successful user info retrieval', () => {
           })
@@ -172,7 +172,7 @@ describe('stores.authenticator-state', () => {
       })
 
       describe('after updateCredentials with tokens', () => {
-        // TODO: mock the Credentials API
+        // TODO: mock the Dog's Business Resource API
         describe.skip('with valid tokens', () => {
           describe('with successful user info retrieval', () => {
             it('should be in the "authenticated" state', () => {
@@ -296,7 +296,7 @@ describe('stores.authenticator-state', () => {
       })
 
       describe('after syncStateWithAccountInfo(online)', () => {
-        // TODO: mock the Credentials API
+        // TODO: mock the Dog's Business Resource API
         describe.skip('with valid tokens', () => {
           describe('with successful user info retrieval', () => {
           })
@@ -405,7 +405,7 @@ describe('stores.authenticator-state', () => {
       })
 
       describe('after updateCredentials with tokens', () => {
-        // TODO: mock the Credentials API
+        // TODO: mock the Dog's Business Resource API
         describe.skip('with valid tokens', () => {
           describe('with successful user info retrieval', () => {
             it('should be in the "authenticated" state', () => {
@@ -757,7 +757,7 @@ describe('stores.authenticator-state', () => {
       })
 
       describe('after updateCredentials with tokens', () => {
-        // TODO: mock the Credentials API
+        // TODO: mock the Dog's Business Resource API
         describe.skip('with valid tokens', () => {
           describe('with successful user info retrieval', () => {
           })
