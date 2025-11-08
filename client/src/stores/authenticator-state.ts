@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch, watchEffect } from 'vue'
+import { inject, ref, watch, watchEffect } from 'vue'
 import type {
   CognitoTokens,
   PublicKeyInfo
@@ -7,6 +7,7 @@ import type {
 import { useSessionStorage } from '@vueuse/core'
 
 import { makeValidatingSerializer } from '../lib/storage-serializer'
+import { RESOURCE_API_INJECTION_KEY } from '../providers/resource-api'
 import type { AccountInfo } from '../types/account-info'
 import { isUserInfo } from '../types/account-info'
 import { isAuthenticatorState } from '../types/authenticator-state'
@@ -102,6 +103,12 @@ type UpdatedCredentials = {
 export const useAuthenticatorState = defineStore('authenticator-state', () => {
   // Credentials API
   const credentialsApi = useCredentialsApi()
+
+  // Dog's Business Resource API
+  const resourceApi = inject(RESOURCE_API_INJECTION_KEY)
+  if (resourceApi == null) {
+    throw new Error('Resource API must be provided')
+  }
 
   // authenticator UI provides a way to ask the user to sign in.
   const _authenticatorUi = ref<AuthenticatorUi>()
@@ -268,21 +275,11 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     }
     // updates the user information of the online account
     try {
-      // TODO: what is the best way to provide the API access
-      const url = import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL + '/user'
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${tokens.idToken}`
-        }
-      })
+      const res = await resourceApi.getCurrentUserInfo(tokens.idToken)
       if (res.ok) {
-        const userInfo = await res.json()
+        const userInfo = await res.parse()
         if (process.env.NODE_ENV !== 'production') {
           console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'fetched user information', userInfo)
-        }
-        if (!isUserInfo(userInfo)) {
-          throw new Error('received invalid user information')
         }
         state.value = {
           type: 'authenticated',
@@ -294,7 +291,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         // re-authenticates if the error is Unauthorized (401)
         if (res.status === 401) {
           if (process.env.NODE_ENV !== 'production') {
-            console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'tokens are no longer valid, re-authenticating')
+            console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'access denied. re-authenticating')
           }
           state.value = {
             type: 'authenticating',
@@ -305,12 +302,12 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         }
       }
     } catch (err) {
-      // TODO: deal with errors other than Unauthorized (401)
       console.error('useAuthenticatorState._fetchOnlineAccountUserInfo', err)
       lastError.value = {
         type: 'any-error',
         cause: err
       }
+      // TODO: should transition into the "welcoming" state?
     }
   }
 
