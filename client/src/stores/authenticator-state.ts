@@ -396,53 +396,54 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     return
   }
 
-  // changes of the state should trigger authenticator events.
-  // TODO: merge into the `watchEffect` below.
+  // just logs state changes for debugging.
   watch(
     state,
     (state, oldState) => {
       if (process.env.NODE_ENV !== 'production') {
         console.log('useAuthenticatorState', 'state changed', `${oldState?.type} → ${state.type}`)
       }
-      switch (state.type) {
-        case 'loading':
-        case 'welcoming':
-          break // does nothing
-        case 'guest':
-          break // end of the event chain
-        case 'authenticating':
-          break // asks the user to sign in when the authenticator UI is attached
-        case 'authenticated':
-          break // end of the event chain
-        case 'refreshing-tokens':
-          // refreshes the Cognito tokens
-          _refreshCognitoTokens()
-          break
-        default: {
-          const unreachable: never = state
-          throw new RangeError(`unknown authenticator state: ${unreachable}`)
-        }
-      }
     },
     { immediate: true }
   )
 
-  // authenticates the online account in the "authenticating" state
-  // when the authenticator UI is attached.
+  // changes of the state may trigger authenticator events.
   watchEffect(() => {
-    if (state.value.type !== 'authenticating') {
-      return
-    }
-    if (_authenticatorUi.value == null) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('useAuthenticatorState', 'no authenticator UI is attached yet')
+    switch (state.value.type) {
+      case 'loading':
+      case 'welcoming':
+      case 'guest':
+        // does nothing
+        break
+      case 'authenticating': {
+        // asks the user to sign in if the authenticator UI is attached
+        if (_authenticatorUi.value != null) {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('useAuthenticatorState', 'asking sign-in with public key info', state.value.publicKeyInfo)
+          }
+          _authenticatorUi.value.askSignIn(state.value.publicKeyInfo)
+        } else {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('useAuthenticatorState', 'no authenticator UI is attached yet')
+          }
+        }
+        break
       }
-      return
+      case 'authenticated':
+        // does nothing
+        break
+      case 'refreshing-tokens':
+        // refreshes the Cognito tokens
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('useAuthenticatorState', 'refreshing Cognito tokens')
+        }
+        _refreshCognitoTokens()
+        break
+      default: {
+        const unreachable: never = state.value
+        throw new RangeError(`unknown authenticator state: ${unreachable}`)
+      }
     }
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('useAuthenticatorState', 'asking sign-in with public key info', state.value.publicKeyInfo)
-    }
-    _authenticatorUi.value.askSignIn(state.value.publicKeyInfo)
   })
 
   // updates credentials for an online account.
