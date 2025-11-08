@@ -9,10 +9,7 @@ import { useSessionStorage } from '@vueuse/core'
 import { makeValidatingSerializer } from '../lib/storage-serializer'
 import type { AccountInfo } from '../types/account-info'
 import { isUserInfo } from '../types/account-info'
-import {
-  isAuthenticatorState,
-  isEquivalentCognitoTokens
-} from '../types/authenticator-state'
+import { isAuthenticatorState } from '../types/authenticator-state'
 import { isCognitoTokensExpiring } from '../utils/passquito'
 import { useCredentialsApi } from './credentials-api'
 
@@ -41,6 +38,41 @@ export interface AuthenticatorUi {
    *   Public key info of the user to sign in.
    */
   askSignIn(publicKeyInfo: PublicKeyInfo): void | Promise<void>
+}
+
+/**
+ * Error caused by the store for the authenticator state.
+ *
+ * @remarks
+ *
+ * All the variants have the `type` field.
+ *
+ * @beta
+ */
+export type UseAuthenticatorStateError = CorruptedAccountInfoError | AnyError
+
+/**
+ * Error caused by a corrupted account info.
+ *
+ * @beta
+ */
+export interface CorruptedAccountInfoError {
+  type: 'corrupted-account-info'
+
+  /** Cause of the error. */
+  cause: string
+}
+
+/**
+ * Any error caught by the store.
+ *
+ * @beta
+ */
+export interface AnyError {
+  type: 'any-error'
+
+  /** Caught error. */
+  cause: unknown
 }
 
 // Request waiting for Cognito tokens refreshing.
@@ -87,9 +119,11 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
   )
 
   // remembers the last error.
-  const lastError = ref<any>()
+  const lastError = ref<UseAuthenticatorStateError>()
 
   // syncs the state with given account info.
+  //
+  // if the state and the account info disagree, the state shall precede.
   const syncStateWithAccountInfo = (accountInfo: AccountInfo) => {
     switch (accountInfo.type) {
       case 'no-account':
@@ -102,8 +136,13 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'guest':
           case 'authenticated':
           case 'refreshing-tokens':
-            // TODO: due to a corrupted account info?
+            // due to a corrupted account info?
+            // fall back to the welcoming state
             console.warn(`useAuthenticatorState.syncStateWithAccountInfo@${state.value.type}`, 'account info may have been corrupted')
+            lastError.value = {
+              type: 'corrupted-account-info',
+              cause: 'account info was lost'
+            }
             state.value = { type: 'welcoming' }
             break
           case 'authenticating':
@@ -130,8 +169,13 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'authenticated':
           case 'refreshing-tokens':
             // online account should not be directly switched to a guest
-            // TODO: handle as an error
+            // falls back to the welcoming state
             console.error(`useAuthenticatorState.syncStateWithAccountInfo@${state.value.type}`, 'cannot switch to guest account from online account')
+            lastError.value = {
+              type: 'corrupted-account-info',
+              cause: 'switching from online account to guest account'
+            }
+            state.value = { type: 'welcoming' }
             break
           default: {
             const unreachable: never = state.value
@@ -158,11 +202,18 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
             }
             break
           case 'authenticating':
+            // this will happen during re-authentication
+            // because the page will be reloaded
+            break
           case 'refreshing-tokens':
-            break // authentication, or token refreshing shall go on
+            // this might happen if the user reloads the page while tokens
+            // are being refreshed
+            // the subsequent refreshing shall be done anyway
+            break
           case 'authenticated':
             // refreshes the tokens and fetches the user info again
             // if the tokens have been expired
+            // TODO: what if the public key is different?
             if (isCognitoTokensExpiring(state.value.tokens)) {
               if (process.env.NODE_ENV !== 'production') {
                 console.log('useAuthenticatorState.syncStateWithAccountInfo', 'tokens have been expired')
@@ -176,8 +227,12 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
             break
           case 'guest':
             // guest should not be directly switched to an online account
-            // TODO: handle as an error
             console.error(`useAuthenticatorState.syncStateWithAccountInfo@${state.value.type}`, 'cannot switch to online account from guest')
+            lastError.value = {
+              type: 'corrupted-account-info',
+              cause: 'switching from guest account to online account'
+            }
+            state.value = { type: 'welcoming' }
             break
           default: {
             const unreachable: never = state.value
@@ -193,6 +248,8 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
   }
 
   // fetches the user information of the online account.
+  //
+  // this function updates the state to "authenticated" on success,
   const _fetchOnlineAccountUserInfo = async (
     publicKeyInfo: PublicKeyInfo,
     tokens: CognitoTokens
@@ -250,7 +307,10 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     } catch (err) {
       // TODO: deal with errors other than Unauthorized (401)
       console.error('useAuthenticatorState._fetchOnlineAccountUserInfo', err)
-      lastError.value = err
+      lastError.value = {
+        type: 'any-error',
+        cause: err
+      }
     }
   }
 
@@ -322,7 +382,10 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
       // transitions back to the authenticating state anyway
       // TODO: deal with errors other than Unauthorized (401)
       console.error('useAuthenticatorState._refreshCognitoTokens', 'failed to refresh Cognito tokens', err)
-      lastError.value = err
+      lastError.value = {
+        type: 'any-error',
+        cause: err
+      }
       state.value = {
         type: 'authenticating',
         publicKeyInfo,
@@ -334,6 +397,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
   }
 
   // changes of the state should trigger authenticator events.
+  // TODO: merge into the `watchEffect` below.
   watch(
     state,
     (state, oldState) => {
@@ -363,7 +427,8 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     { immediate: true }
   )
 
-  // authenticates the online account when the authenticator UI is attached.
+  // authenticates the online account in the "authenticating" state
+  // when the authenticator UI is attached.
   watchEffect(() => {
     if (state.value.type !== 'authenticating') {
       return
@@ -381,6 +446,13 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
   })
 
   // updates credentials for an online account.
+  //
+  // this action is allowed only in the following states:
+  // - loading
+  // - welcoming
+  // - authenticating
+  //
+  // throws an `Error` in other states.
   const updateCredentials = async (credentials: UpdatedCredentials) => {
     switch (state.value.type) {
       case 'loading':
@@ -397,9 +469,8 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         }
         break
       case 'guest':
-        // TODO: handle as an error
-        console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'no credentials are expected')
-        break
+        console.error(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'no credentials are expected')
+        throw new Error('guest should not update credentials')
       case 'authenticating':
         if (credentials.tokens != null) {
           _fetchOnlineAccountUserInfo(credentials.publicKeyInfo, credentials.tokens)
@@ -409,12 +480,12 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         }
         break
       case 'authenticated':
-        console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'credentials should not be updated')
-        break
+        console.error(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'credentials should not be updated')
+        throw new Error('should not update credentials in the authenticated state')
       case 'refreshing-tokens':
         // credentials should not be updated in this state
-        console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'credentials should not be updated')
-        break
+        console.error(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'credentials should not be updated')
+        throw new Error('should not update credentials in the refreshing-tokens state')
       default: {
         const unreachable: never = state.value
         throw new RangeError(`unknown authenticator state: ${unreachable}`)
@@ -435,7 +506,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     }
     _authenticatorUi.value = authenticatorUi
     // function to detach the authenticator UI
-    // `detached` is to prevent multiple detachments
+    // `detached` is a flag to prevent multiple detachments
     let detached = false
     return () => {
       if (detached) {
@@ -468,6 +539,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
 
   return {
     attachAuthenticatorUi,
+    lastError,
     refreshCognitoTokens,
     state,
     syncStateWithAccountInfo,

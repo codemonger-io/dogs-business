@@ -30,10 +30,7 @@ import type {
   UserInfo
 } from '../types/account-info'
 import { isAccountInfo } from '../types/account-info'
-import {
-  isAuthenticatorState,
-  isEquivalentCognitoTokens
-} from '../types/authenticator-state'
+import { isAuthenticatorState } from '../types/authenticator-state'
 import { isCognitoTokensExpiring } from '../utils/passquito'
 import { useAuthenticatorState } from './authenticator-state'
 

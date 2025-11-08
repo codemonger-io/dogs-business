@@ -15,6 +15,63 @@ import { isUserInfo } from '../types/account-info'
  *
  * @remarks
  *
+ * Represents a state of the state machine defined in the "authenticator-state"
+ * Pinia store.
+ *
+ * ### loading
+ *
+ * The initial state of the authenticator.
+ * This state continues until the "account-manager" Pinia store becomes ready.
+ *
+ * ### welcoming
+ *
+ * The state where no account is created.
+ * In this state, the user will be asked to
+ * - create a new online account,
+ * - create a guest account, or
+ * - sign in to an existing online account
+ *
+ * If the user chooses to create a new online account, a ceremony for passkey
+ * registration will be conducted.
+ * And after successful passkey registration, the state will transition to
+ * "authenticating".
+ *
+ * If the user chooses to create a guest account, a guest account will be
+ * created.
+ * And after successful guest account creation, the state will transition to
+ * "guest".
+ *
+ * If the user chooses to sign in to an existing online account, the state will
+ * transition to "authenticating".
+ *
+ * ### guest
+ *
+ * The state where a guest account is acitve.
+ * In this state, the user can enjoy the app as a guest user.
+ *
+ * ### authenticating
+ *
+ * The state where an online account is being authenticated.
+ * In this state, the user will be asked to sign in with a passkey.
+ * After a successful sign-in, the state will transition to "authenticated".
+ *
+ * ### authenticated
+ *
+ * The state where an online account has been authenticated.
+ * In this state, the user can enjoy the app with the full features.
+ * When the Cognito tokens are about to expire, the state will transition to
+ * "refreshing-tokens".
+ *
+ * ### refreshing-tokens
+ *
+ * The state where the Cognito tokens are being refreshed.
+ * In this state, the user should not be interrupted.
+ * After successful token refreshing, the state will transition back to
+ * "authenticated".
+ *
+ * If the refresh token is no longer valid, the state will transition to
+ * "authenticating".
+ *
  * @beta
  */
 export type AuthenticatorState =
@@ -162,22 +219,4 @@ function isTrueRefreshingTokensState(
   state: RefreshingTokensState
 ): boolean {
   return isPublicKeyInfo(state.publicKeyInfo) && isCognitoTokens(state.tokens)
-}
-
-/**
- * Returns if given two `CognitoTokens`s are equivalent.
- *
- * @remarks
- *
- * Does not take into account `activatedAt` and `expiresIn`.
- *
- * @beta
- */
-export function isEquivalentCognitoTokens(
-  tokens1: CognitoTokens,
-  tokens2: CognitoTokens
-): boolean {
-  return tokens1.accessToken === tokens2.accessToken &&
-    tokens1.idToken === tokens2.idToken &&
-    tokens1.refreshToken === tokens2.refreshToken
 }
