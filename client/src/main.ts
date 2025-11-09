@@ -16,12 +16,15 @@ import type {
   LocationTrackerEvent,
   LocationTrackerEventListener
 } from './lib/location-tracker'
+import { ResourceApiProvider } from './providers/resource-api'
 import {
   businessRecordDatabaseManagerProvider,
   dogDatabaseManagerProvider
 } from './stores/account-manager'
 import { locationTrackerProvider } from './stores/location-tracker'
+import { isUserInfo } from './types/account-info'
 import type { OnlineAccountProvider } from './types/online-account-provider'
+import { wrapFetchResponse } from './utils/api-response'
 import router from './router'
 import messages from './i18n'
 
@@ -58,6 +61,18 @@ app.use(businessRecordDatabaseManagerProvider({
   },
   async getOnlineBusinessRecordDatabase(accountProvider: OnlineAccountProvider) {
     return new OnlineBusinessRecordDatabaseImpl(accountProvider)
+  }
+}))
+app.use(new ResourceApiProvider({
+  getCurrentUserInfo: async (idToken: string) => {
+    const url = import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL + '/user'
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${idToken}`
+      }
+    })
+    return wrapFetchResponse(res, isUserInfo)
   }
 }))
 
