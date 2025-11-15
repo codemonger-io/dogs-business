@@ -131,7 +131,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
   // syncs the state with given account info.
   //
   // if the state and the account info disagree, the state shall precede.
-  const syncStateWithAccountInfo = (accountInfo: AccountInfo) => {
+  const syncStateWithAccountInfo = async (accountInfo: AccountInfo) => {
     switch (accountInfo.type) {
       case 'no-account':
         switch (state.value.type) {
@@ -197,7 +197,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
             // if the Cognito tokens are available → fetches the user information
             // otherwise → authenticating state
             if (accountInfo.tokens != null) {
-              _fetchOnlineAccountUserInfo(
+              await _fetchOnlineAccountUserInfo(
                 accountInfo.publicKeyInfo,
                 accountInfo.tokens
               )
@@ -220,7 +220,6 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'authenticated':
             // refreshes the tokens and fetches the user info again
             // if the tokens have been expired
-            // TODO: what if the public key is different?
             if (isCognitoTokensExpiring(state.value.tokens)) {
               if (process.env.NODE_ENV !== 'production') {
                 console.log('useAuthenticatorState.syncStateWithAccountInfo', 'tokens have been expired')
@@ -450,6 +449,8 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
   // - welcoming
   // - authenticating
   //
+  // in the "authenticating" state, `credentials` will replace the current ones.
+  //
   // throws an `Error` in other states.
   const updateCredentials = async (credentials: UpdatedCredentials) => {
     switch (state.value.type) {
@@ -458,7 +459,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         // if Cognito tokens are available → fetches the user information
         // otherwise → authenticating state
         if (credentials.tokens != null) {
-          _fetchOnlineAccountUserInfo(credentials.publicKeyInfo, credentials.tokens)
+          await _fetchOnlineAccountUserInfo(credentials.publicKeyInfo, credentials.tokens)
         } else {
           state.value = {
             type: 'authenticating',
@@ -471,7 +472,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         throw new Error('guest should not update credentials')
       case 'authenticating':
         if (credentials.tokens != null) {
-          _fetchOnlineAccountUserInfo(credentials.publicKeyInfo, credentials.tokens)
+          await _fetchOnlineAccountUserInfo(credentials.publicKeyInfo, credentials.tokens)
         } else {
           // TODO: maybe switching to discoverable authentication
           console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'Cognito tokens are expected')
