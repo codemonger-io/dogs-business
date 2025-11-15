@@ -5,6 +5,10 @@ import { createApp, nextTick } from 'vue'
 import { ResourceApiProvider } from '@/providers/resource-api'
 import { useAuthenticatorState } from '@/stores/authenticator-state'
 import type { AuthenticatorUi } from '@/stores/authenticator-state'
+import { isUserInfo } from '@/types/account-info'
+import type { ApiResponse } from '@/types/api-response'
+import type { ResourceApi } from '@/types/resource-api'
+import { wrapFetchResponse } from '@/utils/api-response'
 
 // key used in `sessionStorage` to store the authenticator state.
 const SESSION_STORAGE_KEY = 'dogs-business.authenticator-state'
@@ -24,12 +28,14 @@ describe('stores.authenticator-state', () => {
     })
 
     describe('with ResourceApi injected', () => {
+      const mockResourceApi: ResourceApi = {
+        getCurrentUserInfo: vi.fn()
+      }
+
       beforeEach(() => {
         const pinia = createPinia()
         app.use(pinia)
-        app.use(new ResourceApiProvider({
-          getCurrentUserInfo: vi.fn()
-        }))
+        app.use(new ResourceApiProvider(mockResourceApi))
         setActivePinia(pinia)
       })
 
@@ -82,12 +88,128 @@ describe('stores.authenticator-state', () => {
         })
 
         describe('after syncStateWithAccountInfo(online)', () => {
-          // TODO: mock the Dog's Business Resource API
-          describe.skip('with valid tokens', () => {
+          describe('with valid tokens', () => {
             describe('with successful user info retrieval', () => {
+              let activatedAt: number
+
+              beforeEach(async () => {
+                // lets the getCurrentUserInfo return a valid user info
+                const body = JSON.stringify({
+                  mapboxAccessToken: 'dummy-mapbox-access-token-2'
+                })
+                const apiResponse = wrapFetchResponse(new Response(body), isUserInfo)
+                mockResourceApi.getCurrentUserInfo = vi
+                  .mocked(mockResourceApi.getCurrentUserInfo)
+                  .mockResolvedValue(apiResponse)
+
+                // syncs the state
+                activatedAt = Date.now()
+                await authenticatorState.syncStateWithAccountInfo({
+                  type: 'online',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt,
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  },
+                  userInfo: {
+                    mapboxAccessToken: 'dummy-mapbox-access-token'
+                  }
+                })
+              })
+
+              afterEach(() => {
+                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
+              })
+
+              it('should be in the "authenticated" state', () => {
+                const expectedState = {
+                  type: 'authenticated',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt,
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  },
+                  userInfo: {
+                    mapboxAccessToken: 'dummy-mapbox-access-token-2'
+                  }
+                }
+
+                expect(authenticatorState.state).toEqual(expectedState)
+
+                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+                expect(storedState).toEqual(expectedState)
+              })
             })
 
             describe('with unauthorized user info retrieval', () => {
+              beforeEach(async () => {
+                // lets the getCurrentUserInfo return a 401 response
+                const apiResponse = wrapFetchResponse(
+                  new Response('Unauthorized', { status: 401 }),
+                  isUserInfo
+                )
+                mockResourceApi.getCurrentUserInfo = vi
+                  .mocked(mockResourceApi.getCurrentUserInfo)
+                  .mockResolvedValue(apiResponse)
+
+                // syncs the state
+                await authenticatorState.syncStateWithAccountInfo({
+                  type: 'online',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt: Date.now(),
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  },
+                  userInfo: {
+                    mapboxAccessToken: 'dummy-mapbox-access-token'
+                  }
+                })
+              })
+
+              afterEach(() => {
+                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
+              })
+
+              it('should be in the "authenticating" state', () => {
+                const expectedState = {
+                  type: 'authenticating',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  }
+                }
+
+                expect(authenticatorState.state).toEqual(expectedState)
+
+                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+                expect(storedState).toEqual(expectedState)
+              })
+            })
+
+            // TODO: determine the behavior
+            describe.skip('with other failed user info retrieval', () => {
             })
           })
 
@@ -191,18 +313,119 @@ describe('stores.authenticator-state', () => {
         })
 
         describe('after updateCredentials with tokens', () => {
-          // TODO: mock the Dog's Business Resource API
-          describe.skip('with valid tokens', () => {
+          describe('with valid tokens', () => {
             describe('with successful user info retrieval', () => {
+              let activatedAt: number
+
+              beforeEach(async () => {
+                // lets the getCurrentUserInfo return a valid user info
+                const body = JSON.stringify({
+                  mapboxAccessToken: 'dummy-mapbox-access-token'
+                })
+                mockResourceApi.getCurrentUserInfo = vi
+                  .mocked(mockResourceApi.getCurrentUserInfo)
+                  .mockResolvedValue(wrapFetchResponse(new Response(body), isUserInfo))
+
+                // updates the credentials
+                activatedAt = Date.now()
+                await authenticatorState.updateCredentials({
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt,
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  }
+                })
+              })
+
+              afterEach(() => {
+                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
+              })
+
               it('should be in the "authenticated" state', () => {
-                throw new Error('not yet implemented')
+                const expectedState = {
+                  type: 'authenticated',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt,
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  },
+                  userInfo: {
+                    mapboxAccessToken: 'dummy-mapbox-access-token'
+                  }
+                }
+
+                expect(authenticatorState.state).toEqual(expectedState)
+
+                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+                expect(storedState).toEqual(expectedState)
               })
             })
 
             describe('with unauthorized user info retrieval', () => {
-              it('should be in the "authenticating" state', () => {
-                throw new Error('not yet implemented')
+              beforeEach(async () => {
+                // lets the getCurrentUserInfo return a 401 response
+                const apiResponse = wrapFetchResponse(
+                  new Response('Unauthorized', { status: 401 }),
+                  isUserInfo
+                )
+                mockResourceApi.getCurrentUserInfo = vi
+                  .mocked(mockResourceApi.getCurrentUserInfo)
+                  .mockResolvedValue(apiResponse)
+
+                // updates the credentials
+                await authenticatorState.updateCredentials({
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt: Date.now(),
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  }
+                })
               })
+
+              afterEach(() => {
+                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
+              })
+
+              it('should be in the "authenticating" state', () => {
+                const expectedState = {
+                  type: 'authenticating',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  }
+                }
+
+                expect(authenticatorState.state).toEqual(expectedState)
+
+                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+                expect(storedState).toEqual(expectedState)
+              })
+            })
+
+            // TODO: determine the behavior
+            describe.skip('with other failed user info retrieval', () => {
             })
           })
 
@@ -315,12 +538,127 @@ describe('stores.authenticator-state', () => {
         })
 
         describe('after syncStateWithAccountInfo(online)', () => {
-          // TODO: mock the Dog's Business Resource API
-          describe.skip('with valid tokens', () => {
+          describe('with valid tokens', () => {
             describe('with successful user info retrieval', () => {
+              let activatedAt: number
+
+              beforeEach(async () => {
+                // lets the getCurrentUserInfo return a valid user info
+                const body = JSON.stringify({
+                  mapboxAccessToken: 'dummy-mapbox-access-token-2'
+                })
+                mockResourceApi.getCurrentUserInfo = vi
+                  .mocked(mockResourceApi.getCurrentUserInfo)
+                  .mockResolvedValue(wrapFetchResponse(new Response(body), isUserInfo))
+
+                // syncs the state
+                activatedAt = Date.now()
+                await authenticatorState.syncStateWithAccountInfo({
+                  type: 'online',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt,
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  },
+                  userInfo: {
+                    mapboxAccessToken: 'dummy-mapbox-access-token'
+                  }
+                })
+              })
+
+              afterEach(() => {
+                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
+              })
+
+              it('should be in the "authenticated" state', () => {
+                const expectedState = {
+                  type: 'authenticated',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt,
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  },
+                  userInfo: {
+                    mapboxAccessToken: 'dummy-mapbox-access-token-2'
+                  }
+                }
+
+                expect(authenticatorState.state).toEqual(expectedState)
+
+                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+                expect(storedState).toEqual(expectedState)
+              })
             })
 
             describe('with unauthorized user info retrieval', () => {
+              beforeEach(async () => {
+                // lets the getCurrentUserInfo return a 401 response
+                const apiResponse = wrapFetchResponse(
+                  new Response('Unauthorized', { status: 401 }),
+                  isUserInfo
+                )
+                mockResourceApi.getCurrentUserInfo = vi
+                  .mocked(mockResourceApi.getCurrentUserInfo)
+                  .mockResolvedValue(apiResponse)
+
+                // syncs the state
+                await authenticatorState.syncStateWithAccountInfo({
+                  type: 'online',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt: Date.now(),
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  },
+                  userInfo: {
+                    mapboxAccessToken: 'dummy-mapbox-access-token'
+                  }
+                })
+              })
+
+              afterEach(() => {
+                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
+              })
+
+              it('should be in the "authenticating" state', () => {
+                const expectedState = {
+                  type: 'authenticating',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  }
+                }
+
+                expect(authenticatorState.state).toEqual(expectedState)
+
+                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+                expect(storedState).toEqual(expectedState)
+              })
+            })
+
+            // TODO: determine the behavior
+            describe.skip('with other failed user info retrieval', () => {
             })
           })
 
@@ -424,26 +762,115 @@ describe('stores.authenticator-state', () => {
         })
 
         describe('after updateCredentials with tokens', () => {
-          // TODO: mock the Dog's Business Resource API
-          describe.skip('with valid tokens', () => {
+          describe('with valid tokens', () => {
             describe('with successful user info retrieval', () => {
-              it('should be in the "authenticated" state', () => {
-                throw new Error('not yet implemented')
+              let activatedAt: number
+
+              beforeEach(async () => {
+                // lets the getCurrentUserInfo return a valid user info
+                const body = JSON.stringify({
+                  mapboxAccessToken: 'dummy-mapbox-access-token-2'
+                })
+                mockResourceApi.getCurrentUserInfo = vi
+                  .mocked(mockResourceApi.getCurrentUserInfo)
+                  .mockResolvedValue(wrapFetchResponse(new Response(body), isUserInfo))
+
+                // updates the credentials
+                activatedAt = Date.now()
+                await authenticatorState.updateCredentials({
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt,
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  }
+                })
               })
 
-              it('should persist the "authenticated" state in sessionStorage', () => {
-                throw new Error('not yet implemented')
+              it('should be in the "authenticated" state', () => {
+                const expectedState = {
+                  type: 'authenticated',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt,
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  },
+                  userInfo: {
+                    mapboxAccessToken: 'dummy-mapbox-access-token-2'
+                  }
+                }
+
+                expect(authenticatorState.state).toEqual(expectedState)
+
+                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+                expect(storedState).toEqual(expectedState)
               })
             })
 
             describe('with unauthorized user info retrieval', () => {
-              it('should be in the "authenticating" state', () => {
-                throw new Error('not yet implemented')
+              beforeEach(async () => {
+                // lets the getCurrentUserInfo return a 401 response
+                const apiResponse = wrapFetchResponse(
+                  new Response('Unauthorized', { status: 401 }),
+                  isUserInfo
+                )
+                mockResourceApi.getCurrentUserInfo = vi
+                  .mocked(mockResourceApi.getCurrentUserInfo)
+                  .mockResolvedValue(apiResponse)
+
+                // updates the credentials
+                await authenticatorState.updateCredentials({
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  },
+                  tokens: {
+                    activatedAt: Date.now(),
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  }
+                })
               })
 
-              it('should persist the "authenticating" state in sessionStorage', () => {
-                throw new Error('not yet implemented')
+              afterEach(() => {
+                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
               })
+
+              it('should be in the "authenticating" state', () => {
+                const expectedState = {
+                  type: 'authenticating',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id',
+                    userHandle: 'dummy-user-handle'
+                  }
+                }
+
+                expect(authenticatorState.state).toEqual(expectedState)
+
+                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+                expect(storedState).toEqual(expectedState)
+              })
+            })
+
+            // TODO: determine the behavior
+            describe.skip('with other failed user info retrieval', () => {
             })
           })
 
@@ -776,12 +1203,115 @@ describe('stores.authenticator-state', () => {
         })
 
         describe('after updateCredentials with tokens', () => {
-          // TODO: mock the Dog's Business Resource API
-          describe.skip('with valid tokens', () => {
+          describe('with valid tokens', () => {
             describe('with successful user info retrieval', () => {
+              let activatedAt: number
+
+              beforeEach(async () => {
+                // lets the getCurrentUserInfo return a valid user info
+                const body = JSON.stringify({
+                  mapboxAccessToken: 'dummy-mapbox-access-token'
+                })
+                mockResourceApi.getCurrentUserInfo = vi
+                  .mocked(mockResourceApi.getCurrentUserInfo)
+                  .mockResolvedValue(wrapFetchResponse(new Response(body), isUserInfo))
+
+                // updates the credentials
+                activatedAt = Date.now()
+                await authenticatorState.updateCredentials({
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id-2',
+                    userHandle: 'dummy-user-handle-2'
+                  },
+                  tokens: {
+                    activatedAt,
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  }
+                })
+              })
+
+              afterEach(() => {
+                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
+              })
+
+              it('should be in the "authenticated" state', () => {
+                const expectedState = {
+                  type: 'authenticated',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id-2',
+                    userHandle: 'dummy-user-handle-2'
+                  },
+                  tokens: {
+                    activatedAt,
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  },
+                  userInfo: {
+                    mapboxAccessToken: 'dummy-mapbox-access-token'
+                  }
+                }
+
+                expect(authenticatorState.state).toEqual(expectedState)
+
+                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+                expect(storedState).toEqual(expectedState)
+              })
             })
 
             describe('with unauthorized user info retrieval', () => {
+              beforeEach(async () => {
+                // lets the getCurrentUserInfo return a 401 response
+                const apiResponse = wrapFetchResponse(
+                  new Response('Unauthorized', { status: 401 }),
+                  isUserInfo
+                )
+                mockResourceApi.getCurrentUserInfo = vi
+                  .mocked(mockResourceApi.getCurrentUserInfo)
+                  .mockResolvedValue(apiResponse)
+
+                // updates the credentials
+                await authenticatorState.updateCredentials({
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id-2',
+                    userHandle: 'dummy-user-handle-2'
+                  },
+                  tokens: {
+                    activatedAt: Date.now(),
+                    expiresIn: 30 * 60,
+                    accessToken: 'dummy-access-token',
+                    idToken: 'dummy-id-token',
+                    refreshToken: 'dummy-refresh-token'
+                  }
+                })
+              })
+
+              afterEach(() => {
+                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
+              })
+
+              it('should be in the "authenticating" state', () => {
+                const expectedState = {
+                  type: 'authenticating',
+                  publicKeyInfo: {
+                    authenticatorAttachment: 'platform',
+                    id: 'dummy-public-key-id-2',
+                    userHandle: 'dummy-user-handle-2'
+                  }
+                }
+
+                expect(authenticatorState.state).toEqual(expectedState)
+
+                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+                expect(storedState).toEqual(expectedState)
+              })
             })
           })
 
@@ -793,15 +1323,15 @@ describe('stores.authenticator-state', () => {
               authenticatorState.updateCredentials({
                 publicKeyInfo: {
                   authenticatorAttachment: 'platform',
-                  id: 'dummy-public-key-id',
-                  userHandle: 'dummy-user-handle'
+                  id: 'dummy-public-key-id-2',
+                  userHandle: 'dummy-user-handle-2'
                 },
                 tokens: {
                   activatedAt,
                   expiresIn: 30 * 60,
-                  accessToken: 'dummy-access-token',
-                  idToken: 'dummy-id-token',
-                  refreshToken: 'dummy-refresh-token'
+                  accessToken: 'dummy-access-token-2',
+                  idToken: 'dummy-id-token-2',
+                  refreshToken: 'dummy-refresh-token-2'
                 }
               })
             })
@@ -811,15 +1341,15 @@ describe('stores.authenticator-state', () => {
                 type: 'refreshing-tokens',
                 publicKeyInfo: {
                   authenticatorAttachment: 'platform',
-                  id: 'dummy-public-key-id',
-                  userHandle: 'dummy-user-handle'
+                  id: 'dummy-public-key-id-2',
+                  userHandle: 'dummy-user-handle-2'
                 },
                 tokens: {
                   activatedAt,
                   expiresIn: 30 * 60,
-                  accessToken: 'dummy-access-token',
-                  idToken: 'dummy-id-token',
-                  refreshToken: 'dummy-refresh-token'
+                  accessToken: 'dummy-access-token-2',
+                  idToken: 'dummy-id-token-2',
+                  refreshToken: 'dummy-refresh-token-2'
                 }
               })
             })
@@ -920,22 +1450,24 @@ describe('stores.authenticator-state', () => {
 
           describe('after syncStateWithAccountInfo(online)', () => {
             beforeEach(() => {
+              // intentionally gives a different account info
+              // but it should not matter to the state
               authenticatorState.syncStateWithAccountInfo({
                 type: 'online',
                 publicKeyInfo: {
                   authenticatorAttachment: 'platform',
-                  id: 'dummy-public-key-id',
-                  userHandle: 'dummy-user-handle'
+                  id: 'dummy-public-key-id-2',
+                  userHandle: 'dummy-user-handle-2'
                 },
                 tokens: {
-                  activatedAt,
+                  activatedAt: Date.now() - 30 * 60 * 1000,
                   expiresIn: 30 * 60,
-                  accessToken: 'dummy-access-token',
-                  idToken: 'dummy-id-token',
-                  refreshToken: 'dummy-refresh-token'
+                  accessToken: 'dummy-access-token-2',
+                  idToken: 'dummy-id-token-2',
+                  refreshToken: 'dummy-refresh-token-2'
                 },
                 userInfo: {
-                  mapboxAccessToken: 'dummy-mapbox-access-token'
+                  mapboxAccessToken: 'dummy-mapbox-access-token-2'
                 }
               })
             })
@@ -1047,22 +1579,24 @@ describe('stores.authenticator-state', () => {
 
           describe('after syncStateWithAccountInfo(online)', () => {
             beforeEach(() => {
+              // intentionally gives a different account info
+              // but it should not matter to the state
               authenticatorState.syncStateWithAccountInfo({
                 type: 'online',
                 publicKeyInfo: {
                   authenticatorAttachment: 'platform',
-                  id: 'dummy-public-key-id',
-                  userHandle: 'dummy-user-handle'
+                  id: 'dummy-public-key-id-2',
+                  userHandle: 'dummy-user-handle-2'
                 },
                 tokens: {
-                  activatedAt,
+                  activatedAt: Date.now(),
                   expiresIn: 30 * 60,
-                  accessToken: 'dummy-access-token',
-                  idToken: 'dummy-id-token',
-                  refreshToken: 'dummy-refresh-token'
+                  accessToken: 'dummy-access-token-2',
+                  idToken: 'dummy-id-token-2',
+                  refreshToken: 'dummy-refresh-token-2'
                 },
                 userInfo: {
-                  mapboxAccessToken: 'dummy-mapbox-access-token'
+                  mapboxAccessToken: 'dummy-mapbox-access-token-2'
                 }
               })
             })
