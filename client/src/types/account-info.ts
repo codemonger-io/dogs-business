@@ -123,6 +123,9 @@ function isTrueOnlineAccountInfo(accountInfo: OnlineAccountInfo): boolean {
   if (!isCognitoTokens(accountInfo.tokens)) {
     return false
   }
+  if (accountInfo.userInfo == null) {
+    return false
+  }
   if (!isTrueUserInfo(accountInfo.userInfo)) {
     return false
   }
@@ -152,15 +155,4 @@ export function isUserInfo(value: unknown): value is UserInfo {
     return false
   }
   return isTrueUserInfo(value as UserInfo)
-}
-
-/**
- * Returns if given two possible `UserInfo` are the same.
- *
- * @beta
- */
-export function isSameUserInfo(userInfo1?: UserInfo, userInfo2?: UserInfo): boolean {
-  return userInfo1 != null &&
-    userInfo2 != null &&
-    userInfo1.mapboxAccessToken === userInfo2.mapboxAccessToken
 }
