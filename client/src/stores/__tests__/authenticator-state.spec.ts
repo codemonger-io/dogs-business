@@ -91,10 +91,7 @@ describe('stores.authenticator-state', () => {
 
               beforeEach(async () => {
                 // lets the getCurrentUserInfo return a valid user info
-                const body = JSON.stringify({
-                  mapboxAccessToken: 'dummy-mapbox-access-token-2'
-                })
-                const apiResponse = wrapFetchResponse(new Response(body), isUserInfo)
+                const apiResponse = wrapFetchResponse(new Response('{}'), isUserInfo)
                 mockResourceApi.getCurrentUserInfo = vi
                   .mocked(mockResourceApi.getCurrentUserInfo)
                   .mockResolvedValue(apiResponse)
@@ -115,9 +112,7 @@ describe('stores.authenticator-state', () => {
                     idToken: 'dummy-id-token',
                     refreshToken: 'dummy-refresh-token'
                   },
-                  userInfo: {
-                    mapboxAccessToken: 'dummy-mapbox-access-token'
-                  }
+                  userInfo: {}
                 })
               })
 
@@ -140,9 +135,7 @@ describe('stores.authenticator-state', () => {
                     idToken: 'dummy-id-token',
                     refreshToken: 'dummy-refresh-token'
                   },
-                  userInfo: {
-                    mapboxAccessToken: 'dummy-mapbox-access-token-2'
-                  }
+                  userInfo: {}
                 }
 
                 expect(authenticatorState.state).toEqual(expectedState)
@@ -178,9 +171,7 @@ describe('stores.authenticator-state', () => {
                     idToken: 'dummy-id-token',
                     refreshToken: 'dummy-refresh-token'
                   },
-                  userInfo: {
-                    mapboxAccessToken: 'dummy-mapbox-access-token'
-                  }
+                  userInfo: {}
                 })
               })
 
@@ -229,9 +220,7 @@ describe('stores.authenticator-state', () => {
                   idToken: 'dummy-id-token',
                   refreshToken: 'dummy-refresh-token'
                 },
-                userInfo: {
-                  mapboxAccessToken: 'dummy-mapbox-access-token'
-                }
+                userInfo: {}
               })
             })
 
@@ -316,12 +305,9 @@ describe('stores.authenticator-state', () => {
 
               beforeEach(async () => {
                 // lets the getCurrentUserInfo return a valid user info
-                const body = JSON.stringify({
-                  mapboxAccessToken: 'dummy-mapbox-access-token'
-                })
                 mockResourceApi.getCurrentUserInfo = vi
                   .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(wrapFetchResponse(new Response(body), isUserInfo))
+                  .mockResolvedValue(wrapFetchResponse(new Response('{}'), isUserInfo))
 
                 // updates the credentials
                 activatedAt = Date.now()
@@ -360,9 +346,7 @@ describe('stores.authenticator-state', () => {
                     idToken: 'dummy-id-token',
                     refreshToken: 'dummy-refresh-token'
                   },
-                  userInfo: {
-                    mapboxAccessToken: 'dummy-mapbox-access-token'
-                  }
+                  userInfo: {}
                 }
 
                 expect(authenticatorState.state).toEqual(expectedState)
@@ -538,12 +522,9 @@ describe('stores.authenticator-state', () => {
 
               beforeEach(async () => {
                 // lets the getCurrentUserInfo return a valid user info
-                const body = JSON.stringify({
-                  mapboxAccessToken: 'dummy-mapbox-access-token-2'
-                })
                 mockResourceApi.getCurrentUserInfo = vi
                   .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(wrapFetchResponse(new Response(body), isUserInfo))
+                  .mockResolvedValue(wrapFetchResponse(new Response('{}'), isUserInfo))
 
                 // syncs the state
                 activatedAt = Date.now()
@@ -561,9 +542,7 @@ describe('stores.authenticator-state', () => {
                     idToken: 'dummy-id-token',
                     refreshToken: 'dummy-refresh-token'
                   },
-                  userInfo: {
-                    mapboxAccessToken: 'dummy-mapbox-access-token'
-                  }
+                  userInfo: {}
                 })
               })
 
@@ -586,9 +565,7 @@ describe('stores.authenticator-state', () => {
                     idToken: 'dummy-id-token',
                     refreshToken: 'dummy-refresh-token'
                   },
-                  userInfo: {
-                    mapboxAccessToken: 'dummy-mapbox-access-token-2'
-                  }
+                  userInfo: {}
                 }
 
                 expect(authenticatorState.state).toEqual(expectedState)
@@ -624,9 +601,7 @@ describe('stores.authenticator-state', () => {
                     idToken: 'dummy-id-token',
                     refreshToken: 'dummy-refresh-token'
                   },
-                  userInfo: {
-                    mapboxAccessToken: 'dummy-mapbox-access-token'
-                  }
+                  userInfo: {}
                 })
               })
 
@@ -675,9 +650,7 @@ describe('stores.authenticator-state', () => {
                   idToken: 'dummy-id-token',
                   refreshToken: 'dummy-refresh-token'
                 },
-                userInfo: {
-                  mapboxAccessToken: 'dummy-mapbox-access-token'
-                }
+                userInfo: {}
               })
             })
 
@@ -762,12 +735,9 @@ describe('stores.authenticator-state', () => {
 
               beforeEach(async () => {
                 // lets the getCurrentUserInfo return a valid user info
-                const body = JSON.stringify({
-                  mapboxAccessToken: 'dummy-mapbox-access-token-2'
-                })
                 mockResourceApi.getCurrentUserInfo = vi
                   .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(wrapFetchResponse(new Response(body), isUserInfo))
+                  .mockResolvedValue(wrapFetchResponse(new Response('{}'), isUserInfo))
 
                 // updates the credentials
                 activatedAt = Date.now()
@@ -802,9 +772,7 @@ describe('stores.authenticator-state', () => {
                     idToken: 'dummy-id-token',
                     refreshToken: 'dummy-refresh-token'
                   },
-                  userInfo: {
-                    mapboxAccessToken: 'dummy-mapbox-access-token-2'
-                  }
+                  userInfo: {}
                 }
 
                 expect(authenticatorState.state).toEqual(expectedState)
@@ -985,9 +953,7 @@ describe('stores.authenticator-state', () => {
                 idToken: 'dummy-id-token',
                 refreshToken: 'dummy-refresh-token'
               },
-              userInfo: {
-                mapboxAccessToken: 'dummy-mapbox-access-token'
-              }
+              userInfo: {}
             })
           })
 
@@ -1165,9 +1131,7 @@ describe('stores.authenticator-state', () => {
                 idToken: 'dummy-id-token',
                 refreshToken: 'dummy-refresh-token'
               },
-              userInfo: {
-                mapboxAccessToken: 'dummy-mapbox-access-token'
-              }
+              userInfo: {}
             })
           })
 
@@ -1197,12 +1161,9 @@ describe('stores.authenticator-state', () => {
 
               beforeEach(async () => {
                 // lets the getCurrentUserInfo return a valid user info
-                const body = JSON.stringify({
-                  mapboxAccessToken: 'dummy-mapbox-access-token'
-                })
                 mockResourceApi.getCurrentUserInfo = vi
                   .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(wrapFetchResponse(new Response(body), isUserInfo))
+                  .mockResolvedValue(wrapFetchResponse(new Response('{}'), isUserInfo))
 
                 // updates the credentials
                 activatedAt = Date.now()
@@ -1241,9 +1202,7 @@ describe('stores.authenticator-state', () => {
                     idToken: 'dummy-id-token',
                     refreshToken: 'dummy-refresh-token'
                   },
-                  userInfo: {
-                    mapboxAccessToken: 'dummy-mapbox-access-token'
-                  }
+                  userInfo: {}
                 }
 
                 expect(authenticatorState.state).toEqual(expectedState)
@@ -1368,9 +1327,7 @@ describe('stores.authenticator-state', () => {
                   idToken: 'dummy-id-token',
                   refreshToken: 'dummy-refresh-token'
                 },
-                userInfo: {
-                  mapboxAccessToken: 'dummy-mapbox-access-token'
-                }
+                userInfo: {}
               })
             )
             authenticatorState = useAuthenticatorState()
@@ -1395,9 +1352,7 @@ describe('stores.authenticator-state', () => {
                 idToken: 'dummy-id-token',
                 refreshToken: 'dummy-refresh-token'
               },
-              userInfo: {
-                mapboxAccessToken: 'dummy-mapbox-access-token'
-              }
+              userInfo: {}
             })
           })
 
@@ -1451,9 +1406,7 @@ describe('stores.authenticator-state', () => {
                   idToken: 'dummy-id-token-2',
                   refreshToken: 'dummy-refresh-token-2'
                 },
-                userInfo: {
-                  mapboxAccessToken: 'dummy-mapbox-access-token-2'
-                }
+                userInfo: {}
               })
             })
 
@@ -1472,9 +1425,7 @@ describe('stores.authenticator-state', () => {
                   idToken: 'dummy-id-token',
                   refreshToken: 'dummy-refresh-token'
                 },
-                userInfo: {
-                  mapboxAccessToken: 'dummy-mapbox-access-token'
-                }
+                userInfo: {}
               })
             })
           })
@@ -1529,9 +1480,7 @@ describe('stores.authenticator-state', () => {
                   idToken: 'dummy-id-token',
                   refreshToken: 'dummy-refresh-token'
                 },
-                userInfo: {
-                  mapboxAccessToken: 'dummy-mapbox-access-token'
-                }
+                userInfo: {}
               })
             )
             authenticatorState = useAuthenticatorState()
@@ -1556,9 +1505,7 @@ describe('stores.authenticator-state', () => {
                 idToken: 'dummy-id-token',
                 refreshToken: 'dummy-refresh-token'
               },
-              userInfo: {
-                mapboxAccessToken: 'dummy-mapbox-access-token'
-              }
+              userInfo: {}
             })
           })
 
@@ -1580,9 +1527,7 @@ describe('stores.authenticator-state', () => {
                   idToken: 'dummy-id-token-2',
                   refreshToken: 'dummy-refresh-token-2'
                 },
-                userInfo: {
-                  mapboxAccessToken: 'dummy-mapbox-access-token-2'
-                }
+                userInfo: {}
               })
             })
 
@@ -1723,9 +1668,7 @@ describe('stores.authenticator-state', () => {
                 idToken: 'dummy-id-token',
                 refreshToken: 'dummy-refresh-token'
               },
-              userInfo: {
-                mapboxAccessToken: 'dummy-mapbox-access-token'
-              }
+              userInfo: {}
             })
           })
 

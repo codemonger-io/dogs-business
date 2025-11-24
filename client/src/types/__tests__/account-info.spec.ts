@@ -40,15 +40,13 @@ describe('types.account-info', () => {
           idToken: 'dummy-id-token',
           refreshToken: 'dummy-refresh-token'
         },
-        userInfo: {
-          mapboxAccessToken: 'dummy-mapbox-access-token'
-        },
+        userInfo: {},
         activeDogId: 'dog'
       }
       expect(isAccountInfo(value)).toBe(true)
     })
 
-    it('should be true for { type: "online", publicKeyInfo: {...}, tokens: {...}, userInfo: {...} }', () => {
+    it('should be true for { type: "online", publicKeyInfo: {...}, tokens: {...}, userInfo: {...} } missing activeDogId', () => {
       const value = {
         type: 'online',
         publicKeyInfo: {
@@ -63,9 +61,7 @@ describe('types.account-info', () => {
           idToken: 'dummy-id-token',
           refreshToken: 'dummy-refresh-token'
         },
-        userInfo: {
-          mapboxAccessToken: 'dummy-mapbox-access-token'
-        }
+        userInfo: {}
       }
       expect(isAccountInfo(value)).toBe(true)
     })
@@ -80,9 +76,7 @@ describe('types.account-info', () => {
           idToken: 'dummy-id-token',
           refreshToken: 'dummy-refresh-token'
         },
-        userInfo: {
-          mapboxAccessToken: 'dummy-mapbox-access-token'
-        }
+        userInfo: {}
       }
       expect(isAccountInfo(value)).toBe(false)
     })
@@ -95,9 +89,7 @@ describe('types.account-info', () => {
           id: 'dummy-public-key-id',
           userHandle: 'dummy-user-handle'
         },
-        userInfo: {
-          mapboxAccessToken: 'dummy-mapbox-access-token'
-        }
+        userInfo: {}
       }
       expect(isAccountInfo(value)).toBe(false)
     })
@@ -132,9 +124,7 @@ describe('types.account-info', () => {
           idToken: 'dummy-id-token',
           refreshToken: 'dummy-refresh-token'
         },
-        userInfo: {
-          mapboxAccessToken: 'dummy-mapbox-access-token'
-        }
+        userInfo: {}
       }
       expect(isAccountInfo(value)).toBe(false)
     })
@@ -148,9 +138,7 @@ describe('types.account-info', () => {
           userHandle: 'dummy-user-handle'
         },
         tokens: 'invalid',
-        userInfo: {
-          mapboxAccessToken: 'dummy-mapbox-access-token'
-        }
+        userInfo: {}
       }
       expect(isAccountInfo(value)).toBe(false)
     })
@@ -190,9 +178,7 @@ describe('types.account-info', () => {
           idToken: 'dummy-id-token',
           refreshToken: 'dummy-refresh-token'
         },
-        userInfo: {
-          mapboxAccessToken: 'dummy-mapbox-access-token'
-        },
+        userInfo: {},
         activeDogId: 123
       }
       expect(isAccountInfo(value)).toBe(false)
@@ -220,20 +206,12 @@ describe('types.account-info', () => {
   })
 
   describe('isUserInfo', () => {
-    it('should be true for { mapboxAccessToken: "token" }', () => {
-      expect(isUserInfo({ mapboxAccessToken: 'token' })).toBe(true)
-    })
-
-    it('should be false for { mapboxAccessToken: 123 } with non-string mapboxAccessToken', () => {
-      expect(isUserInfo({ mapboxAccessToken: 123 })).toBe(false)
-    })
-
-    it('should be false for {} missing mapboxAccessToken', () => {
-      expect(isUserInfo({})).toBe(false)
+    it('should be true for {}', () => {
+      expect(isUserInfo({})).toBe(true)
     })
 
     it('should be false for a string', () => {
-      expect(isUserInfo('mapbox token')).toBe(false)
+      expect(isUserInfo('user info')).toBe(false)
     })
 
     it('should be false for null', () => {

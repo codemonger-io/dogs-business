@@ -43,8 +43,6 @@ export interface GuestAccountInfo {
  * @beta
  */
 export interface UserInfo {
-  /** Mapbox access token for the user. */
-  mapboxAccessToken: string
 }
 
 /**
@@ -117,10 +115,7 @@ function isTrueOnlineAccountInfo(accountInfo: OnlineAccountInfo): boolean {
   if (!isCognitoTokens(accountInfo.tokens)) {
     return false
   }
-  if (accountInfo.userInfo == null) {
-    return false
-  }
-  if (!isTrueUserInfo(accountInfo.userInfo)) {
+  if (!isUserInfo(accountInfo.userInfo)) {
     return false
   }
   if (
@@ -132,13 +127,6 @@ function isTrueOnlineAccountInfo(accountInfo: OnlineAccountInfo): boolean {
   return true
 }
 
-// returns if a given value is truely a `UserInfo`.
-// this function is intended to be used when the value is known to be a non-null
-// object.
-function isTrueUserInfo(userInfo: UserInfo): boolean {
-  return typeof userInfo.mapboxAccessToken === 'string'
-}
-
 /**
  * Returns if a given value is a `UserInfo`.
  *
@@ -148,5 +136,5 @@ export function isUserInfo(value: unknown): value is UserInfo {
   if (value == null || typeof value !== 'object') {
     return false
   }
-  return isTrueUserInfo(value as UserInfo)
+  return true // there is no field for now
 }

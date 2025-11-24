@@ -42,9 +42,7 @@ describe('type.authenticator-state', () => {
           expiresIn: 900,
           activatedAt: 1760962792000
         },
-        userInfo: {
-          mapboxAccessToken: 'mapbox-access-token'
-        }
+        userInfo: {}
       })).toBe(true)
     })
 
@@ -103,9 +101,7 @@ describe('type.authenticator-state', () => {
           expiresIn: 900,
           activatedAt: 1760962792000
         },
-        userInfo: {
-          mapboxAccessToken: 'mapbox-access-token'
-        }
+        userInfo: {}
       })).toBe(false)
     })
 
@@ -120,9 +116,7 @@ describe('type.authenticator-state', () => {
           expiresIn: 900,
           activatedAt: 1760962792000
         },
-        userInfo: {
-          mapboxAccessToken: 'mapbox-access-token'
-        }
+        userInfo: {}
       })).toBe(false)
     })
 
@@ -134,9 +128,7 @@ describe('type.authenticator-state', () => {
           id: 'serial-ID',
           userHandle: 'user-abc'
         },
-        userInfo: {
-          mapboxAccessToken: 'mapbox-access-token'
-        }
+        userInfo: {}
       })).toBe(false)
     })
 
@@ -149,9 +141,7 @@ describe('type.authenticator-state', () => {
           userHandle: 'user-abc'
         },
         tokens: {},
-        userInfo: {
-          mapboxAccessToken: 'mapbox-access-token'
-        }
+        userInfo: {}
       })).toBe(false)
     })
 
@@ -188,7 +178,7 @@ describe('type.authenticator-state', () => {
           expiresIn: 900,
           activatedAt: 1760962792000
         },
-        userInfo: {}
+        userInfo: 'online-account'
       })).toBe(false)
     })
 
