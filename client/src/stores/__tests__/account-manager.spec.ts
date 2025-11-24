@@ -1,10 +1,10 @@
 import assert from 'node:assert'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createApp } from 'vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createApp, nextTick } from 'vue'
 
-import type { AccountManager } from '@/lib/account-manager'
 import type {
+  BusinessRecord,
   BusinessRecordDatabaseManager,
   BusinessRecordParams,
   BusinessRecordParamsOfDog,
@@ -15,24 +15,19 @@ import type {
   DogParams,
   GuestDogDatabase
 } from '@/lib/dog-database'
+import { ResourceApiProvider } from '@/providers/resource-api'
 import {
-  accountManagerProvider,
   businessRecordDatabaseManagerProvider,
   dogDatabaseManagerProvider,
   useAccountManager
 } from '@/stores/account-manager'
+import type { ResourceApi } from '@/types/resource-api'
 
-const dummyAccountManager: AccountManager = {
-  async loadAccountInfo() {
-    return { type: 'no-account' }
-  },
-  async saveAccountInfo() {},
-  async createGuestAccount() {
-    return {
-      type: 'guest',
-      mapboxAccessToken: 'dummy token'
-    }
-  }
+// key used in `localStorage` to store the account info.
+const ACCOUNT_INFO_LOCAL_STORAGE_KEY = 'dogs-business.account'
+
+const dummyResourceApi: ResourceApi = {
+  getCurrentUserInfo: vi.fn()
 }
 
 const dummyGuestDogDatabaseManager = {
@@ -41,14 +36,15 @@ const dummyGuestDogDatabaseManager = {
       async createDog(params: DogParams) {
         return {
           ...params,
-          key: 1
+          dogId: 1
         }
       },
       async getDog() {
         return undefined
       }
     }
-  }
+  },
+  getOnlineDogDatabase: vi.fn()
 }
 
 const dummyBusinessRecordDatabaseManager = {
@@ -57,18 +53,19 @@ const dummyBusinessRecordDatabaseManager = {
       async createBusinessRecord(params: BusinessRecordParamsOfDog<number>) {
         return {
           ...params,
-          key: 1
+          recordId: 1
         }
       },
       async loadBusinessRecords() {
         return []
       }
     }
-  }
+  },
+  getOnlineBusinessRecordDatabase: vi.fn()
 }
 
 describe('useAccountManager', () => {
-  describe('without account manager provided', () => {
+  describe('without Resource API provided', () => {
     beforeEach(() => {
       const app = createApp({})
       const pinia = createPinia()
@@ -88,7 +85,7 @@ describe('useAccountManager', () => {
       const app = createApp({})
       const pinia = createPinia()
       app.use(pinia)
-      app.use(accountManagerProvider(dummyAccountManager))
+      app.use(new ResourceApiProvider(dummyResourceApi))
       app.use(businessRecordDatabaseManagerProvider(dummyBusinessRecordDatabaseManager))
       setActivePinia(pinia)
     })
@@ -103,7 +100,7 @@ describe('useAccountManager', () => {
       const app = createApp({})
       const pinia = createPinia()
       app.use(pinia)
-      app.use(accountManagerProvider(dummyAccountManager))
+      app.use(new ResourceApiProvider(dummyResourceApi))
       app.use(dogDatabaseManagerProvider(dummyGuestDogDatabaseManager))
       setActivePinia(pinia)
     })
@@ -113,8 +110,8 @@ describe('useAccountManager', () => {
     })
   })
 
-  describe('with accountManagerProviderv, dogDatabaseManagerProvider, and businessRecordDatabaseManagerProvided', () => {
-    let accountManager: AccountManager
+  describe('with all the necessary providers', () => {
+    let resourceApi: ResourceApi
     let guestDogDatabase: GuestDogDatabase
     let dogDatabaseManager: DogDatabaseManager
     let guestBusinessRecordDatabase: GuestBusinessRecordDatabase
@@ -122,26 +119,14 @@ describe('useAccountManager', () => {
 
     beforeEach(() => {
       const app = createApp({})
-      accountManager = {
-        async loadAccountInfo() {
-          return { type: 'no-account' }
-        },
-        async saveAccountInfo() {},
-        async createGuestAccount() {
-          return {
-            type: 'guest',
-            mapboxAccessToken: 'dummy token'
-          }
-        }
+      resourceApi = {
+        getCurrentUserInfo: vi.fn()
       }
-      vi.spyOn(accountManager, 'loadAccountInfo')
-      vi.spyOn(accountManager, 'saveAccountInfo')
-      vi.spyOn(accountManager, 'createGuestAccount')
       guestDogDatabase = {
         async createDog(params: DogParams) {
           return {
             ...params,
-            key: 1
+            dogId: 1
           }
         },
         async getDog() {
@@ -149,17 +134,19 @@ describe('useAccountManager', () => {
         }
       }
       vi.spyOn(guestDogDatabase, 'createDog')
+      vi.spyOn(guestDogDatabase, 'getDog')
       dogDatabaseManager = {
         async getGuestDogDatabase() {
           return guestDogDatabase
-        }
+        },
+        getOnlineDogDatabase: vi.fn()
       }
       vi.spyOn(dogDatabaseManager, 'getGuestDogDatabase')
       guestBusinessRecordDatabase = {
         async createBusinessRecord(params: BusinessRecordParamsOfDog<number>) {
           return {
             ...params,
-            key: 1
+            recordId: 1
           }
         },
         async loadBusinessRecords() {
@@ -171,156 +158,294 @@ describe('useAccountManager', () => {
       businessRecordDatabaseManager = {
         async getGuestBusinessRecordDatabase() {
           return guestBusinessRecordDatabase
-        }
+        },
+        getOnlineBusinessRecordDatabase: vi.fn()
       }
       vi.spyOn(businessRecordDatabaseManager, 'getGuestBusinessRecordDatabase')
       const pinia = createPinia()
       app.use(pinia)
-      app.use(accountManagerProvider(accountManager))
+      app.use(new ResourceApiProvider(resourceApi))
       app.use(dogDatabaseManagerProvider(dogDatabaseManager))
       app.use(businessRecordDatabaseManagerProvider(businessRecordDatabaseManager))
       setActivePinia(pinia)
     })
 
-    it('should call AccountManager.loadAccountInfo', () => {
-      useAccountManager()
-      expect(accountManager.loadAccountInfo).toHaveBeenCalled()
+    describe('with empty localStorage', () => {
+      let accountManager: ReturnType<typeof useAccountManager>
+
+      beforeEach(() => {
+        accountManager = useAccountManager()
+      })
+
+      afterEach(() => {
+        localStorage.clear()
+      })
+
+      it('should have "no-account"', () => {
+        expect(accountManager.accountInfo).toEqual({ type: 'no-account' })
+      })
+
+      it('should not persist account info to localStorage', () => {
+        expect(localStorage.getItem(ACCOUNT_INFO_LOCAL_STORAGE_KEY)).toBeNull()
+      })
+
+      it('should have no current dog', () => {
+        expect(accountManager.currentDog).toBeUndefined()
+      })
+
+      it('should have no active business records', () => {
+        expect(accountManager.activeBusinessRecords).toBeUndefined()
+      })
     })
 
-    describe('with accountInfo loaded', () => {
-      let store: ReturnType<typeof useAccountManager>
+    describe('with localStorage containing "no-account" account type', () => {
+      let accountManager: ReturnType<typeof useAccountManager>
 
-      beforeEach(async () => {
-        store = useAccountManager()
-        // waits for loadAccountInfo to make sure `accountInfo` is resolved
-        await accountManager.loadAccountInfo()
+      beforeEach(() => {
+        localStorage.setItem(
+          ACCOUNT_INFO_LOCAL_STORAGE_KEY,
+          JSON.stringify({ type: 'no-account' })
+        )
+        accountManager = useAccountManager()
       })
 
-      it('should have accountInfo "no-account"', () => {
-        expect(store.accountInfo).toEqual({ type: 'no-account' })
+      afterEach(() => {
+        localStorage.clear()
       })
 
-      it('should call AccountManager.saveAccountInfo', () => {
-        expect(accountManager.saveAccountInfo).toHaveBeenCalledWith({
-          type: 'no-account'
-        })
+      it('should have "no-account"', () => {
+        expect(accountManager.accountInfo).toEqual({ type: 'no-account' })
       })
 
-      it('should have lastError undefined', () => {
-        expect(store.lastError).toBeUndefined()
-      })
-    })
-
-    describe('then createGuestAccount', () => {
-      let store: ReturnType<typeof useAccountManager>
-
-      beforeEach(async () => {
-        store = useAccountManager()
-        await store.createGuestAccount()
+      it('should have no current dog', () => {
+        expect(accountManager.currentDog).toBeUndefined()
       })
 
-      it('should call AccountManager.createGuestAccount', () => {
-        expect(accountManager.createGuestAccount).toHaveBeenCalled()
+      it('should have no active business records', () => {
+        expect(accountManager.activeBusinessRecords).toBeUndefined()
       })
 
-      it('should have accountInfo "guest"', () => {
-        expect(store.accountInfo).toEqual({
-          type: 'guest',
-          mapboxAccessToken: 'dummy token'
-        })
+      it('should fail to register a new guest dog friend', async () => {
+        await expect(accountManager.registerNewDogFriend({ name: 'ポチ' }))
+          .rejects.toThrow()
       })
 
-      it('should call AccountManager.saveAccountInfo', () => {
-        expect(accountManager.saveAccountInfo).toHaveBeenLastCalledWith({
-          type: 'guest',
-          mapboxAccessToken: 'dummy token'
-        })
+      it('should fail to add a business record', async () => {
+        await expect(accountManager.addBusinessRecord({
+          businessType: 'pee',
+          location: {
+            latitude: 35.6812,
+            longitude: 139.7671
+          },
+          timestamp: 1527001200
+        })).rejects.toThrow()
       })
 
-      describe('then registerNewDogFriend', () => {
+      describe('after createGuestAccount', () => {
         beforeEach(async () => {
-          vi.mocked(accountManager.saveAccountInfo).mockClear()
-          await store.registerNewDogFriend({ name: 'ポチ' })
+          await accountManager.createGuestAccount()
         })
 
-        it('should have a new dog as currentDog', () => {
-          expect(store.currentDog).toEqual({
-            key: 1,
-            name: 'ポチ'
-          })
-        })
-
-        it('should have the new dog key as accountInfo.activeDogKey', () => {
-          assert(store.accountInfo?.type === 'guest')
-          expect(store.accountInfo.activeDogKey).toEqual(1)
-        })
-
-        it('should call DogDatabaseManager.getGuestDogDatabase', () => {
-          expect(dogDatabaseManager.getGuestDogDatabase)
-            .toHaveBeenCalledWith(store.accountInfo)
-        })
-
-        it('should call GuestDogDatabase.createDog', () => {
-          expect(guestDogDatabase.createDog).toHaveBeenCalledWith({
-            name: 'ポチ'
-          })
-        })
-
-        it('should call BusinessRecordDatabaseManager.getGuestBusinessRecordDatabase', () => {
-          expect(businessRecordDatabaseManager.getGuestBusinessRecordDatabase)
-            .toHaveBeenCalledWith(store.accountInfo)
-        })
-
-        it('should call GuestBusinessRecordDatabase.loadBusinessRecords', () => {
-          expect(guestBusinessRecordDatabase.loadBusinessRecords)
-            .toHaveBeenCalledWith(1)
-        })
-
-        it('should call AccountManager.saveAccountInfo', () => {
-          expect(accountManager.saveAccountInfo).toHaveBeenLastCalledWith({
+        it('should have "guest" account without dog', () => {
+          const expectedAccountInfo = {
             type: 'guest',
-            mapboxAccessToken: 'dummy token',
-            activeDogKey: 1
+            mapboxAccessToken: expect.any(String)
+          }
+
+          expect(accountManager.accountInfo).toEqual(expectedAccountInfo)
+
+          const storedAccountInfo = JSON.parse(localStorage.getItem(ACCOUNT_INFO_LOCAL_STORAGE_KEY)!)
+          expect(storedAccountInfo).toEqual(expectedAccountInfo)
+        })
+
+        it('should have no current dog', () => {
+          expect(accountManager.currentDog).toBeUndefined()
+        })
+
+        it('should have no active business records', () => {
+          expect(accountManager.activeBusinessRecords).toBeUndefined()
+        })
+      })
+    })
+
+    describe('with localStorage containing "guest" account type', () => {
+      afterEach(() => {
+        localStorage.clear()
+      })
+
+      describe('without the active dog', () => {
+        let accountManager: ReturnType<typeof useAccountManager>
+
+        beforeEach(() => {
+          localStorage.setItem(
+            ACCOUNT_INFO_LOCAL_STORAGE_KEY,
+            JSON.stringify({
+              type: 'guest',
+              mapboxAccessToken: 'dummy-mapbox-access-token'
+            })
+          )
+          accountManager = useAccountManager()
+        })
+
+        it('should have "guest" account', () => {
+          expect(accountManager.accountInfo).toEqual({
+            type: 'guest',
+            mapboxAccessToken: 'dummy-mapbox-access-token'
           })
         })
 
-        describe('then addBusinessRecord', () => {
-          const RECORD_PARAMS: BusinessRecordParams = {
-            businessType: 'poo',
+        it('should not request the active dog', () => {
+          expect(dogDatabaseManager.getGuestDogDatabase).not.toHaveBeenCalled()
+        })
+
+        it('should have no current dog', () => {
+          expect(accountManager.currentDog).toBeUndefined()
+        })
+
+        it('should have no active business records', () => {
+          expect(accountManager.activeBusinessRecords).toBeUndefined()
+        })
+
+        it('should fail to add a business record', async () => {
+          await expect(accountManager.addBusinessRecord({
+            businessType: 'pee',
             location: {
               latitude: 35.6812,
               longitude: 139.7671
             },
-            timestamp: new Date(2018, 5, 23)
-          }
+            timestamp: 1527001200
+          })).rejects.toThrow()
+        })
 
+        describe('after registerNewDogFriend', () => {
           beforeEach(async () => {
-            vi.mocked(businessRecordDatabaseManager.getGuestBusinessRecordDatabase).mockClear()
-            await store.addBusinessRecord(RECORD_PARAMS)
+            await accountManager.registerNewDogFriend({ name: 'ポチ' })
           })
 
-          it('should have the business record in activeBusinessRecords', () => {
-            expect(store.activeBusinessRecords).toEqual([
-              {
-                ...RECORD_PARAMS,
-                key: 1,
-                dogKey: 1
-              }
-            ])
+          it('should store the updated account info', () => {
+            const storedAccountInfo = JSON.parse(localStorage.getItem(ACCOUNT_INFO_LOCAL_STORAGE_KEY)!)
+            expect(storedAccountInfo).toEqual({
+              type: 'guest',
+              mapboxAccessToken: 'dummy-mapbox-access-token',
+              activeDogId: 1
+            })
           })
 
-          it('should call BusinessRecordDatabaseManager.getGuestBusinessRecordDatabase', () => {
-            expect(businessRecordDatabaseManager.getGuestBusinessRecordDatabase)
-              .toHaveBeenCalledWith(store.accountInfo)
+          it('should register a new dog', () => {
+            expect(guestDogDatabase.createDog).toHaveBeenCalledWith({
+              name: 'ポチ'
+            })
           })
 
-          it('should call GuestBusinessRecordDatabase.createBusinessRecord', () => {
-            expect(guestBusinessRecordDatabase.createBusinessRecord)
-              .toHaveBeenCalledWith({
-                ...RECORD_PARAMS,
-                dogKey: 1
+          it('should have the current dog', () => {
+            expect(accountManager.currentDog).toEqual({
+              dogId: 1,
+              name: 'ポチ'
+            })
+          })
+
+          it('should have empty active business records', () => {
+            expect(accountManager.activeBusinessRecords).toEqual([])
+          })
+
+          describe('after addBusinessRecord', () => {
+            const businessRecordParams: BusinessRecordParams = {
+              businessType: 'pee',
+              location: {
+                latitude: 35.6812,
+                longitude: 139.7671
+              },
+              timestamp: 1527001200
+            }
+
+            beforeEach(async () => {
+              await accountManager.addBusinessRecord(businessRecordParams)
+            })
+
+            it('should request to add a business record', () => {
+              expect(guestBusinessRecordDatabase.createBusinessRecord).toHaveBeenCalledWith({
+                dogId: 1,
+                ...businessRecordParams
               })
+            })
           })
+        })
+      })
+
+      describe('with the active dog', () => {
+        const dummyDog = {
+          dogId: 1,
+          name: 'ポチ'
+        }
+        const dummyRecords: BusinessRecord<number, number>[] = [
+          {
+            recordId: 1,
+            dogId: 1,
+            businessType: 'pee',
+            location: {
+              latitude: 35.6812,
+              longitude: 139.7671
+            },
+            timestamp: 1527001200
+          },
+          {
+            recordId: 2,
+            dogId: 1,
+            businessType: 'poo',
+            location: {
+              latitude: -34.6037,
+              longitude: -58.3821,
+            },
+            timestamp: 1763794500
+          }
+        ]
+        let accountManager: ReturnType<typeof useAccountManager>
+
+        beforeEach(async () => {
+          localStorage.setItem(
+            ACCOUNT_INFO_LOCAL_STORAGE_KEY,
+            JSON.stringify({
+              type: 'guest',
+              mapboxAccessToken: 'dummy-mapbox-access-token',
+              activeDogId: 1
+            })
+          )
+          // returns a dummy dog
+          vi.mocked(guestDogDatabase.getDog).mockResolvedValue(dummyDog)
+          accountManager = useAccountManager()
+          // returns dummy business records
+          vi.mocked(guestBusinessRecordDatabase.loadBusinessRecords)
+            .mockResolvedValue(dummyRecords)
+
+          // waits for async operations to complete
+          // TODO: how many ticks are actually needed?
+          await nextTick()
+        })
+
+        it('should have "guest" account', () => {
+          expect(accountManager.accountInfo).toEqual({
+            type: 'guest',
+            mapboxAccessToken: 'dummy-mapbox-access-token',
+            activeDogId: 1
+          })
+        })
+
+        it('should request the active dog', () => {
+          expect(dogDatabaseManager.getGuestDogDatabase).toHaveBeenCalled()
+          expect(guestDogDatabase.getDog).toHaveBeenCalledWith(1)
+        })
+
+        it('should have the active dog as the current dog', () => {
+          expect(accountManager.currentDog).toEqual(dummyDog)
+        })
+
+        it('should request the business records of the active dog', async () => {
+          expect(businessRecordDatabaseManager.getGuestBusinessRecordDatabase).toHaveBeenCalled()
+          expect(guestBusinessRecordDatabase.loadBusinessRecords).toHaveBeenCalledWith(1)
+        })
+
+        it('should have the active business records loaded from the database', () => {
+          expect(accountManager.activeBusinessRecords).toEqual(dummyRecords)
         })
       })
     })
