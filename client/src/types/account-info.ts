@@ -33,9 +33,6 @@ export interface GuestAccountInfo {
   /** Type: always 'guest'. */
   type: 'guest'
 
-  /** Mapbox access token for the guest. */
-  mapboxAccessToken: string
-
   /** ID of the active dog. */
   activeDogId?: number
 }
@@ -102,9 +99,6 @@ export function isAccountInfo(value: unknown): value is AccountInfo {
 // returns if a given value is truely a `GuestAccountInfo`.
 // this function is intended to be used when only `type` is known to be "guest".
 function isTrueGuestAccountInfo(accountInfo: GuestAccountInfo): boolean {
-  if (typeof accountInfo.mapboxAccessToken !== 'string') {
-    return false
-  }
   if (
     accountInfo.activeDogId != null &&
     typeof accountInfo.activeDogId !== 'number'

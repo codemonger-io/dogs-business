@@ -71,10 +71,7 @@ describe('stores.authenticator-state', () => {
 
         describe('after syncStateWithAccountInfo(guest)', () => {
           beforeEach(() => {
-            authenticatorState.syncStateWithAccountInfo({
-              type: 'guest',
-              mapboxAccessToken: 'dummy-mapbox-access-token'
-            })
+            authenticatorState.syncStateWithAccountInfo({ type: 'guest' })
           })
 
           it('should be in the "guest" state', () => {
@@ -521,10 +518,7 @@ describe('stores.authenticator-state', () => {
 
         describe('after syncStateWithAccountInfo(guest)', () => {
           beforeEach(() => {
-            authenticatorState.syncStateWithAccountInfo({
-              type: 'guest',
-              mapboxAccessToken: 'dummy-mapbox-access-token'
-            })
+            authenticatorState.syncStateWithAccountInfo({ type: 'guest' })
           })
 
           it('should be in the "guest" state', () => {
@@ -967,10 +961,7 @@ describe('stores.authenticator-state', () => {
 
         describe('after syncStateWithAccountInfo(guest)', () => {
           beforeEach(() => {
-            authenticatorState.syncStateWithAccountInfo({
-              type: 'guest',
-              mapboxAccessToken: 'dummy-mapbox-access-token'
-            })
+            authenticatorState.syncStateWithAccountInfo({ type: 'guest' })
           })
 
           it('should be in the "guest" state', () => {
@@ -1146,10 +1137,7 @@ describe('stores.authenticator-state', () => {
 
         describe('after syncStateWithAccountInfo(guest)', () => {
           beforeEach(() => {
-            authenticatorState.syncStateWithAccountInfo({
-              type: 'guest',
-              mapboxAccessToken: 'dummy-mapbox-access-token'
-            })
+            authenticatorState.syncStateWithAccountInfo({ type: 'guest' })
           })
 
           it('should be in the "welcoming" state with a "corrupted-account-info" error', () => {
@@ -1431,10 +1419,7 @@ describe('stores.authenticator-state', () => {
 
           describe('after syncStateWithAccountInfo(guest)', () => {
             beforeEach(() => {
-              authenticatorState.syncStateWithAccountInfo({
-                type: 'guest',
-                mapboxAccessToken: 'dummy-mapbox-access-token'
-              })
+              authenticatorState.syncStateWithAccountInfo({ type: 'guest' })
             })
 
             it('should be in the "welcoming" state with a "corrupted-account-info" error', () => {
@@ -1708,10 +1693,7 @@ describe('stores.authenticator-state', () => {
 
         describe('after syncStateWithAccountInfo(guest)', () => {
           beforeEach(() => {
-            authenticatorState.syncStateWithAccountInfo({
-              type: 'guest',
-              mapboxAccessToken: 'dummy-mapbox-access-token'
-            })
+            authenticatorState.syncStateWithAccountInfo({ type: 'guest' })
           })
 
           it('should be in the "welcoming" state with a "corrupted-account-info" error', () => {

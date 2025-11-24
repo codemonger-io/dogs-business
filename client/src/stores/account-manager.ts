@@ -356,10 +356,7 @@ export const useAccountManager = defineStore('account-manager', () => {
 
   const createGuestAccount = async () => {
     // TODO: fail if the account already exists
-    accountInfo.value = {
-      type: 'guest',
-      mapboxAccessToken: import.meta.env.VITE_MAPBOX_GUEST_ACCESS_TOKEN
-    }
+    accountInfo.value = { type: 'guest' }
   }
 
   const _registerNewDogFriendOfGuest = async (

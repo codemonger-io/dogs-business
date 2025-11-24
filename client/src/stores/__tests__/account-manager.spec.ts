@@ -247,10 +247,7 @@ describe('useAccountManager', () => {
         })
 
         it('should have "guest" account without dog', () => {
-          const expectedAccountInfo = {
-            type: 'guest',
-            mapboxAccessToken: expect.any(String)
-          }
+          const expectedAccountInfo = { type: 'guest' }
 
           expect(accountManager.accountInfo).toEqual(expectedAccountInfo)
 
@@ -279,19 +276,13 @@ describe('useAccountManager', () => {
         beforeEach(() => {
           localStorage.setItem(
             ACCOUNT_INFO_LOCAL_STORAGE_KEY,
-            JSON.stringify({
-              type: 'guest',
-              mapboxAccessToken: 'dummy-mapbox-access-token'
-            })
+            JSON.stringify({ type: 'guest' })
           )
           accountManager = useAccountManager()
         })
 
         it('should have "guest" account', () => {
-          expect(accountManager.accountInfo).toEqual({
-            type: 'guest',
-            mapboxAccessToken: 'dummy-mapbox-access-token'
-          })
+          expect(accountManager.accountInfo).toEqual({ type: 'guest' })
         })
 
         it('should not request the active dog', () => {
@@ -326,7 +317,6 @@ describe('useAccountManager', () => {
             const storedAccountInfo = JSON.parse(localStorage.getItem(ACCOUNT_INFO_LOCAL_STORAGE_KEY)!)
             expect(storedAccountInfo).toEqual({
               type: 'guest',
-              mapboxAccessToken: 'dummy-mapbox-access-token',
               activeDogId: 1
             })
           })
@@ -406,7 +396,6 @@ describe('useAccountManager', () => {
             ACCOUNT_INFO_LOCAL_STORAGE_KEY,
             JSON.stringify({
               type: 'guest',
-              mapboxAccessToken: 'dummy-mapbox-access-token',
               activeDogId: 1
             })
           )
@@ -425,7 +414,6 @@ describe('useAccountManager', () => {
         it('should have "guest" account', () => {
           expect(accountManager.accountInfo).toEqual({
             type: 'guest',
-            mapboxAccessToken: 'dummy-mapbox-access-token',
             activeDogId: 1
           })
         })

@@ -9,44 +9,18 @@ describe('types.account-info', () => {
       expect(isAccountInfo(value)).toBe(true)
     })
 
-    it('should be true for { type: "guest", mapboxAccessToken: "token", activeDogId: 1 }', () => {
+    it('should be true for { type: "guest", activeDogId: 1 }', () => {
       const value = {
         type: 'guest',
-        mapboxAccessToken: 'token',
         activeDogId: 1
       }
       expect(isAccountInfo(value)).toBe(true)
     })
 
-    it('should be true for { type: "guest", mapboxAccessToken: "token" }', () => {
+    it('should be false for { type: "guest", activeDogId: "123" } with non-numeric activeDogId', () => {
       const value = {
         type: 'guest',
-        mapboxAccessToken: 'token'
-      }
-      expect(isAccountInfo(value)).toBe(true)
-    })
-
-    it('should be false for { type: "guest", mapboxAccessToken: "token", activeDogId: "123" } with non-numeric activeDogId', () => {
-      const value = {
-        type: 'guest',
-        mapboxAccessToken: 'token',
         activeDogId: '123'
-      }
-      expect(isAccountInfo(value)).toBe(false)
-    })
-
-    it('should be false for { type: "guest", activeDogId: 1 } missing mapboxAccessToken', () => {
-      const value = {
-        type: 'guest',
-        activeDogId: 1
-      }
-      expect(isAccountInfo(value)).toBe(false)
-    })
-
-    it('should be false for { type: "guest", mapboxAccessToken: 123 } with non-string mapboxAccessToken', () => {
-      const value = {
-        type: 'guest',
-        mapboxAccessToken: 123
       }
       expect(isAccountInfo(value)).toBe(false)
     })
