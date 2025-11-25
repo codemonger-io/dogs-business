@@ -15,9 +15,6 @@ interface ImportMetaEnv {
 
   // base URL of the Dog's Business Map API.
   readonly VITE_DOGS_BUSINESS_MAP_API_BASE_URL: string
-
-  // Mapbox access token for guests.
-  readonly VITE_MAPBOX_GUEST_ACCESS_TOKEN: string
 }
 
 interface ImportMeta {
