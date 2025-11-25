@@ -72,9 +72,6 @@ const createGuestAccountAndGo = async () => {
             </i18n-t>
           </b-checkbox>
         </p>
-        <b-notification type="is-warning" :closable="false">
-          {{ t('message.remarks_on_without_signup') }}
-        </b-notification>
         <p class="block is-flex is-justify-content-center">
           <b-button
             type="is-primary"
