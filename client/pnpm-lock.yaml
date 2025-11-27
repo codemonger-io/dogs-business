@@ -21,8 +21,11 @@ importers:
         specifier: ^13.5.0
         version: 13.5.0(vue@3.5.17(typescript@5.8.3))
       buefy:
-        specifier: npm:@buefy/buefy@1.0.0-4f1274eb674fbe66ae6b3f1f743de7b446b5b7a6
-        version: '@buefy/buefy@1.0.0-4f1274eb674fbe66ae6b3f1f743de7b446b5b7a6(vue@3.5.17(typescript@5.8.3))'
+        specifier: ^3.0.3
+        version: 3.0.3(vue@3.5.17(typescript@5.8.3))
+      bulma:
+        specifier: ^1.0.4
+        version: 1.0.4
       maplibre-gl:
         specifier: ^5.6.2
         version: 5.6.2
@@ -69,9 +72,6 @@ importers:
       '@vue/tsconfig':
         specifier: ^0.7.0
         version: 0.7.0(typescript@5.8.3)(vue@3.5.17(typescript@5.8.3))
-      bulma:
-        specifier: ^0.9.4
-        version: 0.9.4
       cypress:
         specifier: ^13.17.0
         version: 13.17.0
@@ -142,11 +142,6 @@ packages:
   '@babel/types@7.27.7':
     resolution: {integrity: sha512-8OLQgDScAOHXnAz2cV+RfzzNMipuLVBz2biuAJFMV9bfkNf393je3VM8CLkjQodW5+iWsSJdSgSWT6rsZoXHPw==}
     engines: {node: '>=6.9.0'}
-
-  '@buefy/buefy@1.0.0-4f1274eb674fbe66ae6b3f1f743de7b446b5b7a6':
-    resolution: {integrity: sha512-Y85jJpNhx51oRHfswo2F5ZMCFGct5krg9QuJ7miUPp0kgTh9U31hKpS25VwyrgJLI1Vk/jZuTzNKvzkR2mGuMA==, tarball: https://npm.pkg.github.com/download/@buefy/buefy/1.0.0-4f1274eb674fbe66ae6b3f1f743de7b446b5b7a6/c4f248b074c0bcc94b7ac0674999d16a6b4b259b}
-    peerDependencies:
-      vue: ^3.0.0
 
   '@codemonger-io/maplibre-collision-boxes@0.1.0-48c016f':
     resolution: {integrity: sha512-iT8fMLu4PVk8Enr/6Fg6ynW78uIWja6TVSCgN6uxbI0kS1HhFq5zdB8OIrK7R4m5KW4o47WkKAQ7SCh/cqsd1Q==, tarball: https://npm.pkg.github.com/download/@codemonger-io/maplibre-collision-boxes/0.1.0-48c016f/c2ed61c2fa670286750b61511686425cbb34b747}
@@ -1066,14 +1061,19 @@ packages:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
 
+  buefy@3.0.3:
+    resolution: {integrity: sha512-//QfIDgbhmpn+mFszD/lEwhlphA+hQavJED2XwjlzqS/bpxYjk/Rnj36X08QVbqiH3lt4a+G357uzsZczc7JTg==}
+    peerDependencies:
+      vue: ^3.0.0
+
   buffer-crc32@0.2.13:
     resolution: {integrity: sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ==}
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
 
-  bulma@0.9.4:
-    resolution: {integrity: sha512-86FlT5+1GrsgKbPLRRY7cGDg8fsJiP/jzTqXXVqiUZZ2aZT8uemEOHlU1CDU+TxklPEZ11HZNNWclRBBecP4CQ==}
+  bulma@1.0.4:
+    resolution: {integrity: sha512-Ffb6YGXDiZYX3cqvSbHWqQ8+LkX6tVoTcZuVB3lm93sbAVXlO0D6QlOTMnV6g18gILpAXqkG2z9hf9z4hCjz2g==}
 
   cac@6.7.14:
     resolution: {integrity: sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ==}
@@ -2764,10 +2764,6 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
 
-  '@buefy/buefy@1.0.0-4f1274eb674fbe66ae6b3f1f743de7b446b5b7a6(vue@3.5.17(typescript@5.8.3))':
-    dependencies:
-      vue: 3.5.17(typescript@5.8.3)
-
   '@codemonger-io/maplibre-collision-boxes@0.1.0-48c016f(maplibre-gl@5.6.2)':
     dependencies:
       maplibre-gl: 5.6.2
@@ -3624,6 +3620,11 @@ snapshots:
     dependencies:
       fill-range: 7.1.1
 
+  buefy@3.0.3(vue@3.5.17(typescript@5.8.3)):
+    dependencies:
+      bulma: 1.0.4
+      vue: 3.5.17(typescript@5.8.3)
+
   buffer-crc32@0.2.13: {}
 
   buffer@5.7.1:
@@ -3631,7 +3632,7 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  bulma@0.9.4: {}
+  bulma@1.0.4: {}
 
   cac@6.7.14: {}
 
