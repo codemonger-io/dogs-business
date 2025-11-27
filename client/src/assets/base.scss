@@ -1,13 +1,14 @@
-@import './buefy-extension.scss';
+@use 'bulma/sass' as bulma;
+@use './buefy-extension.scss';
 
 :root {
-  --dogs-theme: #{$primary};
-  --dogs-warning: #{$warning};
-  --dogs-danger: #{$danger};
+  --dogs-theme: var(--bulma-primary);
+  --dogs-warning: var(--bulma-warning);
+  --dogs-danger: var(--bulma-danger);
   --paper-color: #FFF9F5;
   --paper-color-bis: #FAF4F0;
   --paper-color-ter: #F5EFEB;
-  --paper-invert: #{$black};
-  --paper-invert-bis: #{$black-bis};
-  --paper-invert-ter: #{$black-ter};
+  --paper-invert: var(--bulma-scheme-invert);
+  --paper-invert-bis: var(--bulma-scheme-invert-bis);
+  --paper-invert-ter: var(--bulma-scheme-invert-ter);
 }

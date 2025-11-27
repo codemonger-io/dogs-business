@@ -1,20 +1,13 @@
-@import 'maplibre-gl/dist/maplibre-gl.css';
-@import './base.scss';
-/* base.css must be imported before */
-@import './buefy-patch.scss';
-@import './maplibre-extension.scss';
+@use 'maplibre-gl/dist/maplibre-gl.css';
+@use './base.scss';
+@use './maplibre-extension.scss';
 
 :root {
   background-color: var(--dogs-theme);
 }
 
 .paper {
-  --b-scheme-main: var(--paper-color);
-  --b-scheme-main-bis: var(--paper-color-bis);
-  --b-scheme-main-ter: var(--paper-color-ter);
-  --b-scheme-invert: var(--paper-invert);
-  --b-scheme-invert-bis: var(--paper-invert-bis);
-  --b-scheme-invert-ter: var(--paper-invert-ter);
+  background-color: var(--paper-color);
 
   .maplibregl-popup-tip {
     border-top-color: var(--paper-color);
@@ -26,8 +19,8 @@
 
 .box {
   &.welcome-box {
-    --b-box-radius: 0px;
-    --b-box-shadow: 0px 0px 100px 1px color-mix(in srgb, var(--b-scheme-invert) 30%, transparent);
+    --bulma-box-radius: 0px;
+    --bulma-box-shadow: 0px 0px 100px 1px color-mix(in srgb, var(--bulma-scheme-invert) 30%, transparent);
     min-height: 100vh;
   }
 }
