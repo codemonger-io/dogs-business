@@ -30,7 +30,6 @@ import type {
   UserInfo
 } from '../types/account-info'
 import { isAccountInfo } from '../types/account-info'
-import { isAuthenticatorState } from '../types/authenticator-state'
 import { isCognitoTokensExpiring } from '../utils/passquito'
 import { useAuthenticatorState } from './authenticator-state'
 
@@ -76,22 +75,6 @@ export const useAccountManager = defineStore('account-manager', () => {
 
   // remembers the last error.
   const lastError = ref<any>()
-
-  // runs a given function and captures any error.
-  // the error is rethrown after being remembered in `lastError`.
-  //
-  // `finally_` is an optional function that always runs after `f` is executed.
-  const runAndCaptureError = <T>(f: () => T, finally_?: () => void) => {
-    try {
-      return f()
-    } catch (err) {
-      console.error('useAccountManager', 'captured error', err)
-      lastError.value = err
-      throw err
-    } finally {
-      finally_?.()
-    }
-  }
 
   // runs a given async function and captures any error.
   const runAndCaptureErrorAsync = async <T>(f: () => Promise<T>, finally_?: () => void) => {
@@ -146,9 +129,11 @@ export const useAccountManager = defineStore('account-manager', () => {
       // otherwise, simply replaces the account info
       if (accountInfo.value.publicKeyInfo.userHandle === publicKeyInfo.userHandle) {
         const {
+          /* eslint-disable @typescript-eslint/no-unused-vars */
           publicKeyInfo: _1,
           tokens: _2,
           userInfo: _3,
+          /* eslint-enable @typescript-eslint/no-unused-vars */
           ...rest
         } = accountInfo.value
         accountInfo.value = {
@@ -256,7 +241,7 @@ export const useAccountManager = defineStore('account-manager', () => {
               return _loadOnlineDogFriend(account)
             default: {
               const unreachable: never = account
-              throw new Error(`unnacceptable account type: ${account}`)
+              throw new Error(`unnacceptable account type: ${unreachable}`)
             }
           }
         },

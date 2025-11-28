@@ -186,6 +186,7 @@ export function isAuthenticatorState(value: unknown): value is AuthenticatorStat
     case 'refreshing-tokens':
       return isTrueRefreshingTokensState(maybeAuthenticatorState)
     default: {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _: never = maybeAuthenticatorState // ensures exhaustive type checking
       return false
     }

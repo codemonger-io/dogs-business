@@ -57,7 +57,7 @@ export const usePasskeyCapabilityStore = defineStore('passkey-capability', () =>
       default: {
         // exhaustive check
         const neverState: never = _state.value
-        throw new Error('unhandled passkey capability store state: ' + _state.value)
+        throw new Error('unhandled passkey capability store state: ' + neverState)
       }
     }
   }

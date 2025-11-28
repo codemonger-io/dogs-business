@@ -88,6 +88,7 @@ export function isAccountInfo(value: unknown): value is AccountInfo {
     case 'online':
       return isTrueOnlineAccountInfo(maybeAccountInfo)
     default: {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _: never = maybeAccountInfo // ensures exhaustive type checking
       return false
     }

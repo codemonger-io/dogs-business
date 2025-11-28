@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { GenericDog } from '../lib/dog-database'
-import { capitalize } from '../utils/strings'
 import IconPee from './icons/IconPee.vue'
 import IconPoo from './icons/IconPoo.vue'
 

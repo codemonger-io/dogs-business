@@ -1,5 +1,4 @@
 import type { OnlineAccountProvider } from '../../types/online-account-provider'
-import { isCognitoTokensExpiring } from '../../utils/passquito'
 import type { BusinessRecord, OnlineBusinessRecordDatabase } from './interfaces'
 import type { BusinessRecordParamsOfDog } from './types'
 import { isBusinessRecord } from './utils'

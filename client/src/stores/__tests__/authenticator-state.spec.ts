@@ -6,7 +6,6 @@ import { ResourceApiProvider } from '@/providers/resource-api'
 import { useAuthenticatorState } from '@/stores/authenticator-state'
 import type { AuthenticatorUi } from '@/stores/authenticator-state'
 import { isUserInfo } from '@/types/account-info'
-import type { ApiResponse } from '@/types/api-response'
 import type { ResourceApi } from '@/types/resource-api'
 import { wrapFetchResponse } from '@/utils/api-response'
 
