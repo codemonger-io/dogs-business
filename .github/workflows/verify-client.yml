@@ -1,0 +1,80 @@
+name: "Verifies the client"
+
+on:
+  - push
+  - pull_request
+
+env:
+  node-version: 24.x
+  pnpm-version: 10
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./client
+
+jobs:
+  verify-client:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # pnpm has to be installed prior to installing dependencies
+      - name: Install pnpm ${{ env.pnpm-version }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.pnpm-version }}
+          run_install: false
+
+      - name: Setup Node.js ${{ env.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.node-version }}
+          registry-url: "https://npm.pkg.github.com" # necessary to use NODE_AUTH_TOKEN during pnpm install
+          # setup fails due to a missing lock file without the following line
+          # https://github.com/actions/setup-node/issues/706#issuecomment-1557983832
+          cache-dependency-path: client
+
+      - name: Install dependencies
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_READER_PAT }} # necessary to install packages from GitHub package registry
+        run: pnpm install
+
+      - name: Run type checking
+        id: type-check
+        continue-on-error: true # reports later
+        run: pnpm type-check
+
+      - name: Run lint
+        id: lint
+        continue-on-error: true # reports later
+        run: pnpm lint
+
+      - name: Run unit tests
+        id: unit-tests
+        continue-on-error: true # reports later
+        run: pnpm test:unit
+
+      - name: Report results
+        run: |
+          if [[ "${{ steps.type-check.outcome }}" == "failure" ]]; then
+            echo "Type checking failed."
+          fi
+
+          if [[ "${{ steps.lint.outcome }}" == "failure" ]]; then
+            echo "Linting failed."
+          fi
+
+          if [[ "${{ steps.unit-tests.outcome }}" == "failure" ]]; then
+            echo "Unit tests failed."
+          fi
+
+          if [[ \
+            "${{ steps.type-check.outcome }}" == "failure" \
+            || "${{ steps.lint.outcome }}" == "failure" \
+            || "${{ steps.unit-tests.outcome }}" == "failure" \
+          ]]; then
+            exit 1
+          fi
+          echo "All checks passed successfully."
