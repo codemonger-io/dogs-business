@@ -54,7 +54,7 @@ jobs:
       - name: Run unit tests
         id: unit-tests
         continue-on-error: true # reports later
-        run: pnpm test:unit
+        run: pnpm test:unit --silent
 
       - name: Report results
         run: |
