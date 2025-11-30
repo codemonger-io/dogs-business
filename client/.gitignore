@@ -20,6 +20,7 @@ coverage
 # configuration files except for examples
 /.env*
 !/.env.example
+!/.env.test
 /src/configs/*
 !/src/configs/*.example.ts
 
