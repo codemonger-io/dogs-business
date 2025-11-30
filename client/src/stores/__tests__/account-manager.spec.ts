@@ -309,6 +309,13 @@ describe('useAccountManager', () => {
 
         describe('after registerNewDogFriend', () => {
           beforeEach(async () => {
+            // makes the database return a dummy dog
+            // so that subsequent access to the dog info succeeds
+            vi.mocked(guestDogDatabase.getDog).mockResolvedValue({
+              dogId: 1,
+              name: 'ポチ'
+            })
+
             await accountManager.registerNewDogFriend({ name: 'ポチ' })
           })
 

@@ -135,7 +135,7 @@ describe('wrapFetchResponse', () => {
       })
 
       it('parse should throw', async () => {
-        expect(apiResponse.parse()).rejects.toThrow()
+        await expect(apiResponse.parse()).rejects.toThrow()
       })
 
       it('text should return the text representation of the body', async () => {
