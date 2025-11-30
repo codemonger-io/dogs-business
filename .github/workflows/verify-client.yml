@@ -59,15 +59,15 @@ jobs:
       - name: Report results
         run: |
           if [[ "${{ steps.type-check.outcome }}" == "failure" ]]; then
-            echo "Type checking failed."
+            echo -e "\033[0;31mType checking failed."
           fi
 
           if [[ "${{ steps.lint.outcome }}" == "failure" ]]; then
-            echo "Linting failed."
+            echo -e "\033[0;31mLinting failed."
           fi
 
           if [[ "${{ steps.unit-tests.outcome }}" == "failure" ]]; then
-            echo "Unit tests failed."
+            echo -e "\033[0;31mUnit tests failed."
           fi
 
           if [[ \
