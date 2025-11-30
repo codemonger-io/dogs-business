@@ -12,7 +12,8 @@
     "cdk": "cdk",
     "cdk-synth": "cdk synth -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-development",
     "cdk-synth:production": "cdk synth -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-production",
-    "cdk-deploy": "cdk deploy -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-development",
+    "cdk-deploy": "pnpm cdk-deploy:development",
+    "cdk-deploy:development": "cdk deploy -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-development",
     "cdk-deploy:production": "cdk deploy -c \"@aws-cdk/core:bootstrapQualifier=$BOOTSTRAP_QUALIFIER\" dogs-business-production",
     "set-rp-origin": "tsx bin/set-rp-origin.ts",
     "generate-env": "tsx bin/generate-env.ts"
