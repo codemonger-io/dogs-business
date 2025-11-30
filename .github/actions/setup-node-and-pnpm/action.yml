@@ -1,0 +1,35 @@
+name: "Setup Node.js and pnpm"
+
+description: "Combines boilerplate actions to setup Node.js and pnpm"
+
+inputs:
+  working-directory:
+    description: "Working directory to configure pnpm caching for"
+    required: true
+
+  node-version:
+    description: "Node.js version to setup"
+    default: "24.x"
+
+  pnpm-version:
+    description: "pnpm version to setup"
+    default: "10"
+
+runs:
+  using: composite
+
+  steps:
+    - name: Install pnpm ${{ inputs.pnpm-version }}
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+        run_install: false
+
+    - name: Setup Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v6
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: "https://npm.pkg.github.com" # necessary to use NODE_AUTH_TOKEN during pnpm install
+        # setup fails due to a missing lock file without the following line
+        # https://github.com/actions/setup-node/issues/706#issuecomment-1557983832
+        cache-dependency-path: ${{ inputs.working-directory }}
