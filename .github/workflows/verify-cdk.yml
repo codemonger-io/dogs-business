@@ -1,0 +1,55 @@
+name: "Verify the CDK stack"
+
+on:
+  - push
+  - pull_request
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./cdk
+
+jobs:
+  verify-cdk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js and pnpm
+        uses: ./.github/actions/setup-node-and-pnpm
+        with:
+          working-directory: ./cdk
+
+      - name: Install dependencies
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_READER_PAT }} # necessary to install packages from the GitHub package registry
+        run: pnpm install
+
+      - name: Run type checking
+        id: type-check
+        continue-on-error: true # reports later
+        run: pnpm type-check
+
+      - name: Run unit tests
+        id: unit-tests
+        continue-on-error: true # reports later
+        run: pnpm test
+
+      - name: Report results
+        run: |
+          if [[ "${{ steps.type-check.outcome }}" == "failure" ]]; then
+            echo -e "\033[0;31mType checking failed."
+          fi
+
+          if [[ "${{ steps.unit-tests.outcome }}" == "failure" ]]; then
+            echo -e "\033[0;31mUnit tests failed."
+          fi
+
+          if [[ \
+            "${{ steps.type-check.outcome }}" == "failure" \
+            || "${{ steps.unit-tests.outcome }}" == "failure" \
+          ]]; then
+            exit 1
+          fi
+          echo "All checks passed successfully."
