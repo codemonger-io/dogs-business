@@ -1,0 +1,69 @@
+name: "Deploy the CDK stack"
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  deployment-stage: development # TODO: make this a workflow input
+  zig-version: "0.15.2"
+  cargo-lambda-version: "1.8.6"
+
+defaults:
+  run:
+    working-directory: ./cdk
+
+permissions:
+  id-token: write # required to assume roles in OIDC
+  contents: read # required to checkout the repository
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js and pnpm
+        uses: ./.github/actions/setup-node-and-pnpm
+        with:
+          working-directory: ./cdk
+
+      - name: Install dependencies
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_READER_PAT }} # necessary to install packages from the GitHub package registry
+        run: pnpm install
+
+      # Zig is required to run cargo-lambda
+      - name: Set up Zig ${{ env.zig-version }}
+        uses: mlugg/setup-zig@fa65c4058643678a4e4a9a60513944a7d8d35440 # equivalent to v2.1.0
+        with:
+          version: ${{ env.zig-version }}
+
+      - name: Set up cargo-lambda ${{ env.cargo-lambda-version }}
+        env:
+          CARGO_LAMBDA_VERSION: ${{ env.cargo-lambda-version }}
+        run: curl -fsSL https://cargo-lambda.info/install.sh | sh
+
+      # https://docs.github.com/en/actions/tutorials/build-and-test-code/rust#caching-dependencies
+      - name: Cache cargo artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            cdk/lambda/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('cdk/lambda/Cargo.lock') }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.CDK_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Deploy the CDK stack
+        env:
+          BOOTSTRAP_QUALIFIER: ${{ secrets.CDK_BOOTSTRAP_QUALIFIER }}
+        run: pnpm cdk-deploy:${{ env.deployment-stage }}
