@@ -1,0 +1,76 @@
+name: "Deploy the client"
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  deployment-stage: development # TODO: make this a workflow input
+  artifact-name: dist
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./client
+
+permissions:
+  id-token: write # required to assume roles in OIDC
+  contents: read # required to checkout the repository
+
+jobs:
+  # builds the client and saves the artifacts for distribution
+  build-client:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js and pnpm
+        uses: ./.github/actions/setup-node-and-pnpm
+        with:
+          working-directory: ./client
+
+      - name: Install dependencies
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_READER_PAT }} # necessary to install packages from GitHub package registry
+        run: pnpm install
+
+      # CloudFormation stack outputs are necessary to configure the client
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.STACK_OUTPUTS_READER_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Configure the client for ${{ env.deployment-stage }}
+        working-directory: ./cdk
+        run: pnpm generate-env ${{ env.deployment-stage }}
+
+      - name: Build the client
+        run: pnpm build
+
+      - name: Save the artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ env.artifact-name }}-${{ env.deployment-stage }}
+          path: ./dist
+          overwrite: true # allows re-run
+
+  # uploads the artifacts to the S3 bucket for distribution
+  deploy-client:
+    needs: build-client
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Load the artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ env.artifact-name }}-${{ env.deployment-stage }}
+          path: ./dist
+
+      # TODO: assume IAM role to upload to the S3 bucket
+
+      # TODO: upload the dist folder to the S3 bucket
