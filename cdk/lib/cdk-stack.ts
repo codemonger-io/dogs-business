@@ -1,4 +1,5 @@
 import {
+  Arn,
   CfnOutput,
   Stack,
   aws_dynamodb as dynamodb,
@@ -45,8 +46,20 @@ export class CdkStack extends Stack {
       'http://localhost:5174',
     ];
 
-    const githubOidcPricinpal = new iam.FederatedPrincipal(
-      'token.actions.githubusercontent.com',
+    // `FederatedPrincipal` turns into `sts:AssumeRole`
+    // but we need `sts:AssumeRoleWithWebIdentity`
+    // so the right choice is `WebIdentityPrincipal`
+    const githubOidcPricinpal = new iam.WebIdentityPrincipal(
+      Arn.format(
+        {
+          service: 'iam',
+          region: '',
+          resource: 'oidc-provider',
+          // GitHub OIDC provider is supposed to have this resource name
+          resourceName: 'token.actions.githubusercontent.com',
+        },
+        this,
+      ),
       {
         StringEquals: {
           'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
