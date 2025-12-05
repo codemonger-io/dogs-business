@@ -1,0 +1,187 @@
+name: "Deploy the client"
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  deployment-stage: development # TODO: make this a workflow input
+  config-artifact-name: encrypted-env
+  build-artifact-name: encrypted-dist
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  id-token: write # required to assume roles in OIDC
+  contents: read # required to checkout the repository
+
+jobs:
+  # configures the client
+  # the working directory has to be ./cdk
+  configure-client:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js and pnpm
+        uses: ./.github/actions/setup-node-and-pnpm
+        with:
+          working-directory: ./cdk
+
+      - name: Install dependencies
+        working-directory: ./cdk
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_READER_PAT }} # necessary to install packages from GitHub package registry
+        run: pnpm install
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.STACK_OUTPUTS_READER_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Configure the client for ${{ env.deployment-stage }}
+        working-directory: ./cdk
+        run: pnpm generate-env ${{ env.deployment-stage }}
+
+      # the leading dot (.) of the encrypted file name is intentionally omitted
+      # because the subsequent upload-artifact action ignores hidden files
+      - name: Encrypt the .env.${{ env.deployment-stage }} file
+        working-directory: ./client
+        run: |
+          openssl enc -e -aes-256-cbc -salt \
+            -in .env.${{ env.deployment-stage }} \
+            -out env.${{ env.deployment-stage }}.enc \
+            -pbkdf2 \
+            -k "${{ secrets.ARTIFACT_ENCRYPTION_KEY }}"
+
+      - name: Save the encrypted .env.${{ env.deployment-stage }} file as a GitHub artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ env.config-artifact-name }}-${{ env.deployment-stage }}
+          path: ./client/env.${{ env.deployment-stage }}.enc
+          overwrite: true # allows re-run
+          if-no-files-found: error
+
+  # builds the client and saves the artifacts for distribution
+  build-client:
+    runs-on: ubuntu-latest
+
+    needs: configure-client
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js and pnpm
+        uses: ./.github/actions/setup-node-and-pnpm
+        with:
+          working-directory: ./client
+
+      - name: Install dependencies
+        working-directory: ./client
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_READER_PAT }} # necessary to install packages from GitHub package registry
+        run: pnpm install
+
+      - name: Restore the encrypted .env.${{ env.deployment-stage }} file from the GitHub artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ env.config-artifact-name }}-${{ env.deployment-stage }}
+          path: ./client
+
+      - name: Decrypt the .env.${{ env.deployment-stage }} file
+        working-directory: ./client
+        run: |
+          openssl enc -d -aes-256-cbc -salt \
+            -in env.${{ env.deployment-stage }}.enc \
+            -out .env.${{ env.deployment-stage }} \
+            -pbkdf2 \
+            -k "${{ secrets.ARTIFACT_ENCRYPTION_KEY }}"
+
+      - name: Build the client
+        working-directory: ./client
+        run: pnpm build --mode ${{ env.deployment-stage }}
+
+      - name: Archive and encrypt the dist folder
+        working-directory: ./client
+        run: |
+          tar cvf - dist | \
+          openssl enc -e -aes-256-cbc -salt \
+            -out dist.tar.enc \
+            -pbkdf2 \
+            -k "${{ secrets.ARTIFACT_ENCRYPTION_KEY }}"
+
+      - name: Save the encrypted dist folder as a GitHub artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ env.build-artifact-name }}-${{ env.deployment-stage }}
+          path: ./client/dist.tar.enc
+          overwrite: true # allows re-run
+          if-no-files-found: error
+
+  # uploads the artifacts to the S3 bucket for distribution
+  deploy-client:
+    needs: build-client
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Load the artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ env.build-artifact-name }}-${{ env.deployment-stage }}
+          path: ./client
+
+      - name: Decrypt the dist folder
+        working-directory: ./client
+        run: |
+          openssl enc -d -aes-256-cbc -salt \
+            -in dist.tar.enc \
+            -pbkdf2 \
+            -k "${{ secrets.ARTIFACT_ENCRYPTION_KEY }}" | \
+          tar xvf - -C .
+
+      # reads configurations from the CloudFormation stack outputs
+      # - S3 bucket name
+      # - IAM role for uploading the contents
+      - name: Configure AWS credentials for reading stack outputs
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.STACK_OUTPUTS_READER_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Get S3 bucket name from stack outputs
+        id: s3-bucket-name
+        run: |
+          BUCKET_NAME=$(aws cloudformation describe-stacks \
+            --stack-name dogs-business-${{ env.deployment-stage }} \
+            --query "Stacks[0].Outputs[?OutputKey=='ContentsBucketName'].OutputValue" \
+            --output text)
+          echo "bucket-name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+
+      - name: Get IAM role ARN for uploading contents from stack outputs
+        id: uploader-role-arn
+        run: |
+          ROLE_ARN=$(aws cloudformation describe-stacks \
+            --stack-name dogs-business-${{ env.deployment-stage }} \
+            --query "Stacks[0].Outputs[?OutputKey=='ContentsUploaderRoleArn'].OutputValue" \
+            --output text)
+          echo "role-arn=$ROLE_ARN" >> $GITHUB_OUTPUT
+
+      # uploads the contents to the S3 bucket
+      - name: Configure AWS credentials for uploading to S3
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ steps.uploader-role-arn.outputs.role-arn }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Upload the dist folder to S3 bucket
+        working-directory: ./client
+        run: aws s3 sync dist/ s3://${{ steps.s3-bucket-name.outputs.bucket-name }}/app
