@@ -1,4 +1,10 @@
-import { CfnOutput, Stack, aws_dynamodb as dynamodb } from 'aws-cdk-lib';
+import {
+  Arn,
+  CfnOutput,
+  Stack,
+  aws_dynamodb as dynamodb,
+  aws_iam as iam,
+} from 'aws-cdk-lib';
 import type { StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
@@ -9,9 +15,11 @@ import type { DeploymentStage } from './deployment-stage';
 import { ApiDistribution } from './api-distribution';
 import { AppDistribution } from './app-distribution';
 import { MapApi } from './map-api';
+import { ELIGIBLE_OIDC_SUB_CLAIMS } from './oidc-config';
 import { ResourceApi } from './resource-api';
 import { ResourceTable } from './resource-table';
 import { SsmParameters } from './ssm-parameters';
+import { StackReader } from './stack-reader';
 
 export interface CdkStackProps extends StackProps {
   /** Deployment stage. */
@@ -37,6 +45,29 @@ export class CdkStack extends Stack {
       ...(appDistributionDomainName ? [`https://${appDistributionDomainName}`] : []),
       'http://localhost:5174',
     ];
+
+    // FederatedPrincipal turns into `sts:AssumeRole`
+    // but we need `sts:AssumeRoleWithWebIdentity`
+    const githubOidcPricinpal = new iam.WebIdentityPrincipal(
+      Arn.format(
+        {
+          service: 'iam',
+          region: '',
+          resource: 'oidc-provider',
+          // GitHub OIDC provider is supposed to have this resource name
+          resourceName: 'token.actions.githubusercontent.com',
+        },
+        this,
+      ),
+      {
+        StringEquals: {
+          'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
+        },
+        StringLike: {
+          'token.actions.githubusercontent.com:sub': ELIGIBLE_OIDC_SUB_CLAIMS,
+        },
+      },
+    );
 
     const passquito = new PassquitoCore(this, 'Passquito', {
       ssmParametersProps: {
@@ -87,6 +118,9 @@ export class CdkStack extends Stack {
     const appDistribution = new AppDistribution(this, 'AppDistribution', {
       deploymentStage,
     });
+    const stackReader = new StackReader(this, 'StackReader', {
+      assumedBy: githubOidcPricinpal,
+    });
 
     new CfnOutput(this, 'MapboxAccessTokenParameterPath', {
       description: 'SSM parameter path for the Mapbox access token for online accounts',
@@ -119,6 +153,10 @@ export class CdkStack extends Stack {
     new CfnOutput(this, 'CredentialsApiInternalUrl', {
       description: 'Internal (API Gateway) URL of the credentials API',
       value: passquito.credentialsApiInternalUrl,
+    });
+    new CfnOutput(this, 'StackReaderRoleArn', {
+      description: 'ARN of the IAM role that can read (describe) this stack. Use for CI/CD.',
+      value: stackReader.roleArn,
     });
   }
 }
