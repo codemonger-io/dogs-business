@@ -49,12 +49,14 @@ jobs:
         working-directory: ./cdk
         run: pnpm generate-env ${{ env.deployment-stage }}
 
+      # the leading dot (.) of the encrypted file name is intentionally omitted
+      # because the subsequent upload-artifact action ignores hidden files
       - name: Encrypt the .env.${{ env.deployment-stage }} file
         working-directory: ./client
         run: |
           openssl enc -aes-256-cbc -salt \
             -in .env.${{ env.deployment-stage }} \
-            -out .env.${{ env.deployment-stage }}.enc \
+            -out env.${{ env.deployment-stage }}.enc \
             -pbkdf2 \
             -k "${{ secrets.ARTIFACT_ENCRYPTION_KEY }}"
 
@@ -62,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: ${{ env.config-artifact-name }}-${{ env.deployment-stage }}
-          path: ./client/.env.${{ env.deployment-stage }}.enc
+          path: ./client/env.${{ env.deployment-stage }}.enc
           overwrite: true # allows re-run
           if-no-files-found: error
 
