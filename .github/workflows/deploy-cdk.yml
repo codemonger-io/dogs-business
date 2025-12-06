@@ -68,4 +68,4 @@ jobs:
         env:
           BOOTSTRAP_QUALIFIER: ${{ secrets.CDK_BOOTSTRAP_QUALIFIER }}
         # --outputs-file option suppresses stack outputs from being printed
-        run: pnpm cdk-deploy:${{ env.deployment-stage }} --require-approval never --outputs-file ./cdk-stack-outputs.json
+        run: pnpm cdk-deploy:${{ env.deployment-stage }} --require-approval never --quite
