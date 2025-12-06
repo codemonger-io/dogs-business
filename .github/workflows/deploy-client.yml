@@ -135,8 +135,17 @@ jobs:
       - name: Load the artifacts
         uses: actions/download-artifact@v6
         with:
-          name: ${{ env.artifact-name }}-${{ env.deployment-stage }}
-          path: ./dist
+          name: ${{ env.build-artifact-name }}-${{ env.deployment-stage }}
+          path: ./client/dist.tar.enc
+
+      - name: Decrypt the dist folder
+        working-directory: ./client
+        run: |
+          openssl enc -d -aes-256-cbc -salt \
+            -in dist.tar.enc \
+            -pbkdf2 \
+            -k "${{ secrets.ARTIFACT_ENCRYPTION_KEY }}" | \
+          tar xvf - -C .
 
       # TODO: assume IAM role to upload to the S3 bucket
 
