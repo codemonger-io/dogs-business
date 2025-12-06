@@ -105,7 +105,7 @@ jobs:
 
       - name: Build the client
         working-directory: ./client
-        run: pnpm build
+        run: pnpm build --mode ${{ env.deployment-stage }}
 
       # TODO: encrypt the dist folder and save the encrypted contents as a GitHub artifact
 
