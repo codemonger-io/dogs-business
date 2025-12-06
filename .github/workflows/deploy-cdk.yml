@@ -66,4 +66,5 @@ jobs:
       - name: Deploy the CDK stack
         env:
           BOOTSTRAP_QUALIFIER: ${{ secrets.CDK_BOOTSTRAP_QUALIFIER }}
-        run: pnpm cdk-deploy:${{ env.deployment-stage }} --require-approval never
+        # to prevent stack outputs from being printed
+        run: pnpm cdk-deploy:${{ env.deployment-stage }} --require-approval never > /dev/null
