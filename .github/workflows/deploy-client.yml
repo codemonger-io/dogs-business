@@ -13,7 +13,6 @@ env:
 defaults:
   run:
     shell: bash
-    working-directory: ./client
 
 permissions:
   id-token: write # required to assume roles in OIDC
@@ -51,10 +50,11 @@ jobs:
         run: pnpm generate-env ${{ env.deployment-stage }}
 
       - name: Encrypt the .env.${{ env.deployment-stage }} file
+        working-directory: ./client
         run: |
           openssl enc -aes-256-cbc -salt \
-            -in ./client/.env.${{ env.deployment-stage }} \
-            -out ./client/.env.${{ env.deployment-stage }}.enc \
+            -in .env.${{ env.deployment-stage }} \
+            -out .env.${{ env.deployment-stage }}.enc \
             -k "${{ secrets.ARTIFACT_ENCRYPTION_KEY }}"
 
       - name: Save the encrypted .env.${{ env.deployment-stage }} file as a GitHub artifact
@@ -79,6 +79,7 @@ jobs:
           working-directory: ./client
 
       - name: Install dependencies
+        working-directory: ./client
         env:
           NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_READER_PAT }} # necessary to install packages from GitHub package registry
         run: pnpm install
@@ -86,6 +87,7 @@ jobs:
       # TODO: restore the .env.{deployment-stage} file
 
       - name: Build the client
+        working-directory: ./client
         run: pnpm build
 
       # TODO: encrypt the dist folder and save the encrypted contents as a GitHub artifact
