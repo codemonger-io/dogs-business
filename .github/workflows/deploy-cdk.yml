@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - gha-* # for testing purposes
 
 env:
   deployment-stage: development # TODO: make this a workflow input
