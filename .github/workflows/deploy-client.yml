@@ -55,6 +55,7 @@ jobs:
           openssl enc -aes-256-cbc -salt \
             -in .env.${{ env.deployment-stage }} \
             -out .env.${{ env.deployment-stage }}.enc \
+            -pbkdf2 \
             -k "${{ secrets.ARTIFACT_ENCRYPTION_KEY }}"
 
       - name: Save the encrypted .env.${{ env.deployment-stage }} file as a GitHub artifact
@@ -63,6 +64,7 @@ jobs:
           name: ${{ env.config-artifact-name }}-${{ env.deployment-stage }}
           path: ./client/.env.${{ env.deployment-stage }}.enc
           overwrite: true # allows re-run
+          if-no-files-found: error
 
   # builds the client and saves the artifacts for distribution
   build-client:
