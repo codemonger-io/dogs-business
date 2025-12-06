@@ -8,7 +8,8 @@ on:
 
 env:
   deployment-stage: development # TODO: make this a workflow input
-  config-artifact-name: encrypted-env-file
+  config-artifact-name: encrypted-env
+  build-artifact-name: encrypted-dist
 
 defaults:
   run:
@@ -107,7 +108,22 @@ jobs:
         working-directory: ./client
         run: pnpm build --mode ${{ env.deployment-stage }}
 
-      # TODO: encrypt the dist folder and save the encrypted contents as a GitHub artifact
+      - name: Archive and encrypt the dist folder
+        working-directory: ./client
+        run: |
+          tar cvf - dist | \
+          openssl enc -e -aes-256-cbc -salt \
+            -out dist.tar.enc \
+            -pbkdf2 \
+            -k "${{ secrets.ARTIFACT_ENCRYPTION_KEY }}"
+
+      - name: Save the encrypted dist folder as a GitHub artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ env.build-artifact-name }}-${{ env.deployment-stage }}
+          path: ./client/dist.tar.enc
+          overwrite: true # allows re-run
+          if-no-files-found: error
 
   # uploads the artifacts to the S3 bucket for distribution
   deploy-client:
