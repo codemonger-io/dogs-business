@@ -54,7 +54,7 @@ jobs:
       - name: Encrypt the .env.${{ env.deployment-stage }} file
         working-directory: ./client
         run: |
-          openssl enc -aes-256-cbc -salt \
+          openssl enc -e -aes-256-cbc -salt \
             -in .env.${{ env.deployment-stage }} \
             -out env.${{ env.deployment-stage }}.enc \
             -pbkdf2 \
@@ -88,7 +88,20 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_READER_PAT }} # necessary to install packages from GitHub package registry
         run: pnpm install
 
-      # TODO: restore the .env.{deployment-stage} file
+      - name: Restore the encrypted .env.${{ env.deployment-stage }} file from the GitHub artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ env.config-artifact-name }}-${{ env.deployment-stage }}
+          path: ./client
+
+      - name: Decrypt the .env.${{ env.deployment-stage }} file
+        working-directory: ./client
+        run: |
+          openssl enc -d -aes-256-cbc -salt \
+            -in env.${{ env.deployment-stage }}.enc \
+            -out .env.${{ env.deployment-stage }} \
+            -pbkdf2 \
+            -k "${{ secrets.ARTIFACT_ENCRYPTION_KEY }}"
 
       - name: Build the client
         working-directory: ./client
