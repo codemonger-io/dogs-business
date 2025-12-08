@@ -12,6 +12,7 @@ env:
 
 defaults:
   run:
+    shell: bash
     working-directory: ./cdk
 
 permissions:
@@ -55,6 +56,15 @@ jobs:
             ~/.cargo/git
             cdk/lambda/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('cdk/lambda/Cargo.lock') }}
+
+      - name: Configure the OIDC sub claims (oid-config.ts)
+        run: |
+          cat << EOF > ./lib/oidc-config.ts
+          export const ELIGIBLE_OIDC_SUB_CLAIMS = [
+            'repo:${{ github.repository }}:ref:refs/heads/main',
+            'repo:${{ github.repository }}:ref:refs/heads/gha-*',
+          ] as const;
+          EOF
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
