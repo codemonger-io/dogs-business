@@ -56,6 +56,15 @@ jobs:
             cdk/lambda/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('cdk/lambda/Cargo.lock') }}
 
+      - name: Configure the OIDC sub claims (oid-config.ts)
+        run: |
+          cat <<EOF
+          export const ELIGIBLE_OIDC_SUB_CLAIMS = [
+            'repo:${{ github.repository }}:ref:refs/heads/main',
+            'repo:${{ github.repository }}:ref:refs/heads/gha-*',
+          ] as const;
+          EOF > ./lib/oidc-config.ts
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
