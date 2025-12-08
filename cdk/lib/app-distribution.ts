@@ -2,6 +2,7 @@ import {
   RemovalPolicy,
   aws_cloudfront as cloudfront,
   aws_cloudfront_origins as origins,
+  aws_iam as iam,
   aws_s3 as s3,
 } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
@@ -11,6 +12,16 @@ import * as servicePaths from './service-paths';
 
 /** Properties for {@link AppDistribution}. */
 export interface AppDistributionProps {
+  /**
+   * Principal to assume the IAM role that can upload contents to the S3 bucket
+   * for distribution.
+   *
+   * @remarks
+   *
+   * Supposed to be a federated principal for GitHub OIDC.
+   */
+  readonly uploaderPrincipal: iam.IPrincipal;
+
   /** Deployment stage. */
   readonly deploymentStage: DeploymentStage;
 }
@@ -33,10 +44,13 @@ export class AppDistribution extends Construct {
   /** CloudFront distribution. */
   readonly distribution: cloudfront.Distribution;
 
+  /** IAM role that can upload contents to the S3 bucket for distribution. */
+  readonly uploaderRole: iam.Role;
+
   constructor(scope: Construct, id: string, props: AppDistributionProps) {
     super(scope, id);
 
-    const { deploymentStage } = props;
+    const { deploymentStage, uploaderPrincipal } = props;
 
     this.contentsBucket = new s3.Bucket(this, 'ContentsBucket', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -63,10 +77,21 @@ export class AppDistribution extends Construct {
       ],
       enableLogging: true,
     });
+
+    this.uploaderRole = new iam.Role(this, 'UploaderRole', {
+      description: 'Role to upload contents to the S3 bucket for distribution (${deploymentStage})',
+      assumedBy: uploaderPrincipal,
+    });
+    this.contentsBucket.grantReadWrite(this.uploaderRole);
   }
 
   /** Internal URL of the distribution. */
   get internalUrl(): string {
     return `https://${this.distribution.distributionDomainName}`;
+  }
+
+  /** ARN of the IAM role that can upload contents to the S3 bucket for distribution. */
+  get uploaderRoleArn(): string {
+    return this.uploaderRole.roleArn;
   }
 }

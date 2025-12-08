@@ -116,6 +116,7 @@ export class CdkStack extends Stack {
       deploymentStage,
     });
     const appDistribution = new AppDistribution(this, 'AppDistribution', {
+      uploaderPrincipal: githubOidcPricinpal,
       deploymentStage,
     });
     const stackReader = new StackReader(this, 'StackReader', {
@@ -157,6 +158,10 @@ export class CdkStack extends Stack {
     new CfnOutput(this, 'StackReaderRoleArn', {
       description: 'ARN of the IAM role that can read (describe) this stack. Use for CI/CD.',
       value: stackReader.roleArn,
+    });
+    new CfnOutput(this, 'ContentsUploaderRoleArn', {
+      description: 'ARN of the IAM role that can upload contents to the S3 bucket for the app distribution',
+      value: appDistribution.uploaderRoleArn,
     });
   }
 }
