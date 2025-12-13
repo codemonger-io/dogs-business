@@ -26,6 +26,9 @@ importers:
       bulma:
         specifier: ^1.0.4
         version: 1.0.4
+      fast_qr:
+        specifier: ^0.13.0
+        version: 0.13.0
       maplibre-gl:
         specifier: ^5.6.2
         version: 5.6.2
@@ -1459,6 +1462,9 @@ packages:
 
   fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
+
+  fast_qr@0.13.0:
+    resolution: {integrity: sha512-6QRi+feU6CFiC/WX7FrTxyhwdNkcJP5LAQmYias8uC1tEQ9MaSVd+/bIJA5Jb1EAz/mdo8qS57n5SN4cmT5P1Q==}
 
   fastq@1.19.1:
     resolution: {integrity: sha512-GwLTyxkCXjXbxqIhTsMI2Nui8huMPtnxg7krajPJAjnEG/iiOS7i+zCtWGZR9G0NBKbXKh6X9m9UIsYX/N6vvQ==}
@@ -4101,6 +4107,8 @@ snapshots:
   fast-json-stable-stringify@2.1.0: {}
 
   fast-levenshtein@2.0.6: {}
+
+  fast_qr@0.13.0: {}
 
   fastq@1.19.1:
     dependencies:
