@@ -52,6 +52,9 @@ export class ApiDistribution extends Construct {
         headerBehavior: cloudfront.CacheHeaderBehavior.allowList(
           'Authorization',
         ),
+        // NOTE: applies the default TTLs. individual API endpoints should set
+        // their own Cache-Control headers as needed
+        minTtl: Duration.seconds(0), // default but explicitly states that any short TTL is allowed
       },
     );
 
