@@ -60,6 +60,9 @@ export class ResourceApi extends Construct {
   /** Lambda function to obtain user information. */
   readonly getUserInfoLambda: lambda.IFunction;
 
+  /** Lambda function to update user information. */
+  readonly updateUserInfoLambda: lambda.IFunction;
+
   /** Lambda function to create a new dog. */
   readonly createDogLambda: lambda.IFunction;
 
@@ -71,6 +74,9 @@ export class ResourceApi extends Construct {
 
   /** Lambda function to get business records. */
   readonly getBusinessRecordsLambda: lambda.IFunction;
+
+  /** Lambda function to invite a human friend. */
+  readonly inviteHumanFriendLambda: lambda.IFunction;
 
   /** API Gateway REST API. */
   readonly api: RestApiWithSpec;
@@ -101,6 +107,18 @@ export class ResourceApi extends Construct {
       }
     });
     ssmParameters.mapboxAccessTokenParameter.grantRead(this.getUserInfoLambda);
+    // - update user information
+    this.updateUserInfoLambda = new RustFunction(this, 'UpdateUserInfoLambda', {
+      manifestPath,
+      binaryName: 'update-user-info',
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 128,
+      timeout: Duration.seconds(5),
+      environment: {
+        RESOURCE_TABLE_NAME: resourceTable.table.tableName,
+      },
+    });
+    resourceTable.table.grantReadWriteData(this.updateUserInfoLambda);
     // - create dog
     this.createDogLambda = new RustFunction(this, 'CreateDogLambda', {
       manifestPath,
@@ -154,6 +172,18 @@ export class ResourceApi extends Construct {
     });
     resourceTable.table.grantReadData(this.getBusinessRecordsLambda);
     businessRecordTable.table.grantReadData(this.getBusinessRecordsLambda);
+    // - invite a human friend
+    this.inviteHumanFriendLambda = new RustFunction(this, 'InviteHumanFriendLambda', {
+      manifestPath,
+      binaryName: 'invite-human-friend',
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 128,
+      timeout: Duration.seconds(5),
+      environment: {
+        RESOURCE_TABLE_NAME: resourceTable.table.tableName,
+      },
+    });
+    resourceTable.table.grantReadWriteData(this.inviteHumanFriendLambda);
 
     // REST API
     this.api = new RestApiWithSpec(this, 'ResourceApi', {
@@ -216,9 +246,11 @@ export class ResourceApi extends Construct {
     );
 
     // building blocks for mapping templates
+    const escapedInputParam = (paramName: string) => `"$util.escapeJavaScript($input.params("${paramName}")).replaceAll("\\'","'")"`;
     const mappingTemplateParts = {
       userId: ['userId', '"$context.authorizer.claims["cognito:username"]"'] as KeyValue,
-      dogIdSegment: ['dogId', `"$util.escapeJavaScript($input.params("dogId")).replaceAll("\\'","'")"`] as KeyValue,
+      dogIdSegment: ['dogId', escapedInputParam('dogId')] as KeyValue,
+      invitationId: ['invitationId', escapedInputParam('invitationId')] as KeyValue,
     };
 
     // gets to the base path
@@ -258,6 +290,39 @@ export class ResourceApi extends Construct {
           {
             statusCode: '200',
             description: 'User information has successfully been obtained',
+          },
+        ]),
+      },
+    );
+    // - PATCH
+    user.addMethod(
+      'PATCH',
+      new apigw.LambdaIntegration(this.updateUserInfoLambda, {
+        proxy: false,
+        passthroughBehavior: apigw.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          'application/json': composeMappingTemplate([
+            mappingTemplateParts.userId,
+            ifThen(
+              '$input.json("$.activeDogId") != ""',
+              [['activeDogId', '$input.json("$.activeDogId")']],
+            ),
+          ]),
+        },
+        integrationResponses: makeIntegrationResponsesAllowCors([
+          {
+            statusCode: '200',
+          },
+        ]),
+      }),
+      {
+        description: 'Update the user information associated with the ID token',
+        authorizer,
+        authorizationType: apigw.AuthorizationType.COGNITO,
+        methodResponses: makeMethodResponsesAllowCors([
+          {
+            statusCode: '200',
+            description: 'User information has successfully been updated',
           },
         ]),
       },
@@ -384,13 +449,132 @@ export class ResourceApi extends Construct {
         ]),
       }),
       {
-        description: 'Obtain the business records carried out by the dog friend identified by a given ID token',
+        description: 'Obtain the business records carried out by a given dog',
         authorizer,
         authorizationType: apigw.AuthorizationType.COGNITO,
         methodResponses: makeMethodResponsesAllowCors([
           {
             statusCode: '200',
             description: 'Business records have successfully been obtained',
+          },
+        ]),
+      },
+    );
+
+    // /dog/{dogId}/invitation
+    const dogInvitation = dogId.addResource('invitation');
+    // - POST
+    dogInvitation.addMethod(
+      'POST',
+      new apigw.LambdaIntegration(this.inviteHumanFriendLambda, {
+        proxy: false,
+        passthroughBehavior: apigw.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          'application/json': composeMappingTemplate([
+            [
+              'create',
+              composeMappingTemplate([
+                mappingTemplateParts.userId,
+                mappingTemplateParts.dogIdSegment,
+              ]),
+            ],
+          ]),
+        },
+        integrationResponses: makeIntegrationResponsesAllowCors([
+          {
+            statusCode: '200',
+          },
+        ]),
+      }),
+      {
+        description: 'Invite a human friend to be a friend of a given dog',
+        authorizer,
+        authorizationType: apigw.AuthorizationType.COGNITO,
+        methodResponses: makeMethodResponsesAllowCors([
+          {
+            statusCode: '200',
+            description: 'Invitation has successfully been made',
+          },
+        ]),
+      },
+    );
+
+    // invitation endpoints
+    const invitation = root.addResource('invitation');
+    // /invitation/{invitationId}
+    const invitationId = invitation.addResource('{invitationId}');
+    // - GET
+    invitationId.addMethod(
+      'GET',
+      new apigw.LambdaIntegration(this.inviteHumanFriendLambda, {
+        proxy: false,
+        passthroughBehavior: apigw.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          'application/json': composeMappingTemplate([
+            [
+              'get', composeMappingTemplate([
+                mappingTemplateParts.userId,
+                mappingTemplateParts.invitationId,
+              ]),
+            ],
+          ]),
+        },
+        integrationResponses: makeIntegrationResponsesAllowCors([
+          {
+            statusCode: '200',
+            responseParameters: {
+              // do not cache invitations
+              'method.response.header.Cache-Control': "'no-store'",
+            },
+          },
+        ]),
+      }),
+      {
+        description: 'Obtain the invitation identified by a given ID',
+        authorizer,
+        authorizationType: apigw.AuthorizationType.COGNITO,
+        methodResponses: makeMethodResponsesAllowCors([
+          {
+            statusCode: '200',
+            description: 'Invitation has successfully been obtained',
+            responseParameters: {
+              // do not cache invitations
+              'method.response.header.Cache-Control': true,
+            },
+          },
+        ]),
+      },
+    );
+    // - POST
+    invitationId.addMethod(
+      'POST',
+      new apigw.LambdaIntegration(this.inviteHumanFriendLambda, {
+        proxy: false,
+        passthroughBehavior: apigw.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          'application/json': composeMappingTemplate([
+            [
+              'accept', composeMappingTemplate([
+                mappingTemplateParts.userId,
+                mappingTemplateParts.invitationId,
+              ])
+            ],
+          ]),
+        },
+        integrationResponses: makeIntegrationResponsesAllowCors([
+          {
+            statusCode: '200',
+          },
+        ]),
+      }),
+      {
+        description: 'Accept the invitation identified by a given ID',
+        authorizer,
+        authorizationType: apigw.AuthorizationType.COGNITO,
+        methodResponses: makeMethodResponsesAllowCors([
+          {
+            statusCode: '200',
+            description: 'Invitation has successfully been accepted',
           },
         ]),
       },

@@ -29,6 +29,9 @@ export class ResourceTable extends Construct {
    * - `pk`: (string) partition key
    * - `sk`: (string) sort key
    *
+   * Time to live (TTL) attribute:
+   * - `expiresAt`: (timestamp) time of expiration
+   *
    * ### Common types
    *
    * - `timestamp`: (number) timestamp represented as the number of seconds
@@ -39,6 +42,8 @@ export class ResourceTable extends Construct {
    * - `pk`: "user#{userId}"
    *   - `userId`: unique user ID
    * - `sk`: "info"
+   * - `activeDogId`: (string, optional) ID of the user's active dog friend
+   * - `consistencyToken`: (string) token for ensuring data consistency
    * - `createdAt`: (timestamp) time of creation
    * - `updatedAt`: (timestamp) time of last update
    *
@@ -54,9 +59,20 @@ export class ResourceTable extends Construct {
    * ### Relationships
    *
    * - `pk`: "friend-of#{userId}"
+   *   - `userId`: unique user ID
    * - `sk`: "dog#{dogId}"
+   *   - `dogId`: unique dog ID
    * - `isGuardian`: (boolean) whether the user is a guardian of the dog
    * - `createdAt`: (timestamp) time of creation
+   *
+   * ### Invitations
+   *
+   * - `pk`: "invitation#{invitationId}"
+   *   - `invitationId`: unique invitation ID
+   * - `sk`: "info"
+   * - `dogId`: unique ID of the dog who issued the invitation
+   * - `createdAt`: (timestamp) time of creation
+   * - `expiresAt`: (timestamp) time of expiration
    */
   readonly table: dynamodb.ITableV2;
 
@@ -72,6 +88,7 @@ export class ResourceTable extends Construct {
         name: 'sk',
         type: dynamodb.AttributeType.STRING,
       },
+      timeToLiveAttribute: 'expiresAt',
       // TODO: increase the caps for production
       billing: dynamodb.Billing.onDemand({
         maxReadRequestUnits: 2,
