@@ -2070,6 +2070,7 @@ dependencies = [
  "futures",
  "lambda_runtime",
  "serde",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
