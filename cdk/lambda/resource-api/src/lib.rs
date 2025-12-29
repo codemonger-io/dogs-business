@@ -2,6 +2,8 @@
 
 use serde::Serialize;
 
+pub mod identifiers;
+
 /// Information on a dog.
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
