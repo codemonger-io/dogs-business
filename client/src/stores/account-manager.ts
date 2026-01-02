@@ -30,6 +30,11 @@ import type {
   UserInfo
 } from '../types/account-info'
 import { isAccountInfo } from '../types/account-info'
+import {
+  isHumanFriendInvitationAcceptanceResult,
+  isHumanFriendInvitationStatus,
+  isNewHumanFriendInvitation
+} from '../types/human-friend-invitation'
 import { isCognitoTokensExpiring } from '../utils/passquito'
 import { useAuthenticatorState } from './authenticator-state'
 
@@ -415,6 +420,98 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
   }
 
+  // the user must become a friend of the dog first.
+  const _setActiveDogFriendOfOnlineAccount = async (dogId: string) => {
+    const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/user`
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: await _requestIdToken()
+      },
+      body: JSON.stringify({
+        activeDogId: { 'set': dogId }
+      })
+    })
+    if (res.ok) {
+      // makes sure that the account info is still online after the API call
+      if (accountInfo.value.type !== 'online') {
+        throw new Error('current account is not an online account')
+      }
+      // updating account info will trigger the watcher to load the dog friend
+      accountInfo.value = {
+        ...accountInfo.value,
+        activeDogId: dogId
+        // TODO: update consistency token
+      }
+    } else {
+      if (res.status === 401) {
+        authenticatorState.triggerReAuthentication()
+      }
+      const message = await res.text()
+      throw new Error(`failed to set active dog friend: ${res.status} ${message}`)
+    }
+  }
+
+  const setActiveDogFriend = (dogId: number | string) => {
+    switch (accountInfo.value.type) {
+      case 'guest':
+        throw new Error('not yet implemented for guest account')
+      case 'online':
+        if (typeof dogId !== 'string') {
+          throw new Error('dog ID must be a string for online account')
+        }
+        return _setActiveDogFriendOfOnlineAccount(dogId)
+      case 'no-account':
+        throw new Error('no account info available')
+      default: {
+        const neverAccount: never = accountInfo.value
+        throw new Error(`unknown account type: ${neverAccount}`)
+      }
+    }
+  }
+
+  const _getDogFriendOfOnlineAccount = async (dogId: string) => {
+    const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/dog/${dogId}`
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: await _requestIdToken()
+      }
+    })
+    if (res.ok) {
+      const dog = await res.json()
+      if (!isOnlineDog(dog) || dog.dogId !== dogId) {
+        throw new Error('invalid dog response from server')
+      }
+      return dog
+    } else {
+      if (res.status === 401) {
+        authenticatorState.triggerReAuthentication()
+      }
+      const message = await res.text()
+      throw new Error(`failed to fetch dog: ${res.status} ${message}`)
+    }
+  }
+
+  const getDogFriend = async (dogId: number | string) => {
+    switch (accountInfo.value.type) {
+      case 'guest':
+        throw new Error('not yet implemented for guest account')
+      case 'online':
+        if (typeof dogId !== 'string') {
+          throw new Error('dog ID must be a string for online account')
+        }
+        return _getDogFriendOfOnlineAccount(dogId)
+      case 'no-account':
+        throw new Error('no account info available')
+      default: {
+        const neverAccount: never = accountInfo.value
+        throw new Error(`unknown account type: ${neverAccount}`)
+      }
+    }
+  }
+
   const _addBusinessRecordOfGuest = async (
     accountInfo: GuestAccountInfo,
     dog: GenericDog,
@@ -499,15 +596,116 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
   }
 
+  const inviteNewHumanFriendForCurrentDog = async () => {
+    const account = accountInfo.value
+    if (account.type !== 'online') {
+      throw new Error('only online account can invite friends')
+    }
+    const dog = currentDog.value
+    if (dog == null) {
+      throw new Error('no current dog available')
+    }
+    // TODO: account must be a guardian of the dog
+    const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/dog/${dog.dogId}/invitation`
+    const idToken = await _requestIdToken()
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: idToken
+      },
+      body: JSON.stringify({})
+    })
+    if (res.ok) {
+      const invitation = await res.json()
+      if (!isNewHumanFriendInvitation(invitation)) {
+        throw new Error('invalid invitation response from server')
+      }
+      return invitation
+    } else {
+      if (res.status === 401) {
+        authenticatorState.triggerReAuthentication()
+      }
+      const message = await res.text()
+      throw new Error(`failed to invite new human friend: ${res.status} ${message}`)
+    }
+  }
+
+  // TODO: this action may be executed by arbitrary online users who have
+  // somehow obtained an invitation ID. can it be abused?
+  const getHumanFriendInvitationStatus = async (invitationId: string) => {
+    const account = accountInfo.value
+    if (account.type !== 'online') {
+      throw new Error('only online account can get invitations')
+    }
+    const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/invitation/${invitationId}`
+    const idToken = await _requestIdToken()
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: idToken
+      }
+    })
+    if (res.ok) {
+      // TODO: include if the user is already a friend of the dog
+      const invitation = await res.json()
+      if (!isHumanFriendInvitationStatus(invitation)) {
+        throw new Error('invalid invitation response from server')
+      }
+      return invitation
+    } else {
+      if (res.status === 401) {
+        authenticatorState.triggerReAuthentication()
+      }
+      const message = await res.text()
+      throw new Error(`failed to get invitation: ${res.status} ${message}`)
+    }
+  }
+
+  const acceptHumanFriendInvitation = async (invitationId: string) => {
+    const account = accountInfo.value
+    if (account.type !== 'online') {
+      throw new Error('only online account can accept invitations')
+    }
+    const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/invitation/${invitationId}`
+    const idToken = await _requestIdToken()
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: idToken
+      },
+      body: JSON.stringify({})
+    })
+    if (res.ok) {
+      const result = await res.json()
+      if (!isHumanFriendInvitationAcceptanceResult(result)) {
+        throw new Error('invalid invitation acceptance response from server')
+      }
+      return result
+    } else {
+      if (res.status === 401) {
+        authenticatorState.triggerReAuthentication()
+      }
+      const message = await res.text()
+      throw new Error(`failed to accept invitation: ${res.status} ${message}`)
+    }
+  }
+
   return {
+    acceptHumanFriendInvitation,
     accountInfo,
     activeBusinessRecords,
     addBusinessRecord,
     createGuestAccount,
     currentDog,
+    getDogFriend,
+    getHumanFriendInvitationStatus,
+    inviteNewHumanFriendForCurrentDog,
     isLoadingDog,
     lastError,
-    registerNewDogFriend
+    registerNewDogFriend,
+    setActiveDogFriend
   }
 })
 

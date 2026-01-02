@@ -20,7 +20,7 @@ watch(
     switch (account.type) {
       case 'guest':
       case 'online':
-        if (!route.path.startsWith('/map')) {
+        if (!route.path.startsWith('/map') && !route.path.startsWith('/invitation')) {
           router.push({ name: 'map' })
         }
         break
