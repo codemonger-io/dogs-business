@@ -27,7 +27,7 @@ describe('type.authenticator-state', () => {
       })).toBe(true)
     })
 
-    it('should be true for { type: "authenticated", publicKeyInfo: valid PublicKeyInfo, tokens: valid CognitoTokens, userInfo: valid UserInfo }', () => {
+    it('should be true for { type: "authenticated", publicKeyInfo: valid PublicKeyInfo, tokens: valid CognitoTokens }', () => {
       expect(isAuthenticatorState({
         type: 'authenticated',
         publicKeyInfo: {
@@ -41,8 +41,7 @@ describe('type.authenticator-state', () => {
           refreshToken: 'refresh-token',
           expiresIn: 900,
           activatedAt: 1760962792000
-        },
-        userInfo: {}
+        }
       })).toBe(true)
     })
 
@@ -105,54 +104,10 @@ describe('type.authenticator-state', () => {
       })).toBe(false)
     })
 
-    it('should be false for { type: "authenticated", publicKeyInfo: {}, tokens: valid CognitoTokens, userInfo: valid UserInfo } with an empty publicKeyInfo', () => {
+    it('should be false for { type: "authenticated", publicKeyInfo: {}, tokens: valid CognitoTokens } with an empty publicKeyInfo', () => {
       expect(isAuthenticatorState({
         type: 'authenticated',
         publicKeyInfo: {},
-        tokens: {
-          accessToken: 'jwt-access-token',
-          idToken: 'jwt-id-token',
-          refreshToken: 'refresh-token',
-          expiresIn: 900,
-          activatedAt: 1760962792000
-        },
-        userInfo: {}
-      })).toBe(false)
-    })
-
-    it('should be false for { type: "authenticated", publicKeyInfo: valid PublicKeyInfo, userInfo: valid UserInfo } missing tokens', () => {
-      expect(isAuthenticatorState({
-        type: 'authenticated',
-        publicKeyInfo: {
-          authenticatorAttachment: 'platform',
-          id: 'serial-ID',
-          userHandle: 'user-abc'
-        },
-        userInfo: {}
-      })).toBe(false)
-    })
-
-    it('should be false for { type: "authenticated", publicKeyInfo: valid PublicKeyInfo, tokens: {}, userInfo: valid UserInfo } with empty tokens', () => {
-      expect(isAuthenticatorState({
-        type: 'authenticated',
-        publicKeyInfo: {
-          authenticatorAttachment: 'platform',
-          id: 'serial-ID',
-          userHandle: 'user-abc'
-        },
-        tokens: {},
-        userInfo: {}
-      })).toBe(false)
-    })
-
-    it('should be false for { type: "authenticated", publicKeyInfo: valid PublicKeyInfo, tokens: valid CognitoTokens } missing userInfo', () => {
-      expect(isAuthenticatorState({
-        type: 'authenticated',
-        publicKeyInfo: {
-          authenticatorAttachment: 'platform',
-          id: 'serial-ID',
-          userHandle: 'user-abc'
-        },
         tokens: {
           accessToken: 'jwt-access-token',
           idToken: 'jwt-id-token',
@@ -163,7 +118,18 @@ describe('type.authenticator-state', () => {
       })).toBe(false)
     })
 
-    it('should be false for { type: "authenticated", publicKeyInfo: valid PublicKeyInfo, tokens: valid CognitoTokens, userInfo: {} } with empty userInfo', () => {
+    it('should be false for { type: "authenticated", publicKeyInfo: valid PublicKeyInfo } missing tokens', () => {
+      expect(isAuthenticatorState({
+        type: 'authenticated',
+        publicKeyInfo: {
+          authenticatorAttachment: 'platform',
+          id: 'serial-ID',
+          userHandle: 'user-abc'
+        }
+      })).toBe(false)
+    })
+
+    it('should be false for { type: "authenticated", publicKeyInfo: valid PublicKeyInfo, tokens: {} } with empty tokens', () => {
       expect(isAuthenticatorState({
         type: 'authenticated',
         publicKeyInfo: {
@@ -171,14 +137,7 @@ describe('type.authenticator-state', () => {
           id: 'serial-ID',
           userHandle: 'user-abc'
         },
-        tokens: {
-          accessToken: 'jwt-access-token',
-          idToken: 'jwt-id-token',
-          refreshToken: 'refresh-token',
-          expiresIn: 900,
-          activatedAt: 1760962792000
-        },
-        userInfo: 'online-account'
+        tokens: {}
       })).toBe(false)
     })
 

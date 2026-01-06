@@ -29,7 +29,7 @@ import type {
   OnlineAccountInfo,
   UserInfo
 } from '../types/account-info'
-import { isAccountInfo } from '../types/account-info'
+import { isAccountInfo, isUserInfo } from '../types/account-info'
 import {
   isHumanFriendInvitationAcceptanceResult,
   isHumanFriendInvitationStatus,
@@ -141,6 +141,7 @@ export const useAccountManager = defineStore('account-manager', () => {
           /* eslint-enable @typescript-eslint/no-unused-vars */
           ...rest
         } = accountInfo.value
+        // TODO: avoid updating accounInfo if nothing changes
         accountInfo.value = {
           ...rest,
           publicKeyInfo,
@@ -166,12 +167,42 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
   }
 
-  // updates and saves `accountInfo` when `authenticatorState` becomes "authenticated".
+  // when `authenticatorState` becomes "authenticated",
+  // obtains the user info associated with the given ID token, and then
+  // updates and saves `accountInfo`
   watch(
     () => authenticatorState.state,
-    (state) => {
+    async (state) => {
       if (state.type === 'authenticated') {
-        _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens, state.userInfo)
+        if (isCognitoTokensExpiring(state.tokens)) {
+          await authenticatorState.refreshCognitoTokens()
+          return
+        }
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('useAccountManager.watchAuthenticatorState', 'fetching user info associated with the ID token')
+        }
+        const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/user`
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            Authorization: state.tokens.idToken
+          }
+        })
+        if (res.ok) {
+          const userInfo = await res.json()
+          if (!isUserInfo(userInfo)) {
+            console.error('useAccountManager.watchAuthenticatorState', 'invalid user info response', userInfo)
+            lastError.value = new Error('invalid user info response from server')
+            return
+          }
+          _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens, userInfo)
+        } else {
+          if (res.status === 401) {
+            authenticatorState.triggerReAuthentication()
+          }
+          const message = await res.text()
+          lastError.value = new Error(`failed to fetch user info: ${res.status} ${message}`)
+        }
       } else {
         // does nothing
       }
@@ -458,6 +489,9 @@ export const useAccountManager = defineStore('account-manager', () => {
       case 'guest':
         throw new Error('not yet implemented for guest account')
       case 'online':
+        if (accountInfo.value.activeDogId === dogId) {
+          return
+        }
         if (typeof dogId !== 'string') {
           throw new Error('dog ID must be a string for online account')
         }
