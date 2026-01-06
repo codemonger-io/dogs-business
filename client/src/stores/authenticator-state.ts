@@ -7,7 +7,6 @@ import type {
 import { useSessionStorage } from '@vueuse/core'
 
 import { makeValidatingSerializer } from '../lib/storage-serializer'
-import { RESOURCE_API_INJECTION_KEY } from '../providers/resource-api'
 import type { AccountInfo } from '../types/account-info'
 import { isAuthenticatorState } from '../types/authenticator-state'
 import { isCognitoTokensExpiring } from '../utils/passquito'
@@ -102,12 +101,6 @@ type UpdatedCredentials = {
 export const useAuthenticatorState = defineStore('authenticator-state', () => {
   // Credentials API
   const credentialsApi = useCredentialsApi()
-
-  // Dog's Business Resource API
-  const resourceApi = inject(RESOURCE_API_INJECTION_KEY)
-  if (resourceApi == null) {
-    throw new Error('Resource API must be provided')
-  }
 
   // authenticator UI provides a way to ask the user to sign in.
   const _authenticatorUi = ref<AuthenticatorUi>()
