@@ -64,8 +64,7 @@ const dummyBusinessRecordDatabaseManager = {
 }
 
 describe('useAccountManager', () => {
-  // TODO: Resource API shall be required in the future
-  describe.skip('without Resource API provided', () => {
+  describe('without Resource API provided', () => {
     beforeEach(() => {
       const app = createApp({})
       const pinia = createPinia()

@@ -24,6 +24,7 @@ import type {
 } from '../lib/dog-database'
 import { isGuestDog, isOnlineDog } from '../lib/dog-database'
 import { makeValidatingSerializer } from '../lib/storage-serializer'
+import { RESOURCE_API_INJECTION_KEY } from '../providers/resource-api'
 import type {
   GuestAccountInfo,
   OnlineAccountInfo,
@@ -62,7 +63,8 @@ export const BUSINESS_RECORD_DATABASE_MANAGER_INJECTION_KEY =
  * @throws Error
  *
  *   If no dog database manager is provided,
- *   or if no business record database manager is provided.
+ *   or if no business record database manager is provided,
+ *   or if no Resource API is provided.
  */
 export const useAccountManager = defineStore('account-manager', () => {
   const dogDatabaseManager = inject(DOG_DATABASE_MANAGER_INJECTION_KEY)
@@ -73,6 +75,10 @@ export const useAccountManager = defineStore('account-manager', () => {
     inject(BUSINESS_RECORD_DATABASE_MANAGER_INJECTION_KEY)
   if (businessRecordDatabaseManager == null) {
     throw new Error('no business record database manager is provided')
+  }
+  const resourceApi = inject(RESOURCE_API_INJECTION_KEY)
+  if (resourceApi == null) {
+    throw new Error('no Resource API is provided')
   }
 
   // authenticator state
@@ -181,20 +187,9 @@ export const useAccountManager = defineStore('account-manager', () => {
         if (process.env.NODE_ENV !== 'production') {
           console.log('useAccountManager.watchAuthenticatorState', 'fetching user info associated with the ID token')
         }
-        const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/user`
-        const res = await fetch(url, {
-          method: 'GET',
-          headers: {
-            Authorization: state.tokens.idToken
-          }
-        })
+        const res = await resourceApi.getCurrentUserInfo(state.tokens.idToken)
         if (res.ok) {
-          const userInfo = await res.json()
-          if (!isUserInfo(userInfo)) {
-            console.error('useAccountManager.watchAuthenticatorState', 'invalid user info response', userInfo)
-            lastError.value = new Error('invalid user info response from server')
-            return
-          }
+          const userInfo = await res.parse()
           _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens, userInfo)
         } else {
           if (res.status === 401) {
