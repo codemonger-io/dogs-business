@@ -193,13 +193,24 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         switch (state.value.type) {
           case 'loading':
           case 'welcoming':
-            // if the Cognito tokens are available → fetches the user information
+            // if the Cognito tokens are available
+            //   and the tokens are expiring → refreshing-tokens state
+            //   otherwise → authenticated state
             // otherwise → authenticating state
             if (accountInfo.tokens != null) {
-              await _fetchOnlineAccountUserInfo(
-                accountInfo.publicKeyInfo,
-                accountInfo.tokens
-              )
+              if (isCognitoTokensExpiring(accountInfo.tokens)) {
+                state.value = {
+                  type: 'refreshing-tokens',
+                  publicKeyInfo: accountInfo.publicKeyInfo,
+                  tokens: accountInfo.tokens
+                }
+              } else {
+                state.value = {
+                  type: 'authenticated',
+                  publicKeyInfo: accountInfo.publicKeyInfo,
+                  tokens: accountInfo.tokens
+                }
+              }
             } else {
               state.value = {
                 type: 'authenticating',
@@ -217,8 +228,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
             // the subsequent refreshing shall be done anyway
             break
           case 'authenticated':
-            // refreshes the tokens and fetches the user info again
-            // if the tokens have been expired
+            // refreshes the tokens if they have been expired
             if (isCognitoTokensExpiring(state.value.tokens)) {
               if (process.env.NODE_ENV !== 'production') {
                 console.log('useAuthenticatorState.syncStateWithAccountInfo', 'tokens have been expired')
@@ -249,63 +259,6 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         const unreachable: never = accountInfo
         throw new RangeError(`unknown account type: ${unreachable}`)
       }
-    }
-  }
-
-  // fetches the user information of the online account.
-  //
-  // this function updates the state to "authenticated" on success,
-  const _fetchOnlineAccountUserInfo = async (
-    publicKeyInfo: PublicKeyInfo,
-    tokens: CognitoTokens
-  ) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'fetching user info', publicKeyInfo, tokens)
-    }
-    if (isCognitoTokensExpiring(tokens)) {
-      // transitions to the refreshing-tokens state to refresh the tokens first
-      state.value = {
-        type: 'refreshing-tokens',
-        publicKeyInfo,
-        tokens
-      }
-      return
-    }
-    // updates the user information of the online account
-    try {
-      const res = await resourceApi.getCurrentUserInfo(tokens.idToken)
-      if (res.ok) {
-        const userInfo = await res.parse()
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'fetched user information', userInfo)
-        }
-        state.value = {
-          type: 'authenticated',
-          publicKeyInfo,
-          tokens,
-          userInfo
-        }
-      } else {
-        // re-authenticates if the error is Unauthorized (401)
-        if (res.status === 401) {
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('useAuthenticatorState._fetchOnlineAccountUserInfo', 'access denied. re-authenticating')
-          }
-          state.value = {
-            type: 'authenticating',
-            publicKeyInfo
-          }
-        } else {
-          throw new Error(`failed to fetch user information: ${res.status} ${await res.text()}`)
-        }
-      }
-    } catch (err) {
-      console.error('useAuthenticatorState._fetchOnlineAccountUserInfo', err)
-      lastError.value = {
-        type: 'any-error',
-        cause: err
-      }
-      // TODO: should transition into the "welcoming" state?
     }
   }
 
@@ -370,7 +323,11 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         console.log('useAuthenticatorState._refreshCognitoTokens', 'refreshed Cognito tokens', tokens)
       }
       _refreshCognitoTokensRequests.value.forEach(async (request) => request.resolve(newTokens))
-      _fetchOnlineAccountUserInfo(publicKeyInfo, newTokens)
+      state.value = {
+        type: 'authenticated',
+        publicKeyInfo,
+        tokens: newTokens
+      }
     } catch (err) {
       // rejects requests waiting for the refreshing
       _refreshCognitoTokensRequests.value.forEach(async (request) => request.reject(err))
@@ -455,10 +412,24 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     switch (state.value.type) {
       case 'loading':
       case 'welcoming':
-        // if Cognito tokens are available → fetches the user information
+        // if Cognito tokens are available
+        //   the tokens are expiring → refreshing-tokens state
+        //   otherwise → authenticated state
         // otherwise → authenticating state
         if (credentials.tokens != null) {
-          await _fetchOnlineAccountUserInfo(credentials.publicKeyInfo, credentials.tokens)
+          if (isCognitoTokensExpiring(credentials.tokens)) {
+            state.value = {
+              type: 'refreshing-tokens',
+              publicKeyInfo: credentials.publicKeyInfo,
+              tokens: credentials.tokens
+            }
+          } else {
+            state.value = {
+              type: 'authenticated',
+              publicKeyInfo: credentials.publicKeyInfo,
+              tokens: credentials.tokens
+            }
+          }
         } else {
           state.value = {
             type: 'authenticating',
@@ -471,7 +442,20 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         throw new Error('guest should not update credentials')
       case 'authenticating':
         if (credentials.tokens != null) {
-          await _fetchOnlineAccountUserInfo(credentials.publicKeyInfo, credentials.tokens)
+          if (isCognitoTokensExpiring(credentials.tokens)) {
+            // it is unlikely that tokens are expiring here but just in case
+            state.value = {
+              type: 'refreshing-tokens',
+              publicKeyInfo: credentials.publicKeyInfo,
+              tokens: credentials.tokens
+            }
+          } else {
+            state.value = {
+              type: 'authenticated',
+              publicKeyInfo: credentials.publicKeyInfo,
+              tokens: credentials.tokens
+            }
+          }
         } else {
           // TODO: maybe switching to discoverable authentication
           console.warn(`useAuthenticatorState.updateCredentials@${state.value.type}`, 'Cognito tokens are expected')

@@ -85,118 +85,50 @@ describe('stores.authenticator-state', () => {
 
         describe('after syncStateWithAccountInfo(online)', () => {
           describe('with valid tokens', () => {
-            describe('with successful user info retrieval', () => {
-              let activatedAt: number
+            let activatedAt: number
 
-              beforeEach(async () => {
-                // lets the getCurrentUserInfo return a valid user info
-                const apiResponse = wrapFetchResponse(new Response('{}'), isUserInfo)
-                mockResourceApi.getCurrentUserInfo = vi
-                  .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(apiResponse)
-
-                // syncs the state
-                activatedAt = Date.now()
-                await authenticatorState.syncStateWithAccountInfo({
-                  type: 'online',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt,
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  },
-                  userInfo: {}
-                })
-              })
-
-              afterEach(() => {
-                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
-              })
-
-              it('should be in the "authenticated" state', () => {
-                const expectedState = {
-                  type: 'authenticated',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt,
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  },
-                  userInfo: {}
-                }
-
-                expect(authenticatorState.state).toEqual(expectedState)
-
-                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-                expect(storedState).toEqual(expectedState)
+            beforeEach(async () => {
+              // syncs the state
+              activatedAt = Date.now()
+              await authenticatorState.syncStateWithAccountInfo({
+                type: 'online',
+                publicKeyInfo: {
+                  authenticatorAttachment: 'platform',
+                  id: 'dummy-public-key-id',
+                  userHandle: 'dummy-user-handle'
+                },
+                tokens: {
+                  activatedAt,
+                  expiresIn: 30 * 60,
+                  accessToken: 'dummy-access-token',
+                  idToken: 'dummy-id-token',
+                  refreshToken: 'dummy-refresh-token'
+                },
+                userInfo: {}
               })
             })
 
-            describe('with unauthorized user info retrieval', () => {
-              beforeEach(async () => {
-                // lets the getCurrentUserInfo return a 401 response
-                const apiResponse = wrapFetchResponse(
-                  new Response('Unauthorized', { status: 401 }),
-                  isUserInfo
-                )
-                mockResourceApi.getCurrentUserInfo = vi
-                  .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(apiResponse)
-
-                // syncs the state
-                await authenticatorState.syncStateWithAccountInfo({
-                  type: 'online',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt: Date.now(),
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  },
-                  userInfo: {}
-                })
-              })
-
-              afterEach(() => {
-                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
-              })
-
-              it('should be in the "authenticating" state', () => {
-                const expectedState = {
-                  type: 'authenticating',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  }
+            it('should be in the "authenticated" state', () => {
+              const expectedState = {
+                type: 'authenticated',
+                publicKeyInfo: {
+                  authenticatorAttachment: 'platform',
+                  id: 'dummy-public-key-id',
+                  userHandle: 'dummy-user-handle'
+                },
+                tokens: {
+                  activatedAt,
+                  expiresIn: 30 * 60,
+                  accessToken: 'dummy-access-token',
+                  idToken: 'dummy-id-token',
+                  refreshToken: 'dummy-refresh-token'
                 }
+              }
 
-                expect(authenticatorState.state).toEqual(expectedState)
+              expect(authenticatorState.state).toEqual(expectedState)
 
-                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-                expect(storedState).toEqual(expectedState)
-              })
-            })
-
-            // TODO: determine the behavior
-            describe.skip('with other failed user info retrieval', () => {
+              const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+              expect(storedState).toEqual(expectedState)
             })
           })
 
@@ -299,113 +231,48 @@ describe('stores.authenticator-state', () => {
 
         describe('after updateCredentials with tokens', () => {
           describe('with valid tokens', () => {
-            describe('with successful user info retrieval', () => {
-              let activatedAt: number
+            let activatedAt: number
 
-              beforeEach(async () => {
-                // lets the getCurrentUserInfo return a valid user info
-                mockResourceApi.getCurrentUserInfo = vi
-                  .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(wrapFetchResponse(new Response('{}'), isUserInfo))
-
-                // updates the credentials
-                activatedAt = Date.now()
-                await authenticatorState.updateCredentials({
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt,
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  }
-                })
-              })
-
-              afterEach(() => {
-                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
-              })
-
-              it('should be in the "authenticated" state', () => {
-                const expectedState = {
-                  type: 'authenticated',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt,
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  },
-                  userInfo: {}
+            beforeEach(async () => {
+              // updates the credentials
+              activatedAt = Date.now()
+              await authenticatorState.updateCredentials({
+                publicKeyInfo: {
+                  authenticatorAttachment: 'platform',
+                  id: 'dummy-public-key-id',
+                  userHandle: 'dummy-user-handle'
+                },
+                tokens: {
+                  activatedAt,
+                  expiresIn: 30 * 60,
+                  accessToken: 'dummy-access-token',
+                  idToken: 'dummy-id-token',
+                  refreshToken: 'dummy-refresh-token'
                 }
-
-                expect(authenticatorState.state).toEqual(expectedState)
-
-                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-                expect(storedState).toEqual(expectedState)
               })
             })
 
-            describe('with unauthorized user info retrieval', () => {
-              beforeEach(async () => {
-                // lets the getCurrentUserInfo return a 401 response
-                const apiResponse = wrapFetchResponse(
-                  new Response('Unauthorized', { status: 401 }),
-                  isUserInfo
-                )
-                mockResourceApi.getCurrentUserInfo = vi
-                  .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(apiResponse)
-
-                // updates the credentials
-                await authenticatorState.updateCredentials({
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt: Date.now(),
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  }
-                })
-              })
-
-              afterEach(() => {
-                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
-              })
-
-              it('should be in the "authenticating" state', () => {
-                const expectedState = {
-                  type: 'authenticating',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  }
+            it('should be in the "authenticated" state', () => {
+              const expectedState = {
+                type: 'authenticated',
+                publicKeyInfo: {
+                  authenticatorAttachment: 'platform',
+                  id: 'dummy-public-key-id',
+                  userHandle: 'dummy-user-handle'
+                },
+                tokens: {
+                  activatedAt,
+                  expiresIn: 30 * 60,
+                  accessToken: 'dummy-access-token',
+                  idToken: 'dummy-id-token',
+                  refreshToken: 'dummy-refresh-token'
                 }
+              }
 
-                expect(authenticatorState.state).toEqual(expectedState)
+              expect(authenticatorState.state).toEqual(expectedState)
 
-                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-                expect(storedState).toEqual(expectedState)
-              })
-            })
-
-            // TODO: determine the behavior
-            describe.skip('with other failed user info retrieval', () => {
+              const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+              expect(storedState).toEqual(expectedState)
             })
           })
 
@@ -516,117 +383,50 @@ describe('stores.authenticator-state', () => {
 
         describe('after syncStateWithAccountInfo(online)', () => {
           describe('with valid tokens', () => {
-            describe('with successful user info retrieval', () => {
-              let activatedAt: number
+            let activatedAt: number
 
-              beforeEach(async () => {
-                // lets the getCurrentUserInfo return a valid user info
-                mockResourceApi.getCurrentUserInfo = vi
-                  .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(wrapFetchResponse(new Response('{}'), isUserInfo))
-
-                // syncs the state
-                activatedAt = Date.now()
-                await authenticatorState.syncStateWithAccountInfo({
-                  type: 'online',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt,
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  },
-                  userInfo: {}
-                })
-              })
-
-              afterEach(() => {
-                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
-              })
-
-              it('should be in the "authenticated" state', () => {
-                const expectedState = {
-                  type: 'authenticated',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt,
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  },
-                  userInfo: {}
-                }
-
-                expect(authenticatorState.state).toEqual(expectedState)
-
-                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-                expect(storedState).toEqual(expectedState)
+            beforeEach(async () => {
+              // syncs the state
+              activatedAt = Date.now()
+              await authenticatorState.syncStateWithAccountInfo({
+                type: 'online',
+                publicKeyInfo: {
+                  authenticatorAttachment: 'platform',
+                  id: 'dummy-public-key-id',
+                  userHandle: 'dummy-user-handle'
+                },
+                tokens: {
+                  activatedAt,
+                  expiresIn: 30 * 60,
+                  accessToken: 'dummy-access-token',
+                  idToken: 'dummy-id-token',
+                  refreshToken: 'dummy-refresh-token'
+                },
+                userInfo: {}
               })
             })
 
-            describe('with unauthorized user info retrieval', () => {
-              beforeEach(async () => {
-                // lets the getCurrentUserInfo return a 401 response
-                const apiResponse = wrapFetchResponse(
-                  new Response('Unauthorized', { status: 401 }),
-                  isUserInfo
-                )
-                mockResourceApi.getCurrentUserInfo = vi
-                  .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(apiResponse)
-
-                // syncs the state
-                await authenticatorState.syncStateWithAccountInfo({
-                  type: 'online',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt: Date.now(),
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  },
-                  userInfo: {}
-                })
-              })
-
-              afterEach(() => {
-                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
-              })
-
-              it('should be in the "authenticating" state', () => {
-                const expectedState = {
-                  type: 'authenticating',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  }
+            it('should be in the "authenticated" state', () => {
+              const expectedState = {
+                type: 'authenticated',
+                publicKeyInfo: {
+                  authenticatorAttachment: 'platform',
+                  id: 'dummy-public-key-id',
+                  userHandle: 'dummy-user-handle'
+                },
+                tokens: {
+                  activatedAt,
+                  expiresIn: 30 * 60,
+                  accessToken: 'dummy-access-token',
+                  idToken: 'dummy-id-token',
+                  refreshToken: 'dummy-refresh-token'
                 }
+              }
 
-                expect(authenticatorState.state).toEqual(expectedState)
+              expect(authenticatorState.state).toEqual(expectedState)
 
-                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-                expect(storedState).toEqual(expectedState)
-              })
-            })
-
-            // TODO: determine the behavior
-            describe.skip('with other failed user info retrieval', () => {
+              const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+              expect(storedState).toEqual(expectedState)
             })
           })
 
@@ -729,109 +529,48 @@ describe('stores.authenticator-state', () => {
 
         describe('after updateCredentials with tokens', () => {
           describe('with valid tokens', () => {
-            describe('with successful user info retrieval', () => {
-              let activatedAt: number
+            let activatedAt: number
 
-              beforeEach(async () => {
-                // lets the getCurrentUserInfo return a valid user info
-                mockResourceApi.getCurrentUserInfo = vi
-                  .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(wrapFetchResponse(new Response('{}'), isUserInfo))
-
-                // updates the credentials
-                activatedAt = Date.now()
-                await authenticatorState.updateCredentials({
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt,
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  }
-                })
-              })
-
-              it('should be in the "authenticated" state', () => {
-                const expectedState = {
-                  type: 'authenticated',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt,
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  },
-                  userInfo: {}
+            beforeEach(async () => {
+              // updates the credentials
+              activatedAt = Date.now()
+              await authenticatorState.updateCredentials({
+                publicKeyInfo: {
+                  authenticatorAttachment: 'platform',
+                  id: 'dummy-public-key-id',
+                  userHandle: 'dummy-user-handle'
+                },
+                tokens: {
+                  activatedAt,
+                  expiresIn: 30 * 60,
+                  accessToken: 'dummy-access-token',
+                  idToken: 'dummy-id-token',
+                  refreshToken: 'dummy-refresh-token'
                 }
-
-                expect(authenticatorState.state).toEqual(expectedState)
-
-                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-                expect(storedState).toEqual(expectedState)
               })
             })
 
-            describe('with unauthorized user info retrieval', () => {
-              beforeEach(async () => {
-                // lets the getCurrentUserInfo return a 401 response
-                const apiResponse = wrapFetchResponse(
-                  new Response('Unauthorized', { status: 401 }),
-                  isUserInfo
-                )
-                mockResourceApi.getCurrentUserInfo = vi
-                  .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(apiResponse)
-
-                // updates the credentials
-                await authenticatorState.updateCredentials({
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  },
-                  tokens: {
-                    activatedAt: Date.now(),
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  }
-                })
-              })
-
-              afterEach(() => {
-                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
-              })
-
-              it('should be in the "authenticating" state', () => {
-                const expectedState = {
-                  type: 'authenticating',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id',
-                    userHandle: 'dummy-user-handle'
-                  }
+            it('should be in the "authenticated" state', () => {
+              const expectedState = {
+                type: 'authenticated',
+                publicKeyInfo: {
+                  authenticatorAttachment: 'platform',
+                  id: 'dummy-public-key-id',
+                  userHandle: 'dummy-user-handle'
+                },
+                tokens: {
+                  activatedAt,
+                  expiresIn: 30 * 60,
+                  accessToken: 'dummy-access-token',
+                  idToken: 'dummy-id-token',
+                  refreshToken: 'dummy-refresh-token'
                 }
+              }
 
-                expect(authenticatorState.state).toEqual(expectedState)
+              expect(authenticatorState.state).toEqual(expectedState)
 
-                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-                expect(storedState).toEqual(expectedState)
-              })
-            })
-
-            // TODO: determine the behavior
-            describe.skip('with other failed user info retrieval', () => {
+              const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+              expect(storedState).toEqual(expectedState)
             })
           })
 
@@ -1155,109 +894,48 @@ describe('stores.authenticator-state', () => {
 
         describe('after updateCredentials with tokens', () => {
           describe('with valid tokens', () => {
-            describe('with successful user info retrieval', () => {
-              let activatedAt: number
+            let activatedAt: number
 
-              beforeEach(async () => {
-                // lets the getCurrentUserInfo return a valid user info
-                mockResourceApi.getCurrentUserInfo = vi
-                  .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(wrapFetchResponse(new Response('{}'), isUserInfo))
-
-                // updates the credentials
-                activatedAt = Date.now()
-                await authenticatorState.updateCredentials({
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id-2',
-                    userHandle: 'dummy-user-handle-2'
-                  },
-                  tokens: {
-                    activatedAt,
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  }
-                })
-              })
-
-              afterEach(() => {
-                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
-              })
-
-              it('should be in the "authenticated" state', () => {
-                const expectedState = {
-                  type: 'authenticated',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id-2',
-                    userHandle: 'dummy-user-handle-2'
-                  },
-                  tokens: {
-                    activatedAt,
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  },
-                  userInfo: {}
+            beforeEach(async () => {
+              // updates the credentials
+              activatedAt = Date.now()
+              await authenticatorState.updateCredentials({
+                publicKeyInfo: {
+                  authenticatorAttachment: 'platform',
+                  id: 'dummy-public-key-id-2',
+                  userHandle: 'dummy-user-handle-2'
+                },
+                tokens: {
+                  activatedAt,
+                  expiresIn: 30 * 60,
+                  accessToken: 'dummy-access-token',
+                  idToken: 'dummy-id-token',
+                  refreshToken: 'dummy-refresh-token'
                 }
-
-                expect(authenticatorState.state).toEqual(expectedState)
-
-                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-                expect(storedState).toEqual(expectedState)
               })
             })
 
-            describe('with unauthorized user info retrieval', () => {
-              beforeEach(async () => {
-                // lets the getCurrentUserInfo return a 401 response
-                const apiResponse = wrapFetchResponse(
-                  new Response('Unauthorized', { status: 401 }),
-                  isUserInfo
-                )
-                mockResourceApi.getCurrentUserInfo = vi
-                  .mocked(mockResourceApi.getCurrentUserInfo)
-                  .mockResolvedValue(apiResponse)
-
-                // updates the credentials
-                await authenticatorState.updateCredentials({
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id-2',
-                    userHandle: 'dummy-user-handle-2'
-                  },
-                  tokens: {
-                    activatedAt: Date.now(),
-                    expiresIn: 30 * 60,
-                    accessToken: 'dummy-access-token',
-                    idToken: 'dummy-id-token',
-                    refreshToken: 'dummy-refresh-token'
-                  }
-                })
-              })
-
-              afterEach(() => {
-                vi.mocked(mockResourceApi.getCurrentUserInfo).mockReset()
-              })
-
-              it('should be in the "authenticating" state', () => {
-                const expectedState = {
-                  type: 'authenticating',
-                  publicKeyInfo: {
-                    authenticatorAttachment: 'platform',
-                    id: 'dummy-public-key-id-2',
-                    userHandle: 'dummy-user-handle-2'
-                  }
+            it('should be in the "authenticated" state', () => {
+              const expectedState = {
+                type: 'authenticated',
+                publicKeyInfo: {
+                  authenticatorAttachment: 'platform',
+                  id: 'dummy-public-key-id-2',
+                  userHandle: 'dummy-user-handle-2'
+                },
+                tokens: {
+                  activatedAt,
+                  expiresIn: 30 * 60,
+                  accessToken: 'dummy-access-token',
+                  idToken: 'dummy-id-token',
+                  refreshToken: 'dummy-refresh-token'
                 }
+              }
 
-                expect(authenticatorState.state).toEqual(expectedState)
+              expect(authenticatorState.state).toEqual(expectedState)
 
-                const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-                expect(storedState).toEqual(expectedState)
-              })
+              const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
+              expect(storedState).toEqual(expectedState)
             })
           })
 
@@ -1325,8 +1003,7 @@ describe('stores.authenticator-state', () => {
                   accessToken: 'dummy-access-token',
                   idToken: 'dummy-id-token',
                   refreshToken: 'dummy-refresh-token'
-                },
-                userInfo: {}
+                }
               })
             )
             authenticatorState = useAuthenticatorState()
@@ -1350,8 +1027,7 @@ describe('stores.authenticator-state', () => {
                 accessToken: 'dummy-access-token',
                 idToken: 'dummy-id-token',
                 refreshToken: 'dummy-refresh-token'
-              },
-              userInfo: {}
+              }
             })
           })
 
@@ -1423,8 +1099,7 @@ describe('stores.authenticator-state', () => {
                   accessToken: 'dummy-access-token',
                   idToken: 'dummy-id-token',
                   refreshToken: 'dummy-refresh-token'
-                },
-                userInfo: {}
+                }
               })
             })
           })
@@ -1478,8 +1153,7 @@ describe('stores.authenticator-state', () => {
                   accessToken: 'dummy-access-token',
                   idToken: 'dummy-id-token',
                   refreshToken: 'dummy-refresh-token'
-                },
-                userInfo: {}
+                }
               })
             )
             authenticatorState = useAuthenticatorState()
@@ -1503,8 +1177,7 @@ describe('stores.authenticator-state', () => {
                 accessToken: 'dummy-access-token',
                 idToken: 'dummy-id-token',
                 refreshToken: 'dummy-refresh-token'
-              },
-              userInfo: {}
+              }
             })
           })
 

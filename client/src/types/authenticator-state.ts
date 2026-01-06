@@ -134,9 +134,6 @@ export interface AuthenticatedAuthenticatorState {
 
   /** Cognito tokens of the online account. */
   tokens: CognitoTokens
-
-  /** User information on the online account. */
-  userInfo: UserInfo
 }
 
 /**
@@ -208,9 +205,7 @@ function isTrueAuthenticatingAuthenticatorState(
 function isTrueAuthenticatedAuthenticatorState(
   state: AuthenticatedAuthenticatorState
 ): boolean {
-  return isPublicKeyInfo(state.publicKeyInfo) &&
-    isCognitoTokens(state.tokens) &&
-    isUserInfo(state.userInfo)
+  return isPublicKeyInfo(state.publicKeyInfo) && isCognitoTokens(state.tokens)
 }
 
 // returns if a given value is truely `RefreshingTokensState`.
