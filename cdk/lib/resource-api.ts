@@ -97,18 +97,20 @@ export class ResourceApi extends Construct {
     // Lambda functions
     // - get user information
     this.getUserInfoLambda = new RustFunction(this, 'GetUserInfoLambda', {
+      description: 'Obtains the user information',
       manifestPath,
       binaryName: 'get-user-info',
       architecture: lambda.Architecture.ARM_64,
       memorySize: 128,
       timeout: Duration.seconds(5),
       environment: {
-        MAPBOX_ACCESS_TOKEN_PARAMETER_PATH: ssmParameters.mapboxAccessTokenParameterPath,
+        RESOURCE_TABLE_NAME: resourceTable.table.tableName,
       }
     });
-    ssmParameters.mapboxAccessTokenParameter.grantRead(this.getUserInfoLambda);
+    resourceTable.table.grantReadData(this.getUserInfoLambda);
     // - update user information
     this.updateUserInfoLambda = new RustFunction(this, 'UpdateUserInfoLambda', {
+      description: 'Updates the user information',
       manifestPath,
       binaryName: 'update-user-info',
       architecture: lambda.Architecture.ARM_64,
@@ -121,6 +123,7 @@ export class ResourceApi extends Construct {
     resourceTable.table.grantReadWriteData(this.updateUserInfoLambda);
     // - create dog
     this.createDogLambda = new RustFunction(this, 'CreateDogLambda', {
+      description: 'Creates a new item for a dog friend',
       manifestPath,
       binaryName: 'create-dog',
       architecture: lambda.Architecture.ARM_64,
@@ -133,6 +136,7 @@ export class ResourceApi extends Construct {
     resourceTable.table.grantReadWriteData(this.createDogLambda);
     // - get dog information
     this.getDogLambda = new RustFunction(this, 'GetDogLambda', {
+      description: 'Obtains the dog friend information',
       manifestPath,
       binaryName: 'get-dog',
       architecture: lambda.Architecture.ARM_64,
@@ -145,6 +149,7 @@ export class ResourceApi extends Construct {
     resourceTable.table.grantReadData(this.getDogLambda);
     // - create business record
     this.createBusinessRecordLambda = new RustFunction(this, 'CreateBusinessRecordLambda', {
+      description: 'Creates a new business record of a dog friend',
       manifestPath,
       binaryName: 'create-business-record',
       architecture: lambda.Architecture.ARM_64,
@@ -159,6 +164,7 @@ export class ResourceApi extends Construct {
     businessRecordTable.table.grantReadWriteData(this.createBusinessRecordLambda);
     // - get business records
     this.getBusinessRecordsLambda = new RustFunction(this, 'GetBusinessRecordsLambda', {
+      description: 'Obtains the business records of a dog friend',
       manifestPath,
       binaryName: 'get-business-records',
       architecture: lambda.Architecture.ARM_64,
@@ -174,6 +180,7 @@ export class ResourceApi extends Construct {
     businessRecordTable.table.grantReadData(this.getBusinessRecordsLambda);
     // - invite a human friend
     this.inviteHumanFriendLambda = new RustFunction(this, 'InviteHumanFriendLambda', {
+      description: 'Invites a human friend to be a friend of a dog',
       manifestPath,
       binaryName: 'invite-human-friend',
       architecture: lambda.Architecture.ARM_64,
@@ -279,6 +286,10 @@ export class ResourceApi extends Construct {
         integrationResponses: makeIntegrationResponsesAllowCors([
           {
             statusCode: '200',
+            responseParameters: {
+              // do not cache user information
+              'method.response.header.Cache-Control': "'no-store'",
+            },
           },
         ]),
       }),
@@ -290,6 +301,10 @@ export class ResourceApi extends Construct {
           {
             statusCode: '200',
             description: 'User information has successfully been obtained',
+            responseParameters: {
+              // do not cache user information
+              'method.response.header.Cache-Control': true,
+            },
           },
         ]),
       },
