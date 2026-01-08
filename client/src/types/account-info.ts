@@ -43,6 +43,18 @@ export interface GuestAccountInfo {
  * @beta
  */
 export interface UserInfo {
+  /** ID of the active dog. `undefined` if no active dog is selected. */
+  activeDogId?: string
+
+  /**
+   * Consistency token.
+   *
+   * @remarks
+   *
+   * This token is used to detect concurrent modifications to the user info on
+   * the server. `undefined` if no user info is stored on the server yet.
+   */
+  consistencyToken?: string
 }
 
 /**
@@ -64,7 +76,7 @@ export interface OnlineAccountInfo {
   userInfo: UserInfo
 
   /** Active dog ID. */
-  activeDogId?: string
+  // activeDogId?: string
 }
 
 /**
@@ -119,12 +131,6 @@ function isTrueOnlineAccountInfo(accountInfo: OnlineAccountInfo): boolean {
   if (!isUserInfo(accountInfo.userInfo)) {
     return false
   }
-  if (
-    accountInfo.activeDogId != null &&
-    typeof accountInfo.activeDogId !== 'string'
-  ) {
-    return false
-  }
   return true
 }
 
@@ -137,5 +143,12 @@ export function isUserInfo(value: unknown): value is UserInfo {
   if (value == null || typeof value !== 'object') {
     return false
   }
-  return true // there is no field for now
+  const maybeUserInfo = value as UserInfo
+  if (maybeUserInfo.activeDogId != null && typeof maybeUserInfo.activeDogId !== 'string') {
+    return false
+  }
+  if (maybeUserInfo.consistencyToken != null && typeof maybeUserInfo.consistencyToken !== 'string') {
+    return false
+  }
+  return true
 }

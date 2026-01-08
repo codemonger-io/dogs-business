@@ -25,7 +25,7 @@ describe('types.account-info', () => {
       expect(isAccountInfo(value)).toBe(false)
     })
 
-    it('should be true for { type: "online", publicKeyInfo: {...}, tokens: {...}, userInfo: {...}, activeDogId: "dog" }', () => {
+    it('should be true for { type: "online", publicKeyInfo: {...}, tokens: {...}, userInfo: {...} }', () => {
       const value = {
         type: 'online',
         publicKeyInfo: {
@@ -40,28 +40,10 @@ describe('types.account-info', () => {
           idToken: 'dummy-id-token',
           refreshToken: 'dummy-refresh-token'
         },
-        userInfo: {},
-        activeDogId: 'dog'
-      }
-      expect(isAccountInfo(value)).toBe(true)
-    })
-
-    it('should be true for { type: "online", publicKeyInfo: {...}, tokens: {...}, userInfo: {...} } missing activeDogId', () => {
-      const value = {
-        type: 'online',
-        publicKeyInfo: {
-          authenticatorAttachment: 'platform',
-          id: 'dummy-public-key-id',
-          userHandle: 'dummy-user-handle'
-        },
-        tokens: {
-          activatedAt: Date.now(),
-          expiresIn: 3600,
-          accessToken: 'dummy-access-token',
-          idToken: 'dummy-id-token',
-          refreshToken: 'dummy-refresh-token'
-        },
-        userInfo: {}
+        userInfo: {
+          activeDogId: 'dog',
+          consistencyToken: 'dummy-consistency-token'
+        }
       }
       expect(isAccountInfo(value)).toBe(true)
     })
@@ -76,7 +58,10 @@ describe('types.account-info', () => {
           idToken: 'dummy-id-token',
           refreshToken: 'dummy-refresh-token'
         },
-        userInfo: {}
+        userInfo: {
+          activeDogId: 'dog',
+          consistencyToken: 'dummy-consistency-token'
+        }
       }
       expect(isAccountInfo(value)).toBe(false)
     })
@@ -89,7 +74,10 @@ describe('types.account-info', () => {
           id: 'dummy-public-key-id',
           userHandle: 'dummy-user-handle'
         },
-        userInfo: {}
+        userInfo: {
+          activeDogId: 'dog',
+          consistencyToken: 'dummy-consistency-token'
+        }
       }
       expect(isAccountInfo(value)).toBe(false)
     })
@@ -124,7 +112,10 @@ describe('types.account-info', () => {
           idToken: 'dummy-id-token',
           refreshToken: 'dummy-refresh-token'
         },
-        userInfo: {}
+        userInfo: {
+          activeDogId: 'dog',
+          consistencyToken: 'dummy-consistency-token'
+        }
       }
       expect(isAccountInfo(value)).toBe(false)
     })
@@ -138,7 +129,10 @@ describe('types.account-info', () => {
           userHandle: 'dummy-user-handle'
         },
         tokens: 'invalid',
-        userInfo: {}
+        userInfo: {
+          activeDogId: 'dog',
+          consistencyToken: 'dummy-consistency-token'
+        }
       }
       expect(isAccountInfo(value)).toBe(false)
     })
@@ -159,27 +153,6 @@ describe('types.account-info', () => {
           refreshToken: 'dummy-refresh-token'
         },
         userInfo: 'invalid'
-      }
-      expect(isAccountInfo(value)).toBe(false)
-    })
-
-    it('should be false for { type: "online", publicKeyInfo: {...}, tokens: {...}, userInfo: {...}, activeDogId: 123 } with non-string activeDogId', () => {
-      const value = {
-        type: 'online',
-        publicKeyInfo: {
-          authenticatorAttachment: 'platform',
-          id: 'dummy-public-key-id',
-          userHandle: 'dummy-user-handle'
-        },
-        tokens: {
-          activatedAt: Date.now(),
-          expiresIn: 3600,
-          accessToken: 'dummy-access-token',
-          idToken: 'dummy-id-token',
-          refreshToken: 'dummy-refresh-token'
-        },
-        userInfo: {},
-        activeDogId: 123
       }
       expect(isAccountInfo(value)).toBe(false)
     })
@@ -206,8 +179,41 @@ describe('types.account-info', () => {
   })
 
   describe('isUserInfo', () => {
+    it('should be true for { activeDogId: "dog", consistencyToken: "token" }', () => {
+      expect(isUserInfo({
+        activeDogId: 'dog',
+        consistencyToken: 'token'
+      })).toBe(true)
+    })
+
+    it('should be true for { consistencyToken: "token" } missing activeDogId', () => {
+      expect(isUserInfo({
+        consistencyToken: 'token'
+      })).toBe(true)
+    })
+
+    it('should be true for { activeDogId: "dog" } missing consistencyToken', () => {
+      expect(isUserInfo({
+        activeDogId: 'dog'
+      })).toBe(true)
+    })
+
     it('should be true for {}', () => {
       expect(isUserInfo({})).toBe(true)
+    })
+
+    it('should be false for { activeDogId: 123, consistencyToken: "token" } with non-string activeDogId', () => {
+      expect(isUserInfo({
+        activeDogId: 123,
+        consistencyToken: 'token'
+      })).toBe(false)
+    })
+
+    it('should be false for { activeDogId: "dog", consistencyToken: 123 } with non-string consistencyToken', () => {
+      expect(isUserInfo({
+        activeDogId: 'dog',
+        consistencyToken: 123
+      })).toBe(false)
     })
 
     it('should be false for a string', () => {
