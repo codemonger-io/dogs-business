@@ -201,7 +201,8 @@ export const useAccountManager = defineStore('account-manager', () => {
       } else {
         // does nothing
       }
-    }
+    },
+    { immediate: true }
   )
 
   const currentDog = ref<GenericDog>()
@@ -233,7 +234,7 @@ export const useAccountManager = defineStore('account-manager', () => {
   // does nothing if the account has no dog friend, or if the dog friend has
   // already been loaded.
   const _loadOnlineDogFriend = async (account: OnlineAccountInfo) => {
-    const dogId = account.activeDogId
+    const dogId = account.userInfo.activeDogId
     if (dogId == null) {
       return
     }
@@ -410,13 +411,17 @@ export const useAccountManager = defineStore('account-manager', () => {
       const dog = await dogDb.createDog(dogParams)
       // makes sure that the account info is still online after the API call
       if (accountInfo.value.type === 'online') {
-        // we have to update currentDog then accountInfo.activeDogId
+        // we have to update currentDog then accountInfo.userInfo.activeDogId
         // otherwise, the watcher of accountInfo will try to load the dog friend
         currentDog.value = dog
         accountInfo.value = {
           ...accountInfo.value,
-          activeDogId: dog.dogId
+          userInfo: {
+            ...accountInfo.value.userInfo,
+            activeDogId: dog.dogId
+          }
         }
+        // TODO: save the activeDogId to the server
       }
     } catch (err) {
       console.error('useAccountManager._registerNewDogFriendOfOnlineAccount', err)
@@ -460,6 +465,10 @@ export const useAccountManager = defineStore('account-manager', () => {
       })
     })
     if (res.ok) {
+      const userInfo = await res.json()
+      if (!isUserInfo(userInfo) || userInfo.activeDogId !== dogId) {
+        throw new Error('invalid user info response from server')
+      }
       // makes sure that the account info is still online after the API call
       if (accountInfo.value.type !== 'online') {
         throw new Error('current account is not an online account')
@@ -467,8 +476,11 @@ export const useAccountManager = defineStore('account-manager', () => {
       // updating account info will trigger the watcher to load the dog friend
       accountInfo.value = {
         ...accountInfo.value,
-        activeDogId: dogId
-        // TODO: update consistency token
+        userInfo: {
+          ...accountInfo.value.userInfo,
+          activeDogId: dogId,
+          consistencyToken: userInfo.consistencyToken
+        }
       }
     } else {
       if (res.status === 401) {
@@ -484,7 +496,7 @@ export const useAccountManager = defineStore('account-manager', () => {
       case 'guest':
         throw new Error('not yet implemented for guest account')
       case 'online':
-        if (accountInfo.value.activeDogId === dogId) {
+        if (accountInfo.value.userInfo.activeDogId === dogId) {
           return
         }
         if (typeof dogId !== 'string') {
