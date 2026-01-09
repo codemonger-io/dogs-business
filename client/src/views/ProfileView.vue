@@ -6,6 +6,11 @@ import { useRouter } from 'vue-router'
 import { useAccountManager } from '../stores/account-manager'
 import { capitalize } from '../utils/strings'
 
+const props = defineProps<{
+  // ID of the dog to show the profile
+  dogId: string
+}>()
+
 const router = useRouter()
 const { t } = useI18n()
 
@@ -13,12 +18,14 @@ const accountManager = useAccountManager()
 
 const inviteNewHumanFriend = async () => {
   if (process.env.NODE_ENV !== 'production') {
-    console.log('ShowProfileView', 'inviting a new human friend...')
+    console.log('ProfileView', `inviting a new human friend on behalf of the dog ${props.dogId}...`)
   }
+  // TODO: create an invitation for props.dogId instead of the current dog
   const invitation = await accountManager.inviteNewHumanFriendForCurrentDog()
   router.push({
     name: 'show-invitation',
     params: {
+      dogId: props.dogId,
       invitationId: invitation.invitationId
     },
     query: {
