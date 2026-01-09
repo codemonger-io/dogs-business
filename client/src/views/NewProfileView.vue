@@ -26,7 +26,7 @@ const onSubmit = async () => {
     close()
   } catch (err) {
     // TODO: what can we do here?
-    console.error('ProfileView', err)
+    console.error('NewProfileView', err)
   }
 }
 </script>
