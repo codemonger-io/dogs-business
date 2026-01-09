@@ -53,7 +53,7 @@ const selectDogFriend = async (dogId: string) => {
     console.log('AcceptInvitationView.selectDogFriend', dogId)
   }
   await accountManager.setActiveDogFriend(dogId)
-  router.push({ name: 'profile' })
+  router.push({ name: 'new-profile' })
 }
 
 const acceptInvitation = async () => {

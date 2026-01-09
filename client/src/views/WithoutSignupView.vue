@@ -48,7 +48,7 @@ const createGuestAccountAndGo = async () => {
       console.log('creating guest account')
     }
     await createGuestAccount()
-    router.push({ name: 'profile' })
+    router.push({ name: 'new-profile' })
   } catch (err) {
     console.error('failed to create guest account', err)
   }

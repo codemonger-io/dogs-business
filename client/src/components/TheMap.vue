@@ -518,7 +518,7 @@ const askCleanup = () => {
       </template>
       <template v-else>
         <p v-if="!isLoadingDog">
-          <router-link :to="{ name: 'profile' }">
+          <router-link :to="{ name: 'new-profile' }">
             {{ t('message.register_your_dog_friend') }}
           </router-link>
         </p>
