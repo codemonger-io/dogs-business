@@ -6,6 +6,8 @@ import { useAccountManager } from '../stores/account-manager'
 
 const accountManager = useAccountManager()
 
+const dogId = computed(() => accountManager.currentDog?.dogId)
+
 const dogNameInitial = computed(() => {
   const dogName = accountManager.currentDog?.name
   if (dogName != null && dogName.length > 0) {
@@ -26,8 +28,8 @@ const openDogProfile = () => {
   <div class="control-container fullscreen">
     <div class="right-control-container">
       <router-link
-        v-if="dogNameInitial != null"
-        :to="{ name: 'show-profile' }"
+        v-if="dogId != null && dogNameInitial != null"
+        :to="{ name: 'profile', params: { dogId } }"
         custom
         v-slot="{ navigate }"
       >

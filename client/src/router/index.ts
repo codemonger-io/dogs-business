@@ -21,15 +21,19 @@ const router = createRouter({
               component: () => import('../views/NewProfileView.vue')
             },
             {
-              path: 'profile/show',
-              name: 'show-profile',
-              component: () => import('../views/ShowProfileView.vue')
+              path: 'profile/:dogId',
+              name: 'profile',
+              component: () => import('../views/ProfileView.vue'),
+              props: router => ({
+                dogId: router.params.dogId
+              })
             },
             {
-              path: 'profile/invitation/:invitationId',
+              path: 'profile/:dogId/invitation/:invitationId',
               name: 'show-invitation',
               component: () => import('../views/ShowInvitationView.vue'),
               props: router => ({
+                dogId: router.params.dogId,
                 invitationId: router.params.invitationId,
                 expiresAt: +router.query['expiresAt']!, // expects a number
                 dogName: router.query['dogName']
