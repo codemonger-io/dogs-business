@@ -32,5 +32,7 @@ export { SvgOptions, qr_svg as qrSvg } from 'fast_qr'
  * @beta
  */
 export const initFastQr = async () => {
-  return init(new URL('./fast_qr_bg.wasm', import.meta.url))
+  return init({
+    module_or_path: new URL('./fast_qr_bg.wasm', import.meta.url)
+  })
 }
