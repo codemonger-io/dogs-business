@@ -74,7 +74,7 @@ const onSubmit = async () => {
               </form>
             </div>
             <!-- TODO: disable for guest accounts -->
-            <div v-if="accountManager.accountInfo.type === "online"" class="block">
+            <div v-if="accountManager.accountInfo.type === 'online'" class="block">
               <p>
                 <a href="#">
                   &#x1F91D;{{ t('message.do_you_want_to_be_a_friend_of_other_dog') }}
