@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { inject, ref, watch, watchEffect } from 'vue'
+import { ref, watch, watchEffect } from 'vue'
 import type {
   CognitoTokens,
   PublicKeyInfo

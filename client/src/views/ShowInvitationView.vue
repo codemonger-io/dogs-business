@@ -5,7 +5,6 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { SvgOptions, initFastQr, qrSvg } from '../lib/fast_qr_wrapper'
-import { capitalize } from '../utils/strings'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -58,7 +57,7 @@ const close = () => {
       <div class="card paper">
         <div v-if="invitationQrData" class="card-image">
           <figure class="image is-square qr-code">
-            <img :src="invitationQrData" alt="Invitation QR Code"></img>
+            <img :src="invitationQrData" alt="Invitation QR Code">
           </figure>
         </div>
         <div class="card-content">
