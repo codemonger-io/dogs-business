@@ -36,7 +36,10 @@ const inviteNewHumanFriend = async () => {
 }
 
 const close = () => {
-  router.back()
+  // we cannot simply goes back, because the user may have landed here by
+  // accepting an invitation
+  // TODO: is the map always the right place to go back to?
+  router.push({ name: 'map' })
 }
 </script>
 
