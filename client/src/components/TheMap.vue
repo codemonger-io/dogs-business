@@ -14,6 +14,7 @@ import {
   watchEffect
 } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { RouterLink } from 'vue-router'
 
 import type { BusinessType } from '../lib/business-record-database'
 import { convertBusinessRecordsToGeoJSON } from '../lib/business-record-database'
