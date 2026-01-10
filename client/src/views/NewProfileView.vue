@@ -8,7 +8,7 @@ import { capitalize } from '../utils/strings'
 
 const router = useRouter()
 const { t } = useI18n()
-const { registerNewDogFriend } = useAccountManager()
+const accountManager = useAccountManager()
 
 const dogName = ref('')
 const trimmedDogName = computed(() => dogName.value.trim())
@@ -22,7 +22,7 @@ const onSubmit = async () => {
     console.log('creating new dog profile for', trimmedDogName.value)
   }
   try {
-    await registerNewDogFriend({ name: trimmedDogName.value })
+    await accountManager.registerNewDogFriend({ name: trimmedDogName.value })
     close()
   } catch (err) {
     // TODO: what can we do here?
@@ -74,7 +74,7 @@ const onSubmit = async () => {
               </form>
             </div>
             <!-- TODO: disable for guest accounts -->
-            <div class="block">
+            <div v-if="accountManager.accountInfo.type === "online"" class="block">
               <p>
                 <a href="#">
                   &#x1F91D;{{ t('message.do_you_want_to_be_a_friend_of_other_dog') }}
