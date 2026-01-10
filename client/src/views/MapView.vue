@@ -20,6 +20,13 @@ import TheMap from '../components/TheMap.vue'
   position: relative;
   width: 100vw;
   height: 100vh;
+  @supports (width: 100dvw) {
+    width: 100dvw;
+  }
+  /* 100vh ignores the address bar on Safari */
+  @supports (height: 100dvh) {
+    height: 100dvh;
+  }
 }
 
 .map-overlay {
