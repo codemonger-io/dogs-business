@@ -9,7 +9,7 @@ const authenticated = () => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('authenticated')
   }
-  router.push({ name: 'new-profile' })
+  router.push({ name: 'map' })
 }
 </script>
 
