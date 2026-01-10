@@ -74,9 +74,6 @@ export interface OnlineAccountInfo {
 
   /** User information. */
   userInfo: UserInfo
-
-  /** Active dog ID. */
-  // activeDogId?: string
 }
 
 /**
