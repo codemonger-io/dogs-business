@@ -16,12 +16,6 @@ const dogNameInitial = computed(() => {
     return null
   }
 })
-
-const openDogProfile = () => {
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('TheControlsOverlay', 'opening dog profile')
-  }
-}
 </script>
 
 <template>

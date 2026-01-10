@@ -7,9 +7,6 @@ import {
   isPublicKeyInfo
 } from '@codemonger-io/passquito-client-js'
 
-import type { UserInfo } from '../types/account-info'
-import { isUserInfo } from '../types/account-info'
-
 /**
  * State of authenticator.
  *
