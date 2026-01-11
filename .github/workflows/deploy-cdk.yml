@@ -47,14 +47,16 @@ jobs:
           CARGO_LAMBDA_VERSION: ${{ env.cargo-lambda-version }}
         run: curl -fsSL https://cargo-lambda.info/install.sh | sh
 
-      # https://docs.github.com/en/actions/tutorials/build-and-test-code/rust#caching-dependencies
+      # https://github.com/actions/cache/blob/main/examples.md#rust---cargo
       - name: Cache cargo artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            cdk/lambda/target
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            cdk/lambda/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('cdk/lambda/Cargo.lock') }}
 
       - name: Configure the OIDC sub claims (oid-config.ts)
