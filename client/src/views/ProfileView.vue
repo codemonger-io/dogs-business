@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { BModal } from 'buefy'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { useAccountManager } from '../stores/account-manager'
-import { capitalize } from '../utils/strings'
 
 const props = defineProps<{
   // ID of the dog to show the profile
@@ -15,6 +15,17 @@ const router = useRouter()
 const { t } = useI18n()
 
 const accountManager = useAccountManager()
+
+const dogName = computed(() => accountManager.currentDog?.name)
+
+const dogNameInitial = computed(() => {
+  const name = dogName.value
+  if (name != null && name.length > 0) {
+    return name.charAt(0)
+  } else {
+    return null
+  }
+})
 
 const inviteNewHumanFriend = async () => {
   if (process.env.NODE_ENV !== 'production') {
@@ -53,7 +64,15 @@ const close = () => {
       <div class="card paper">
         <div class="card-content">
           <section class="section">
-            <h1 class="title is-3">{{ capitalize(t('term.profile')) }}</h1>
+            <div class="block is-flex is-justify-content-center">
+              <div class="avatar">
+                <!-- TODO: show an image in the future -->
+                <span class="icon">{{ dogNameInitial }}</span>
+              </div>
+            </div>
+            <div class="block is-flex is-justify-content-center">
+              <span class="is-size-2"><strong>{{ dogName }}</strong></span>
+            </div>
             <div class="block">
               <p class="block is-flex is-justify-content-center">
                 <b-button
@@ -70,3 +89,24 @@ const close = () => {
     </b-modal>
   </div>
 </template>
+
+<style scoped>
+.avatar {
+  display: inline-flex;
+  align-items: center;
+
+  font-size: 128px;
+
+  border-radius: 9999px;
+  border: 1px solid;
+  border-color: var(--paper-invert);
+
+  margin: 0;
+  padding: 0;
+
+  .icon {
+    width: 256px;
+    height: 256px;
+  }
+}
+</style>
