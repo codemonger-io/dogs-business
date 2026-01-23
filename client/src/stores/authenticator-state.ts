@@ -309,10 +309,21 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     }
     const { publicKeyInfo, tokens } = state.value
     try {
-      const newTokens = await credentialsApi.refreshTokens(tokens.refreshToken)
-      if (newTokens == null) {
-        throw new Error('failed to refresh Cognito tokens')
+      const refreshRes = await credentialsApi.refreshTokens(tokens.refreshToken)
+      if (!refreshRes.ok) {
+        // transitions back to the authenticating state
+        // if the status is 401 Unauthorized, otherwise throws an error
+        if (refreshRes.status === 401) {
+          state.value = {
+            type: 'authenticating',
+            publicKeyInfo,
+          }
+          return
+        } else {
+          throw new Error(`failed to refresh Cognito tokens: ${refreshRes.status} ${await refreshRes.text()}`)
+        }
       }
+      const newTokens = await refreshRes.parse()
       if (process.env.NODE_ENV !== 'production') {
         console.log('useAuthenticatorState._refreshCognitoTokens', 'refreshed Cognito tokens', tokens)
       }
@@ -325,17 +336,12 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     } catch (err) {
       // rejects requests waiting for the refreshing
       _refreshCognitoTokensRequests.value.forEach(async (request) => request.reject(err))
-      // transitions back to the authenticating state anyway
-      // TODO: deal with errors other than Unauthorized (401)
       console.error('useAuthenticatorState._refreshCognitoTokens', 'failed to refresh Cognito tokens', err)
       lastError.value = {
         type: 'any-error',
         cause: err
       }
-      state.value = {
-        type: 'authenticating',
-        publicKeyInfo,
-      }
+      // TODO: where should we transition to?
     } finally {
       _refreshCognitoTokensRequests.value = []
     }
