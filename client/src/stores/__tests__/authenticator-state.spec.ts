@@ -1016,14 +1016,22 @@ describe('stores.authenticator-state', () => {
             authenticatorState.syncStateWithAccountInfo({ type: 'no-account' })
           })
 
-          it('should be in the "welcoming" state with a "corrupted-account-info" error', () => {
-            expect(authenticatorState.state.type).toBe('welcoming')
-            expect(authenticatorState.lastError?.type).toBe('corrupted-account-info')
-          })
-
-          it('should persist the "welcoming" state in sessionStorage', () => {
-            const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-            expect(storedState.type).toBe('welcoming')
+          it('should be in the "authenticated" state', () => {
+            expect(authenticatorState.state).toEqual({
+              type: 'authenticated',
+              publicKeyInfo: {
+                authenticatorAttachment: 'platform',
+                id: 'dummy-public-key-id',
+                userHandle: 'dummy-user-handle'
+              },
+              tokens: {
+                activatedAt,
+                expiresIn: 30 * 60,
+                accessToken: 'dummy-access-token',
+                idToken: 'dummy-id-token',
+                refreshToken: 'dummy-refresh-token'
+              }
+            })
           })
         })
 
@@ -1277,14 +1285,22 @@ describe('stores.authenticator-state', () => {
           authenticatorState.syncStateWithAccountInfo({ type: 'no-account' })
         })
 
-        it('should be in the "welcoming" state with a "corrupted-account-info" error', () => {
-          expect(authenticatorState.state.type).toBe('welcoming')
-          expect(authenticatorState.lastError?.type).toBe('corrupted-account-info')
-        })
-
-        it('should persist the "welcoming" state in sessionStorage', () => {
-          const storedState = JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY)!)
-          expect(storedState.type).toBe('welcoming')
+        it('should be in the "refreshing-tokens" state', () => {
+          expect(authenticatorState.state).toEqual({
+            type: 'refreshing-tokens',
+            publicKeyInfo: {
+              authenticatorAttachment: 'platform',
+              id: 'dummy-public-key-id',
+              userHandle: 'dummy-user-handle'
+            },
+            tokens: {
+              activatedAt,
+              expiresIn: 30 * 60,
+              accessToken: 'dummy-access-token',
+              idToken: 'dummy-id-token',
+              refreshToken: 'dummy-refresh-token'
+            }
+          })
         })
       })
 
