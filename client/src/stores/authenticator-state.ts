@@ -133,8 +133,6 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           case 'welcoming':
             break // does nothing
           case 'guest':
-          case 'authenticated':
-          case 'refreshing-tokens':
             // due to a corrupted account info?
             // fall back to the welcoming state
             console.warn(`useAuthenticatorState.syncStateWithAccountInfo@${state.value.type}`, 'account info may have been corrupted')
@@ -145,10 +143,13 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
             state.value = { type: 'welcoming' }
             break
           case 'authenticating':
+          case 'authenticated':
+          case 'refreshing-tokens':
             // this may happen just after the user signed in,
             // because signing-in involves reloading the page and the initial
             // account info may be "no-account"
-            // the initialization of the account info may also delay
+            // the initialization of the account info may also delay; `undefined` → "no-account"
+            console.warn(`useAuthenticatorState.syncStateWithAccountInfo@${state.value.type}`, 'account info turned to no-account. this should not be a problem just after sign-in')
             break
           default: {
             const unreachable: never = state.value
