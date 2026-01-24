@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import IconInfo from '../components/icons/IconInfo.vue'
 import { useAccountManager } from '../stores/account-manager'
 import { capitalize } from '../utils/strings'
 
@@ -45,7 +46,7 @@ const onSubmit = async () => {
             <div class="block">
               <p class="block">{{ t('message.tell_us_about_your_dog_friend') }}</p>
               <form @submit.prevent="onSubmit">
-                <b-field label-position="on-border">
+                <b-field>
                   <template #label>
                     <b-tooltip
                       type="is-info"
@@ -53,8 +54,9 @@ const onSubmit = async () => {
                       append-to-body
                       multilined
                     >
-                      <span class="is-inline-block">
+                      <span class="icon-text">
                         {{ capitalize(t('term.dog_friend_name')) }}
+                        <icon-info></icon-info>
                       </span>
                     </b-tooltip>
                   </template>

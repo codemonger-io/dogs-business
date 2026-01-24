@@ -4,6 +4,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PublicKeyInfo } from '@codemonger-io/passquito-client-js'
 
+import IconInfo from '../components/icons/IconInfo.vue'
 import { useAuthenticatorState } from '../stores/authenticator-state'
 import { usePasskeyCapabilityStore } from '../stores/passkey-capability'
 import { usePassquitoClientStore } from '../stores/passquito-client'
@@ -95,15 +96,16 @@ onBeforeUnmount(() => {
           v-if="passkeyCapabilityStore.isAuthenticationSupported"
           class="block"
         >
-          <b-field label-position="on-border">
+          <b-field>
             <template #label>
               <b-tooltip
                 type="is-info"
                 :label="t('tooltip.passkey')"
                 append-to-body
               >
-                <span class="is-inline-block">
+                <span class="icon-text">
                   {{ capitalize(t('term.passkey')) }}
+                  <icon-info></icon-info>
                 </span>
               </b-tooltip>
             </template>

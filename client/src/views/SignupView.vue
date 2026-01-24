@@ -3,6 +3,7 @@ import { getCurrentInstance, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import IconInfo from '../components/icons/IconInfo.vue'
 import ThePasskeys from '../components/ThePasskeys.vue'
 import { useAuthenticatorState } from '../stores/authenticator-state'
 import { usePasskeyCapabilityStore } from '../stores/passkey-capability'
@@ -98,15 +99,16 @@ const showWhatArePasskeys = () => {
           class="block"
         >
           <form @submit.prevent="onSubmit">
-            <b-field label-position="on-border">
+            <b-field>
               <template #label>
                 <b-tooltip
                   type="is-info"
                   :label="t('tooltip.username')"
                   append-to-body
                 >
-                  <span class="is-inline-block">
+                  <span class="icon-text">
                     {{ capitalize(t('term.username')) }}
+                    <icon-info></icon-info>
                   </span>
                 </b-tooltip>
               </template>
@@ -116,15 +118,16 @@ const showWhatArePasskeys = () => {
               >
               </b-input>
             </b-field>
-            <b-field label-position="on-border">
+            <b-field>
               <template #label>
                 <b-tooltip
                   type="is-info"
                   :label="t('tooltip.display_name')"
                   append-to-body
                 >
-                  <span class="is-inline-block">
+                  <span class="icon-text">
                     {{ capitalize(t('term.display_name')) }}
+                    <icon-info></icon-info>
                   </span>
                 </b-tooltip>
               </template>
