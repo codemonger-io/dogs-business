@@ -101,7 +101,10 @@ onBeforeUnmount(() => {
               <b-tooltip
                 type="is-info"
                 :label="t('tooltip.passkey')"
-                append-to-body
+                position="is-top"
+                multilined
+                :triggers="['click']"
+                :auto-close="['inside', 'outside']"
               >
                 <span class="icon-text">
                   {{ capitalize(t('term.passkey')) }}

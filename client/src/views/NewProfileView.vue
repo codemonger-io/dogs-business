@@ -51,8 +51,10 @@ const onSubmit = async () => {
                     <b-tooltip
                       type="is-info"
                       :label="t('tooltip.dog_friend_name')"
-                      append-to-body
+                      position="is-top"
                       multilined
+                      :triggers="['click']"
+                      :auto-close="['inside', 'outside']"
                     >
                       <span class="icon-text">
                         {{ capitalize(t('term.dog_friend_name')) }}

@@ -104,7 +104,10 @@ const showWhatArePasskeys = () => {
                 <b-tooltip
                   type="is-info"
                   :label="t('tooltip.username')"
-                  append-to-body
+                  position="is-top"
+                  multilined
+                  :triggers="['click']"
+                  :auto-close="['inside', 'outside']"
                 >
                   <span class="icon-text">
                     {{ capitalize(t('term.username')) }}
@@ -123,7 +126,10 @@ const showWhatArePasskeys = () => {
                 <b-tooltip
                   type="is-info"
                   :label="t('tooltip.display_name')"
-                  append-to-body
+                  position="is-top"
+                  multilined
+                  :triggers="['click']"
+                  :auto-close="['inside', 'outside']"
                 >
                   <span class="icon-text">
                     {{ capitalize(t('term.display_name')) }}
