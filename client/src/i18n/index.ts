@@ -69,10 +69,10 @@ export default {
       your_dog_friend: 'お友達(犬)'
     },
     tooltip: {
-      display_name: '@:{\'term.passkey\'}に紐づけられる表示名です',
+      display_name: '@:{\'term.passkey\'}に紐づけられる表示名です。お使いのデバイスによっては表示されないようです。',
       dog_friend_name: 'このアプリのメッセージをお友達(犬)に合わせてカスタマイズします。省略した場合は「お友達(犬)」と表示します。',
-      passkey: '@:{\'term.passkey\'}を選択して@:{\'term.dogs_business\'}にサインインします',
-      username: '@:{\'term.passkey\'}を識別する名前としてお使いのデバイスに表示されます'
+      passkey: '@:{\'term.passkey\'}を選択して@:{\'term.dogs_business\'}にサインインします。',
+      username: '@:{\'term.passkey\'}を識別する名前としてお使いのデバイスに表示されます。'
     }
   },
   en: {
@@ -145,10 +145,10 @@ export default {
       your_dog_friend: 'your dog-friend'
     },
     tooltip: {
-      display_name: 'Display name associated with your @:term.passkey',
-      dog_friend_name: 'Customize messages on this app for your dog-friend. If omitted, we will displayed "your dog-friend" instead',
-      passkey: 'Select a passkey to sign in to @:term.dogs_business',
-      username: 'Shown on your device as the identifier of your @:term.passkey'
+      display_name: 'Display name associated with your @:term.passkey. But it seems that some devices do not show it.',
+      dog_friend_name: 'Customize messages on this app for your dog-friend. If omitted, we will displayed "your dog-friend" instead.',
+      passkey: 'Select a passkey to sign in to @:term.dogs_business.',
+      username: 'Shown on your device as the identifier of your @:term.passkey.'
     }
   },
 }
