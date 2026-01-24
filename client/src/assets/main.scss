@@ -24,3 +24,10 @@
     min-height: 100vh;
   }
 }
+
+/* label that triggers a tooltip should be wide enough so that the tooltip is
+ * not cropped by the left edge of a mobile screen.
+ */
+.tooltip-trigger-label {
+  min-width: 12rem;
+}

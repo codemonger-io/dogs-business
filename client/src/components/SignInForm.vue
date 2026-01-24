@@ -106,7 +106,7 @@ onBeforeUnmount(() => {
                 :triggers="['click']"
                 :auto-close="['inside', 'outside']"
               >
-                <span class="icon-text">
+                <span class="icon-text tooltip-trigger-label">
                   {{ capitalize(t('term.passkey')) }}
                   <icon-info></icon-info>
                 </span>

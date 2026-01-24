@@ -56,7 +56,7 @@ const onSubmit = async () => {
                       :triggers="['click']"
                       :auto-close="['inside', 'outside']"
                     >
-                      <span class="icon-text">
+                      <span class="icon-text tooltip-trigger-label">
                         {{ capitalize(t('term.dog_friend_name')) }}
                         <icon-info></icon-info>
                       </span>

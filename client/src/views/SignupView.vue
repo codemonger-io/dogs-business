@@ -109,7 +109,7 @@ const showWhatArePasskeys = () => {
                   :triggers="['click']"
                   :auto-close="['inside', 'outside']"
                 >
-                  <span class="icon-text">
+                  <span class="icon-text tooltip-trigger-label">
                     {{ capitalize(t('term.username')) }}
                     <icon-info></icon-info>
                   </span>
@@ -131,7 +131,7 @@ const showWhatArePasskeys = () => {
                   :triggers="['click']"
                   :auto-close="['inside', 'outside']"
                 >
-                  <span class="icon-text">
+                  <span class="icon-text tooltip-trigger-label">
                     {{ capitalize(t('term.display_name')) }}
                     <icon-info></icon-info>
                   </span>
