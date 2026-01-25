@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { boxesIntersect, collectCollisionBoxesAndFeatures } from '@codemonger-io/maplibre-collision-boxes'
 import { GeoCircleLayer } from '@codemonger-io/maplibre-geo-circle-layer'
+import { useSnackbar } from 'buefy'
 import maplibregl from 'maplibre-gl'
 import type { GeoJSONSource } from 'maplibre-gl'
 import {
@@ -36,6 +37,8 @@ const REMOTE_BUSINESS_LAYER_ID = 'business-records'
 const MARKER_RANGE_LAYER_ID = 'marker-range'
 const MAX_MARKER_RANGE_IN_METERS = 50
 const MARKER_RANGE_LAYER_ALPHA = 0.25
+
+const snackbar = useSnackbar()
 
 const { t } = useI18n()
 
@@ -488,10 +491,10 @@ const addBusinessRecordAtCurrentMarker = (businessType: BusinessType) => {
 }
 
 const askCleanup = () => {
-  // @ts-ignore
-  self.proxy?.$buefy.snackbar.open({
-    message: t('message.clean_up_after', [t('term.your_dog_friend')]),
-    type: 'is-warning',
+  const dogName = currentDog.value?.name || t('term.your_dog_friend')
+  snackbar.open({
+    message: t('message.clean_up_after', [dogName]),
+    type: 'is-info',
     position: 'is-top',
     actionText: t('term.undo'),
     duration: 3000,
