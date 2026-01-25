@@ -519,10 +519,34 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     }
   }
 
+  // signs out the current account.
+  // throws an error if the current state is not "authenticated".
+  const signOut = () => {
+    switch (state.value.type) {
+      case 'authenticated':
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('useAuthenticatorState.signOut', 'signing out')
+        }
+        state.value = { type: 'welcoming' }
+        break
+      case 'loading':
+      case 'welcoming':
+      case 'guest':
+      case 'authenticating':
+      case 'refreshing-tokens':
+        throw new Error(`sign-out is allowed only in the "authenticated" state: ${state.value.type}`)
+      default: {
+        const unreachable: never = state.value
+        throw new RangeError(`unknown authenticator state: ${unreachable}`)
+      }
+    }
+  }
+
   return {
     attachAuthenticatorUi,
     lastError,
     refreshCognitoTokens,
+    signOut,
     state,
     syncStateWithAccountInfo,
     triggerReAuthentication,

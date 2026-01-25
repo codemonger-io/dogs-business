@@ -38,6 +38,11 @@ const router = createRouter({
                 expiresAt: +router.query['expiresAt']!, // expects a number
                 dogName: router.query['dogName']
               })
+            },
+            {
+              path: 'settings',
+              name: 'settings',
+              component: () => import('../views/SettingsView.vue')
             }
           ]
         },

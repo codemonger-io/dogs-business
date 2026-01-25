@@ -1,11 +1,16 @@
 export default {
   ja: {
+    action: {
+      cancel: 'キャンセル',
+      sign_out: 'サインアウト'
+    },
     message: {
       accept_invitation: '受け入れる',
       access_qr_code_or_url_below_to_be_friend_of_dog: 'QRコードまたは下記のURLにアクセスして{0}のお友達になりましょう。',
       agreement: '{0}および{1}に同意します。',
       checking_passkey_registration_capability: '@:{\'term.passkey\'}の登録機能を確認中・・・',
       clean_up_after: '{0}の後片付けをしましょう!',
+      confirm_sign_out: 'サインアウトしてもよろしいですか?',
       decline_invitation: '辞退する',
       do_you_accept_invitation_and_become_friend_of_dog: '招待を受け入れて{dog-name}のお友達になりますか?',
       do_you_want_to_be_a_friend_of_other_dog: 'ほかのユーザーのお友達(犬)とお友達になりたいですか?',
@@ -60,6 +65,7 @@ export default {
       poo: 'うんち💩',
       privacy_policy: 'プライバシーポリシー',
       profile: 'プロフィール',
+      settings: '設定',
       signin: 'サインイン',
       signup: 'サインアップ',
       terms_of_service: '利用規約',
@@ -76,12 +82,17 @@ export default {
     }
   },
   en: {
+    action: {
+      cancel: 'Cancel',
+      sign_out: 'Sign out'
+    },
     message: {
       accept_invitation: 'Accept',
       access_qr_code_or_url_below_to_be_friend_of_dog: 'Access the QR code or the URL below to be a friend of {0}.',
       agreement: 'I agree to the {0} and the {1}.',
       checking_passkey_registration_capability: 'Checking @:term.passkey registration capability...',
       clean_up_after: 'Clean up after {0}!',
+      confirm_sign_out: 'Are you sure you want to sign out?',
       decline_invitation: 'Decline',
       do_you_accept_invitation_and_become_friend_of_dog: 'Do you accept the invitation and become a friend of {dog-name}?',
       do_you_want_to_be_a_friend_of_other_dog: 'Do you want to be a friend of other user\'s dog-friend?',
@@ -136,6 +147,7 @@ export default {
       poo: 'poo💩',
       privacy_policy: 'Privacy Policy',
       profile: 'profile',
+      settings: 'settings',
       signin: 'Sign-in',
       signup: 'Sign-up',
       terms_of_service: 'Terms of Service',

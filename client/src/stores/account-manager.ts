@@ -733,6 +733,19 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
   }
 
+  // signs out from the current online account.
+  // throws an error if the current account is not an online account.
+  const signOut = () => {
+    if (accountInfo.value.type !== 'online') {
+      throw new Error('current account is not an online account')
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('useAccountManager.signOut', 'signing out from online account')
+    }
+    authenticatorState.signOut()
+    accountInfo.value = { type: 'no-account' }
+  }
+
   return {
     acceptHumanFriendInvitation,
     accountInfo,
@@ -746,7 +759,8 @@ export const useAccountManager = defineStore('account-manager', () => {
     isLoadingDog,
     lastError,
     registerNewDogFriend,
-    setActiveDogFriend
+    setActiveDogFriend,
+    signOut
   }
 })
 

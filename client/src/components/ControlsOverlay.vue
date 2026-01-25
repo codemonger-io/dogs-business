@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import IconUserCog from '../components/icons/IconUserCog.vue'
 import { useAccountManager } from '../stores/account-manager'
 
 const accountManager = useAccountManager()
@@ -20,7 +21,21 @@ const dogNameInitial = computed(() => {
 
 <template>
   <div class="control-container fullscreen">
-    <div class="right-control-container">
+    <div class="top-right-control-container">
+      <router-link
+        :to="{ name: 'settings' }"
+        custom
+        v-slot="{ navigate }"
+      >
+        <button
+          class="button is-primary is-rounded is-circle-icon"
+          @click="navigate()"
+        >
+          <icon-user-cog></icon-user-cog>
+        </button>
+      </router-link>
+    </div>
+    <div class="bottom-right-control-container">
       <router-link
         v-if="dogId != null && dogNameInitial != null"
         :to="{ name: 'profile', params: { dogId } }"
@@ -52,7 +67,15 @@ const dogNameInitial = computed(() => {
   }
 }
 
-.right-control-container {
+.top-right-control-container {
+  position: absolute;
+  pointer-events: auto;
+  right: 0;
+  top: 1rem;
+  margin-right: 1rem;
+}
+
+.bottom-right-control-container {
   position: absolute;
   pointer-events: auto;
   right: 0;
