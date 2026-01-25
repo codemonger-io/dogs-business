@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import TheControlsOverlay from '../components/TheControlsOverlay.vue'
+import ControlsOverlay from '../components/ControlsOverlay.vue'
 import TheMap from '../components/TheMap.vue'
 </script>
 
@@ -7,7 +7,7 @@ import TheMap from '../components/TheMap.vue'
   <main class="fullscreen">
     <TheMap />
     <div class="map-overlay pointer-pass-through">
-      <TheControlsOverlay />
+      <ControlsOverlay />
     </div>
     <div class="map-overlay">
       <RouterView />
