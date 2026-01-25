@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { type App, type InjectionKey, inject, ref } from 'vue'
+import { type App, type InjectionKey, computed, inject, ref } from 'vue'
 
 import type { LocationTracker } from '../lib/location-tracker'
 import type { MinimalGeolocationPosition } from '../types/geolocation'
@@ -39,6 +39,8 @@ export const useLocationTracker = defineStore('location-tracker', () => {
   const state = ref<LocationTrackerState>('untracking')
   const currentLocation = ref<MinimalGeolocationPosition>()
 
+  const isTracking = computed(() => TRACKING_STATES.includes(state.value))
+
   // TODO: I think the following code is not HMR-ready. Listeners will leak
   //       every time HMR occurs.
   locationTracker.addListener((event) => {
@@ -68,7 +70,7 @@ export const useLocationTracker = defineStore('location-tracker', () => {
   })
 
   const startTracking = () => {
-    if (TRACKING_STATES.includes(state.value)) {
+    if (isTracking.value) {
       return
     }
     try {
@@ -81,7 +83,7 @@ export const useLocationTracker = defineStore('location-tracker', () => {
   }
 
   const stopTracking = () => {
-    if (!TRACKING_STATES.includes(state.value)) {
+    if (!isTracking.value) {
       return
     }
     locationTracker.stopTracking()
@@ -89,7 +91,7 @@ export const useLocationTracker = defineStore('location-tracker', () => {
     currentLocation.value = undefined
   }
 
-  return { currentLocation, startTracking, state, stopTracking }
+  return { currentLocation, isTracking, startTracking, state, stopTracking }
 })
 
 /**

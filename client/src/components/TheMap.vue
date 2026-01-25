@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { boxesIntersect, collectCollisionBoxesAndFeatures } from '@codemonger-io/maplibre-collision-boxes'
 import { GeoCircleLayer } from '@codemonger-io/maplibre-geo-circle-layer'
-import { useSnackbar } from 'buefy'
+import { useSnackbar, useToast } from 'buefy'
 import maplibregl from 'maplibre-gl'
 import type { GeoJSONSource } from 'maplibre-gl'
 import {
@@ -39,6 +39,7 @@ const MAX_MARKER_RANGE_IN_METERS = 50
 const MARKER_RANGE_LAYER_ALPHA = 0.25
 
 const snackbar = useSnackbar()
+const toast = useToast()
 
 const { t } = useI18n()
 
@@ -60,6 +61,8 @@ const actionsPopup = ref<maplibregl.Popup>()
 const isDraggingMarker = ref(false)
 const pinnedLocation = ref<maplibregl.LngLat>()
 const isOutOfRange = ref(false)
+// toast to tell the start of location tracking
+const toastForTrackingStart = ref<{ close: () => void }>()
 
 // layer to show the region within the user can adjust the marker
 const markerRangeLayer = new GeoCircleLayer(MARKER_RANGE_LAYER_ID, {
@@ -263,15 +266,28 @@ const onVisibilityChanged = async () => {
     case 'visible':
       // resumes tracking the current location
       jumpToLocation = true
-      try {
-        locationTracker.startTracking()
-      } catch (err) {
-        console.error('TheMap', 'failed to start tracking:', err)
+      if (!locationTracker.isTracking) {
+        try {
+          if (toastForTrackingStart.value == null) {
+            toastForTrackingStart.value = toast.open({
+              message: t('message.starting_location_tracking'),
+              type: 'is-info',
+              indefinite: true
+            })
+          }
+          locationTracker.startTracking()
+        } catch (err) {
+          console.error('TheMap', 'failed to start tracking:', err)
+          toastForTrackingStart.value?.close()
+          toastForTrackingStart.value = undefined
+        }
       }
       break
     case 'hidden':
       // stops tracking the current location
       try {
+        toastForTrackingStart.value?.close()
+        toastForTrackingStart.value = undefined
         locationTracker.stopTracking()
       } catch (err) {
         console.error('TheMap', 'failed to stop tracking:', err)
@@ -426,18 +442,23 @@ watch(() => locationTracker.state, (state) => {
   switch (state) {
     case 'untracking':
     case 'starting_tracking':
+      break
     case 'tracking':
+      toastForTrackingStart.value?.close()
+      toastForTrackingStart.value = undefined
       break // OK
     case 'permission_denied':
-      // @ts-ignore
-      self.proxy?.$buefy.toast.open({
+      toastForTrackingStart.value?.close()
+      toastForTrackingStart.value = undefined
+      toast.open({
         message: t('message.enable_location_tracking'),
         type: 'is-danger'
       })
       break
     case 'unavailable':
-      // @ts-ignore
-      self.proxy?.$buefy.toast.open({
+      toastForTrackingStart.value?.close()
+      toastForTrackingStart.value = undefined
+      toast.open({
         message: t('message.location_tracking_unavailable'),
         type: 'is-danger'
       })
