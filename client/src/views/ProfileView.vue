@@ -92,10 +92,13 @@ const close = () => {
 
 <style scoped>
 .avatar {
+  --dogs-avatar-size: 128px;
+  --dogs-avatar-font-size: 64px;
+
   display: inline-flex;
   align-items: center;
 
-  font-size: 128px;
+  font-size: var(--dogs-avatar-font-size);
 
   border-radius: 9999px;
   border: 1px solid;
@@ -105,8 +108,8 @@ const close = () => {
   padding: 0;
 
   .icon {
-    width: 256px;
-    height: 256px;
+    width: var(--dogs-avatar-size);
+    height: var(--dogs-avatar-size);
   }
 }
 </style>
