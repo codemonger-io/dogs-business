@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { BInput } from 'buefy'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { BInput, BNotification } from 'buefy'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PublicKeyInfo } from '@codemonger-io/passquito-client-js'
 
@@ -8,13 +8,16 @@ import IconInfo from '../components/icons/IconInfo.vue'
 import { useAuthenticatorState } from '../stores/authenticator-state'
 import { usePasskeyCapabilityStore } from '../stores/passkey-capability'
 import { usePassquitoClientStore } from '../stores/passquito-client'
+import type { SignInReason } from '../types/sign-in-reason'
 import { capitalize } from '../utils/strings'
 
 const props = defineProps<{
   // if specified and the user ID is known, an authentication ceremony for the
   // specified user will be performed.
   // otherwise, a discoverable authentication ceremony will be performed.
-  publicKeyInfo?: PublicKeyInfo
+  publicKeyInfo?: PublicKeyInfo,
+  // optional reason for sign-in
+  signInReason?: SignInReason
 }>()
 
 const emit = defineEmits<{
@@ -29,6 +32,23 @@ const passkeyCapabilityStore = usePasskeyCapabilityStore()
 const passquitoClientStore = usePassquitoClientStore()
 
 const authenticatorState = useAuthenticatorState()
+
+// reason for sign-in. `undefined` if no reason is specified.
+const reasonForSignIn = computed(() => {
+  if (props.signInReason == null) {
+    return undefined
+  }
+  switch (props.signInReason) {
+    case 'fresh-sign-up':
+      return t('message.sign_in_with_your_new_passkey')
+    case 're-authentication':
+      return t('message.sign_in_to_reauthenticate')
+    default: {
+      const unreachable: never = props.signInReason
+      throw new RangeError(`unknown sign-in reason: ${unreachable}`)
+    }
+  }
+})
 
 // passkey input field which gets focused when mounted.
 const passkeyInput = ref<InstanceType<typeof BInput> | null>(null)
@@ -92,6 +112,11 @@ onBeforeUnmount(() => {
     <div class="box welcome-box paper">
       <section class="section">
         <h1 class="title is-3">{{ t('term.signin') }}</h1>
+        <div v-if="reasonForSignIn" class="block">
+          <b-notification type="is-warning" :closable="false">
+            {{ reasonForSignIn }}
+          </b-notification>
+        </div>
         <div
           v-if="passkeyCapabilityStore.isAuthenticationSupported"
           class="block"

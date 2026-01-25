@@ -761,11 +761,14 @@ describe('stores.authenticator-state', () => {
         })
 
         it('should call askSignIn of the authenticator UI', () => {
-          expect(authenticatorUi.askSignIn).toHaveBeenCalledWith({
-            authenticatorAttachment: 'platform',
-            id: 'dummy-public-key-id',
-            userHandle: 'dummy-user-handle'
-          })
+          expect(authenticatorUi.askSignIn).toHaveBeenCalledWith(
+            {
+              authenticatorAttachment: 'platform',
+              id: 'dummy-public-key-id',
+              userHandle: 'dummy-user-handle'
+            },
+            undefined
+          )
         })
 
         it('should not be able to attach another authenticator UI but end up with an error thrown', () => {
@@ -792,11 +795,14 @@ describe('stores.authenticator-state', () => {
             // makes sure that the watchEffect is executed
             await nextTick()
 
-            expect(newAuthenticatorUi.askSignIn).toHaveBeenCalledWith({
-              authenticatorAttachment: 'platform',
-              id: 'dummy-public-key-id',
-              userHandle: 'dummy-user-handle'
-            })
+            expect(newAuthenticatorUi.askSignIn).toHaveBeenCalledWith(
+              {
+                authenticatorAttachment: 'platform',
+                id: 'dummy-public-key-id',
+                userHandle: 'dummy-user-handle'
+              },
+              undefined
+            )
             expect(authenticatorUi.askSignIn).not.toHaveBeenCalled()
           })
         })

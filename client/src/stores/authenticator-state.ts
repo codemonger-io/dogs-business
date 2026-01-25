@@ -9,6 +9,7 @@ import { useSessionStorage } from '@vueuse/core'
 import { makeValidatingSerializer } from '../lib/storage-serializer'
 import type { AccountInfo } from '../types/account-info'
 import { isAuthenticatorState } from '../types/authenticator-state'
+import type { SignInReason } from '../types/sign-in-reason'
 import { isCognitoTokensExpiring } from '../utils/passquito'
 import { useCredentialsApi } from './credentials-api'
 
@@ -35,8 +36,15 @@ export interface AuthenticatorUi {
    * @param publicKeyInfo -
    *
    *   Public key info of the user to sign in.
+   *
+   * @param signInReason -
+   *
+   *   Optional reason for sign-in.
    */
-  askSignIn(publicKeyInfo: PublicKeyInfo): void | Promise<void>
+  askSignIn(
+    publicKeyInfo: PublicKeyInfo,
+    signInReason?: SignInReason
+  ): void | Promise<void>
 }
 
 /**
@@ -87,6 +95,10 @@ type UpdatedCredentials = {
 
   // optional Cognito tokens of the online account
   tokens?: CognitoTokens
+
+  // whether the public key has been newly registered.
+  // means `false` if omitted.
+  isNewPublicKey?: boolean
 }
 
 /**
@@ -317,6 +329,7 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
           state.value = {
             type: 'authenticating',
             publicKeyInfo,
+            signInReason: 're-authentication'
           }
           return
         } else {
@@ -371,9 +384,12 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         // asks the user to sign in if the authenticator UI is attached
         if (_authenticatorUi.value != null) {
           if (process.env.NODE_ENV !== 'production') {
-            console.log('useAuthenticatorState', 'asking sign-in with public key info', state.value.publicKeyInfo)
+            console.log('useAuthenticatorState', 'asking sign-in with public key info', state.value.publicKeyInfo, state.value.signInReason)
           }
-          _authenticatorUi.value.askSignIn(state.value.publicKeyInfo)
+          _authenticatorUi.value.askSignIn(
+            state.value.publicKeyInfo,
+            state.value.signInReason
+          )
         } else {
           if (process.env.NODE_ENV !== 'production') {
             console.log('useAuthenticatorState', 'no authenticator UI is attached yet')
@@ -433,7 +449,8 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
         } else {
           state.value = {
             type: 'authenticating',
-            publicKeyInfo: credentials.publicKeyInfo
+            publicKeyInfo: credentials.publicKeyInfo,
+            signInReason: credentials.isNewPublicKey ? 'fresh-sign-up' : undefined
           }
         }
         break
@@ -515,7 +532,8 @@ export const useAuthenticatorState = defineStore('authenticator-state', () => {
     }
     state.value = {
       type: 'authenticating',
-      publicKeyInfo: state.value.publicKeyInfo
+      publicKeyInfo: state.value.publicKeyInfo,
+      signInReason: 're-authentication'
     }
   }
 

@@ -29,7 +29,7 @@ onMounted(() => {
         window.location.search = params.toString()
       } else {
         if (process.env.NODE_ENV !== 'production') {
-          console.log('TheAuthentictor', 'showing the sign-in form')
+          console.log('TheAuthenticator', 'showing the sign-in form')
         }
       }
     }
@@ -48,6 +48,7 @@ onBeforeUnmount(() => {
   <SignInForm
     v-else-if="authenticatorState.state.type === 'authenticating'"
     :publicKeyInfo="authenticatorState.state.publicKeyInfo"
+    :sign-in-reason="authenticatorState.state.signInReason"
   />
   <template v-else>
     <slot></slot>

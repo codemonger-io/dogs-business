@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { BField, BInput, BNotification, BSkeleton, BTooltip } from 'buefy'
 import { getCurrentInstance, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -38,8 +39,15 @@ onMounted(() => {
 const detachAuthenticatorUi = ref<() => void>()
 onMounted(() => {
   detachAuthenticatorUi.value = authenticatorState.attachAuthenticatorUi({
+    // will be called after the user successfully signs up
     askSignIn: async () => {
-      console.log('SignupView', 'asking user to sign in')
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('SignupView', 'asking user to sign in')
+      }
+      // why not navigate to "sign-in" (`SigninView`)?
+      // because `SigninView` starts a *discoverable* authentication ceremony
+      // while users would expect to sign in with the public key that they
+      // created just now.
       window.location.href = router.resolve({ name: 'map' }).href
     }
   })
@@ -61,7 +69,8 @@ const onSubmit = async () => {
       console.log('SignupView', 'finished registration', publicKeyInfo)
     }
     await authenticatorState.updateCredentials({
-      publicKeyInfo
+      publicKeyInfo,
+      isNewPublicKey: true
     })
   } catch (err) {
     console.error(err)

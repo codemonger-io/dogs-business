@@ -7,6 +7,8 @@ import {
   isPublicKeyInfo
 } from '@codemonger-io/passquito-client-js'
 
+import type { SignInReason } from './sign-in-reason'
+
 /**
  * State of authenticator.
  *
@@ -116,6 +118,9 @@ export interface AuthenticatingAuthenticatorState {
 
   /** Public key info of the online account being authenticated. */
   publicKeyInfo: PublicKeyInfo
+
+  /** Optional reason for sign-in. */
+  signInReason?: SignInReason
 }
 
 /**
