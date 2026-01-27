@@ -115,6 +115,9 @@ watchEffect(() => {
     }
     return
   }
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('TheMap', 'initializing the map')
+  }
   map.value = markRaw(new maplibregl.Map({
     container: mapContainer.value,
     style: 'https://tiles.openfreemap.org/styles/bright',
@@ -185,6 +188,9 @@ watchEffect(() => {
     }
     (source as GeoJSONSource).setData(data)
   } else {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'initializing active business records layer')
+    }
     map.value.addSource(ACTIVE_BUSINESS_SOURCE_ID, {
       type: 'geojson',
       data
@@ -236,6 +242,9 @@ watchEffect(() => {
   }
   const source = map.value.getSource(REMOTE_BUSINESS_SOURCE_ID)
   if (source == null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'initializing remote business records layer')
+    }
     map.value.addSource(REMOTE_BUSINESS_SOURCE_ID, {
       type: 'vector',
       tiles: [`${import.meta.env.VITE_DOGS_BUSINESS_MAP_API_BASE_URL}/tile/{z}/{x}/{y}/tile.mvt`]
@@ -253,7 +262,9 @@ watchEffect(() => {
       filter: ['!', ['has', ['get', 'recordId'], ['literal', activeBusinessRecordIdTable.value]]]
     })
   } else {
-    console.log('TheMap', 'source for remote business records already exists')
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'source for remote business records already exists')
+    }
   }
 })
 
