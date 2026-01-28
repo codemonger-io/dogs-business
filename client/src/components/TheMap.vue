@@ -21,6 +21,7 @@ import type { BusinessType } from '../lib/business-record-database'
 import { convertBusinessRecordsToGeoJSON } from '../lib/business-record-database'
 import { useAccountManager } from '../stores/account-manager'
 import { useLocationTracker } from '../stores/location-tracker'
+import type { MapViewerMode } from '../types/map-viewer-mode'
 import {
   DOGS_BUSINESS_DANGER_RGB,
   DOGS_BUSINESS_PRIMARY,
@@ -38,6 +39,10 @@ const MARKER_RANGE_LAYER_ID = 'marker-range'
 const MAX_MARKER_RANGE_IN_METERS = 50
 const MARKER_RANGE_LAYER_ALPHA = 0.25
 
+const props = defineProps<{
+  viewerMode: MapViewerMode
+}>()
+
 const snackbar = useSnackbar()
 const toast = useToast()
 
@@ -54,6 +59,7 @@ if (self == null) {
 const mapContainer = ref<HTMLElement>()
 const map = ref<maplibregl.Map>()
 const isMapLoaded = ref(false)
+const isActiveBusinessLayerReady = ref(false)
 const locationMarker = ref<maplibregl.Marker>()
 let jumpToLocation = true // intentionally non-reactive
 const actionsPopupContainer = ref<HTMLElement>()
@@ -87,6 +93,16 @@ const activeBusinessRecordIdTable = computed(() => {
     table[r.recordId] = true
   })
   return table
+})
+
+const activeBusinessRecordsGeoJson = computed(() => {
+  if (process.env.NODE_ENV !== 'production') {
+    if (accountManager.activeBusinessRecords == null) {
+      console.log('TheMap', 'no active business records')
+    }
+  }
+  const records = accountManager.activeBusinessRecords ?? []
+  return markRaw(convertBusinessRecordsToGeoJSON(records))
 })
 
 const getBusinessIconUrl = (businessType: string) => {
@@ -173,27 +189,24 @@ watchEffect(() => {
     console.error('TheMap', 'map is loaded but no instance exists')
     return
   }
-  if (accountManager.activeBusinessRecords == null) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('TheMap', 'no active business records')
-    }
-    return
-  }
-  const data =
-    convertBusinessRecordsToGeoJSON(accountManager.activeBusinessRecords)
+  const viewerMode = props.viewerMode
   const source = map.value.getSource(ACTIVE_BUSINESS_SOURCE_ID)
   if (source != null) {
     if (source.type !== 'geojson') {
       throw new Error('active-business source must be "geojson"')
     }
-    (source as GeoJSONSource).setData(data)
+    (source as GeoJSONSource).setData(activeBusinessRecordsGeoJson.value)
+    map.value.setFilter(
+      ACTIVE_BUSINESS_LAYER_ID,
+      ['boolean', viewerMode === 'active-dog']
+    )
   } else {
     if (process.env.NODE_ENV !== 'production') {
       console.log('TheMap', 'initializing active business records layer')
     }
     map.value.addSource(ACTIVE_BUSINESS_SOURCE_ID, {
       type: 'geojson',
-      data
+      data: activeBusinessRecordsGeoJson.value
     })
     map.value.addLayer({
       id: ACTIVE_BUSINESS_LAYER_ID,
@@ -202,12 +215,13 @@ watchEffect(() => {
       layout: {
         'icon-image': ['concat', 'dogs-business-', ['get', 'businessType']],
         'icon-size': 0.3
-      }
+      },
+      filter: ['boolean', viewerMode === 'active-dog']
     })
     // handles clicks on business records
     map.value.on('click', ACTIVE_BUSINESS_LAYER_ID, async (event) => {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('TheMap', 'business record clicked', event)
+        console.log('TheMap', 'active business record clicked', event)
       }
       const clickedRecordId = event.features?.[0].id
       console.log('clicked record ID', clickedRecordId)
@@ -228,6 +242,7 @@ watchEffect(() => {
         console.log('hidden record ID', box.feature.id)
       }
     })
+    isActiveBusinessLayerReady.value = true
   }
 })
 
@@ -240,6 +255,15 @@ watchEffect(() => {
     console.error('TheMap', 'map is loaded but no instance exists')
     return
   }
+  if (!isActiveBusinessLayerReady.value) {
+    // active business layer must be ready first,
+    // because the remote layer should be laid under it.
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'active business layer is not ready yet')
+    }
+    return
+  }
+  const viewerMode = props.viewerMode
   const source = map.value.getSource(REMOTE_BUSINESS_SOURCE_ID)
   if (source == null) {
     if (process.env.NODE_ENV !== 'production') {
@@ -255,16 +279,54 @@ watchEffect(() => {
       source: REMOTE_BUSINESS_SOURCE_ID,
       'source-layer': 'business_records',
       layout: {
-        'icon-image': ['concat', 'dogs-business-', ['get', 'businessType']],
+        'icon-image': viewerMode === 'global'
+          ? ['concat', 'dogs-business-', ['get', 'businessType']]
+          : ['concat', 'dogs-business-', ['get', 'businessType'], '-inactive'],
         'icon-size': 0.3
       },
       // excludes business records in the active business records
-      filter: ['!', ['has', ['get', 'recordId'], ['literal', activeBusinessRecordIdTable.value]]]
+      ...(viewerMode !== 'global' ? { filter: ['!', ['has', ['get', 'recordId'], ['literal', activeBusinessRecordIdTable.value]]] } : {})
+    }, ACTIVE_BUSINESS_LAYER_ID)
+    // handles clicks on business records
+    map.value.on('click', REMOTE_BUSINESS_LAYER_ID, async (event) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('TheMap', 'remote business record clicked', event)
+      }
+      const clickedRecordId = event.features?.[0].id
+      console.log('clicked record ID', clickedRecordId)
+      const collisionBoxes = await collectCollisionBoxesAndFeatures(
+        map.value!,
+        REMOTE_BUSINESS_LAYER_ID
+      )
+      const clickedBox = collisionBoxes
+        .find((box) => box.feature.id=== clickedRecordId)
+      if (clickedBox == null) {
+        console.warn('TheMap', 'clicked business record not found')
+        return
+      }
+      const hiddenBoxes = collisionBoxes.filter((box) => {
+        return box !== clickedBox && boxesIntersect(box.box, clickedBox.box)
+      })
+      for (const box of hiddenBoxes) {
+        console.log('hidden record ID', box.feature.id, box.feature.properties?.recordId)
+      }
     })
+
   } else {
     if (process.env.NODE_ENV !== 'production') {
       console.log('TheMap', 'source for remote business records already exists')
     }
+    map.value.setLayoutProperty(
+      REMOTE_BUSINESS_LAYER_ID,
+      'icon-image',
+      viewerMode === 'global'
+        ? ['concat', 'dogs-business-', ['get', 'businessType']]
+        : ['concat', 'dogs-business-', ['get', 'businessType'], '-inactive']
+    )
+    map.value.setFilter(
+      REMOTE_BUSINESS_LAYER_ID,
+      viewerMode !== 'global' ? ['!', ['has', ['get', 'recordId'], ['literal', activeBusinessRecordIdTable.value]]] : null
+    )
   }
 })
 

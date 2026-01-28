@@ -1,13 +1,22 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
 import ControlsOverlay from '../components/ControlsOverlay.vue'
 import TheMap from '../components/TheMap.vue'
+import type { MapViewerMode } from '../types/map-viewer-mode'
+
+const mapParameters = ref<{
+  viewerMode: MapViewerMode
+}>({
+  viewerMode: 'active-dog'
+})
 </script>
 
 <template>
   <main class="fullscreen">
-    <TheMap />
+    <TheMap :viewer-mode="mapParameters.viewerMode" />
     <div class="map-overlay pointer-pass-through">
-      <ControlsOverlay />
+      <ControlsOverlay v-model:viewer-mode="mapParameters.viewerMode" />
     </div>
     <div class="map-overlay">
       <RouterView />
