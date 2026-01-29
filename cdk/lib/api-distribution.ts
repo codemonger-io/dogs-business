@@ -107,6 +107,7 @@ export class ApiDistribution extends Construct {
         [`${mapApi.basePath.replace(/\/$/, '')}/*`]: {
           origin: new origins.RestApiOrigin(mapApi.api),
           cachePolicy: mapApiCachePolicy,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS, // allows preflight OPTIONS
           responseHeadersPolicy: corsHeadersPolicy,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
         },
