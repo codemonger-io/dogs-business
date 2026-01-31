@@ -70,21 +70,41 @@ async fn function_handler(
     // configures the policy
     let policy_document = &mut response.policy_document;
     policy_document.version = Some("2012-10-17".to_string());
-    let mut statement = IamPolicyStatement::default();
     if is_valid && let Some(method_arn) = &event.payload.method_arn {
-        // (allows everything for now)
-        statement.effect = IamPolicyEffect::Allow;
-        statement.action.push("execute-api:Invoke".to_string());
-        statement.resource.push(method_arn.clone());
+        tracing::info!("parsing method_arn: {}", method_arn);
+        // method_arn should end with /{z}/{x}/{y}/tile.mvt
+        let tile_root_arn = method_arn
+            .rsplit_once('/')
+            .and_then(|(base, _mvt)| base.rsplit_once('/'))
+            .and_then(|(base, _y)| base.rsplit_once('/'))
+            .and_then(|(base, _x)| base.rsplit_once('/'))
+            .map(|(tile, _z)| tile);
+        if tile_root_arn.is_some_and(|arn| arn.ends_with("/tile")) {
+            let tile_root_arn = tile_root_arn.unwrap();
+            tracing::info!("granting access to arn: {}/*", tile_root_arn);
+            let mut statement = IamPolicyStatement::default();
+            statement.effect = IamPolicyEffect::Allow;
+            statement.action.push("execute-api:Invoke".to_string());
+            statement.resource.push(format!("{tile_root_arn}/*"));
+            policy_document.statement.push(statement);
+        } else {
+            tracing::warn!("invalid method_arn pattern: {method_arn}");
+            policy_document.statement.push(make_deny_all_statement());
+        }
     } else {
-        // deny everything
-        statement.effect = IamPolicyEffect::Deny;
-        statement.action.push("*".to_string());
-        statement.resource.push("*".to_string());
+        policy_document.statement.push(make_deny_all_statement());
     }
-    policy_document.statement.push(statement);
 
     Ok(response)
+}
+
+// creates a policy statement that denies all access.
+fn make_deny_all_statement() -> IamPolicyStatement {
+    let mut statement = IamPolicyStatement::default();
+    statement.effect = IamPolicyEffect::Deny;
+    statement.action.push("*".to_string());
+    statement.resource.push("*".to_string());
+    statement
 }
 
 #[tokio::main]
