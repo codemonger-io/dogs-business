@@ -140,6 +140,22 @@ watchEffect(() => {
     center: [139.7671, 35.6812], // Tokyo station
     zoom: 18
   }))
+  map.value.setTransformRequest((url, resourceType) => {
+    // adds Authorization header to requests for business records tiles
+    if (
+      resourceType === 'Tile' &&
+      url.startsWith(import.meta.env.VITE_DOGS_BUSINESS_MAP_API_BASE_URL)
+    ) {
+      return {
+        url,
+        headers: {
+          Authorization: 'Bearer dummy-api-token'
+        }
+      }
+    } else {
+      return { url }
+    }
+  });
   map.value.on('styleimagemissing', (e) => {
     const { id } = e
     if (requestedImages.has(id)) {
