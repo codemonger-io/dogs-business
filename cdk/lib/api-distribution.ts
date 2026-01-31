@@ -65,7 +65,7 @@ export class ApiDistribution extends Construct {
       {
         comment: 'cache policy for the Dog\'s Business Map API',
         headerBehavior: cloudfront.CacheHeaderBehavior.allowList(
-          'X-Api-Key',
+          'Authorization',
         ),
         minTtl: Duration.minutes(5),
         maxTtl: Duration.minutes(15),
