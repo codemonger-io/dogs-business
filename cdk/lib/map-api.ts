@@ -12,7 +12,7 @@ import {
   makeIntegrationResponsesAllowCors,
   makeMethodResponsesAllowCors,
 } from '@codemonger-io/cdk-cors-utils';
-import { RestApiWithSpec } from '@codemonger-io/cdk-rest-api-with-spec';
+import { RestApiWithSpec, augmentAuthorizer } from '@codemonger-io/cdk-rest-api-with-spec';
 import { composeMappingTemplate } from '@codemonger-io/mapping-template-compose';
 
 import type { BusinessRecordTable } from './business-record-table';
@@ -52,6 +52,9 @@ export interface MapApiProps {
  * @beta
  */
 export class MapApi extends Construct {
+  /** Lambda function to authorize a tile request. */
+  readonly authorizeTileRequestLambda: lambda.IFunction;
+
   /** Lambda function to obtain a tile. */
   readonly getTileLambda: lambda.IFunction;
 
@@ -62,12 +65,23 @@ export class MapApi extends Construct {
     super(scope, id);
 
     const { allowOrigins, basePath, businessRecordTable, userPool } = props;
-    const manifestPath = path.join('lambda', 'map-api', 'Cargo.toml');
+    const authManifestPath = path.join('lambda', 'map-auth', 'Cargo.toml');
+    const tileManifestPath = path.join('lambda', 'map-api', 'Cargo.toml');
 
     // Lambda functions
+    // - authorize a tile request
+    this.authorizeTileRequestLambda = new RustFunction(this, 'AuthorizeTileRequest', {
+      description: 'Authorize a map tile request',
+      manifestPath: authManifestPath,
+      binaryName: 'authorize-tile-request',
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 128,
+      timeout: Duration.seconds(5),
+    });
     // - get a tile
     this.getTileLambda = new RustFunction(this, 'GetTileLambda', {
-      manifestPath,
+      description: 'Get a map tile of business records',
+      manifestPath: tileManifestPath,
       binaryName: 'get-tile',
       architecture: lambda.Architecture.ARM_64,
       memorySize: 128,
@@ -111,6 +125,22 @@ export class MapApi extends Construct {
         tracingEnabled: true,
       },
     });
+
+    // authorizer for tiles
+    const authorizer = augmentAuthorizer(
+      new apigw.RequestAuthorizer(this, 'Authorizer', {
+        handler: this.authorizeTileRequestLambda,
+        authorizerName: 'MapTileAccessAuthorizer',
+        identitySources: [apigw.IdentitySource.header('Authorization')],
+        resultsCacheTtl: Duration.minutes(5), // default but explicit
+      }),
+      {
+        description: 'Authorizer that validates tile access tokens',
+        type: 'apiKey',
+        in: 'header',
+        name: 'Authorization',
+      },
+    );
 
     // suppresses CORS errors caused when the gateway responds with errors
     // before reaching the integrations
@@ -175,6 +205,8 @@ export class MapApi extends Construct {
       }),
       {
         description: 'Obtain a map tile at a given zoom level, x, and y coordinates',
+        authorizer,
+        authorizationType: apigw.AuthorizationType.CUSTOM,
         methodResponses: makeMethodResponsesAllowCors([
           {
             statusCode: '200',
