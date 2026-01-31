@@ -10,11 +10,12 @@
 //!
 //! See [`ApiGatewayCustomAuthorizerResponse`](https://docs.rs/aws_lambda_events/latest/aws_lambda_events/event/apigw/struct.ApiGatewayCustomAuthorizerResponse.html).
 
-use aws_lambda_events::event::{
+use aws_lambda_events::{
     apigw::{
         ApiGatewayCustomAuthorizerRequestTypeRequest,
         ApiGatewayCustomAuthorizerResponse,
     },
+    http::HeaderName,
     iam::{IamPolicyEffect, IamPolicyStatement},
 };
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
@@ -31,6 +32,12 @@ impl SharedState {
     }
 }
 
+// `HeaderName` for "Authorization".
+const AUTHORIZATION_HEADER: HeaderName = HeaderName::from_static("authorization"); // must be in lower case
+
+// Authorization header prefix for Bearer tokens.
+const BEARER_PREFIX: &[u8] = b"Bearer ";
+
 async fn function_handler(
     shared_state: Arc<SharedState>,
     event: LambdaEvent<ApiGatewayCustomAuthorizerRequestTypeRequest>,
@@ -40,19 +47,37 @@ async fn function_handler(
     let mut response = ApiGatewayCustomAuthorizerResponse::default();
     response.principal_id = Some("user".to_string());
 
-    // TODO: validate the request
+    // extracts the authorization header
+    let auth_header = event
+        .payload
+        .headers
+        .get(&AUTHORIZATION_HEADER);
+    if auth_header.is_none() {
+        tracing::warn!("missing authorization header");
+    }
+    let token = auth_header
+        .and_then(|v| v.as_bytes().strip_prefix(BEARER_PREFIX));
+    if token.is_none() {
+        tracing::warn!("invalid authorization header. must start with 'Bearer '");
+    }
+    // TODO: validate token
+    tracing::info!("extracted token: {:?}", token);
+    let is_valid = token.is_some();
+    if !is_valid {
+        tracing::warn!("invalid authorization token");
+    }
 
     // configures the policy
     let policy_document = &mut response.policy_document;
     policy_document.version = Some("2012-10-17".to_string());
     let mut statement = IamPolicyStatement::default();
-    if let Some(method_arn) = &event.payload.method_arn {
+    if is_valid && let Some(method_arn) = &event.payload.method_arn {
         // (allows everything for now)
         statement.effect = IamPolicyEffect::Allow;
         statement.action.push("execute-api:Invoke".to_string());
         statement.resource.push(method_arn.clone());
     } else {
-        // no method ARN, deny everything
+        // deny everything
         statement.effect = IamPolicyEffect::Deny;
         statement.action.push("*".to_string());
         statement.resource.push("*".to_string());
