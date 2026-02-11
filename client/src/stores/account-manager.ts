@@ -36,6 +36,7 @@ import {
   isHumanFriendInvitationStatus,
   isNewHumanFriendInvitation
 } from '../types/human-friend-invitation'
+import type { TileAccessToken } from '../types/tile-access-token'
 import { isCognitoTokensExpiring } from '../utils/passquito'
 import { useAuthenticatorState } from './authenticator-state'
 
@@ -46,6 +47,9 @@ export const DOG_DATABASE_MANAGER_INJECTION_KEY =
 /** Injection key for the business record database manager. */
 export const BUSINESS_RECORD_DATABASE_MANAGER_INJECTION_KEY =
   Symbol() as InjectionKey<BusinessRecordDatabaseManager>
+
+// safety margin in seconds before renewing the map tile access token.
+const TILE_ACCESS_TOKEN_REFRESH_MARGIN_SECONDS = 1 * 60
 
 /**
  * Uses the provided account manager.
@@ -205,6 +209,11 @@ export const useAccountManager = defineStore('account-manager', () => {
     { immediate: true }
   )
 
+  const tileAccessToken = ref<TileAccessToken>({
+    token: 'invalid',
+    expiresAt: 0
+  })
+
   const currentDog = ref<GenericDog>()
   const isLoadingDog = ref<boolean>(false)
 
@@ -299,6 +308,82 @@ export const useAccountManager = defineStore('account-manager', () => {
       const tokens = await authenticatorState.refreshCognitoTokens()
       return tokens.idToken
     }
+  }
+
+  let _tileAccessTokenRequestQueue: {
+    resolve: (newToken: TileAccessToken) => void,
+    reject: (reason: unknown) => void
+  }[] = []
+  const _requestTileAccessToken = async (): Promise<TileAccessToken> => {
+    console.log('useAccountManager._requestTileAccessToken', 'queue length', _tileAccessTokenRequestQueue.length)
+    if (_tileAccessTokenRequestQueue.length === 0) {
+      // the first request
+      // queues a dummy promise to indicate that a request is in progress
+      // note that the first request is promised by this function call
+      _tileAccessTokenRequestQueue.push({
+        resolve: () => {},
+        reject: () => {}
+      })
+      try {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('useAccountManager._requestTileAccessToken', 'getting a tile access token from Resource API')
+        }
+        const url = import.meta.env.VITE_DOGS_BUSINESS_MAP_API_BASE_URL + '/tile-access-token'
+        const res = await fetch(url, {
+          headers: {
+            Authorization: await _requestIdToken()
+          }
+        })
+        if (res.ok) {
+          const newRawToken = await res.json()
+          if (!isRawTileAccessToken(newRawToken)) {
+            throw new Error('invalid tile access token response from Map API')
+          }
+          const newToken = {
+            token: newRawToken.token,
+            expiresAt: (Date.now() / 1000) + newRawToken.expiresIn
+          }
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('useAccountManager._requestTileAccessToken', 'renewed tile access token', newToken)
+          }
+          _tileAccessTokenRequestQueue.forEach(({ resolve }) => resolve(newToken))
+          return newToken
+        } else {
+          if (res.status === 401) {
+            authenticatorState.triggerReAuthentication()
+          }
+          const message = await res.text()
+          throw new Error(`failed to get tile access token from Resource API: ${res.status} ${message}`)
+        }
+      } catch (err) {
+        // rejects all pending requests
+        console.error('useAccountManager._requestTileAccessToken', 'failed to renew tile access token', err)
+        _tileAccessTokenRequestQueue.forEach(({ reject }) => reject(err))
+        throw err
+      } finally {
+        // clears the queue anyway
+        _tileAccessTokenRequestQueue = []
+      }
+    } else {
+      return new Promise((resolve, reject) => {
+        _tileAccessTokenRequestQueue.push({ resolve, reject })
+      })
+    }
+  }
+
+  const requestTileAccessToken = async (): Promise<string> => {
+    if (accountInfo.value.type !== 'online') {
+      throw new Error('no tile access token for non-online account')
+    }
+    const refreshBy = (tileAccessToken.value.expiresAt - TILE_ACCESS_TOKEN_REFRESH_MARGIN_SECONDS) * 1000
+    if (Date.now() < refreshBy) {
+      return tileAccessToken.value.token
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('useAccountManager.requestTileAccessToken', 'renewing tile access token')
+    }
+    tileAccessToken.value = await _requestTileAccessToken()
+    return tileAccessToken.value.token
   }
 
   const _loadBusinessRecordsOfGuest = async (
@@ -759,6 +844,7 @@ export const useAccountManager = defineStore('account-manager', () => {
     isLoadingDog,
     lastError,
     registerNewDogFriend,
+    requestTileAccessToken,
     setActiveDogFriend,
     signOut
   }
@@ -813,4 +899,28 @@ export const businessRecordDatabaseManagerProvider = (businessRecordDatabaseMana
       )
     }
   }
+}
+
+// Raw tile access token.
+//
+// Returned type of the Map API.
+interface RawTileAccessToken {
+  token: string
+  // duration of the token validity in seconds.
+  expiresIn: number
+}
+
+// Returns if a given value is `RawTileAccessToken`.
+function isRawTileAccessToken(value: unknown): value is RawTileAccessToken {
+  if (value == null || typeof value !== 'object') {
+    return false
+  }
+  const maybeAccessToken = value as RawTileAccessToken
+  if (typeof maybeAccessToken.token !== 'string') {
+    return false
+  }
+  if (typeof maybeAccessToken.expiresIn !== 'number') {
+    return false
+  }
+  return true
 }
