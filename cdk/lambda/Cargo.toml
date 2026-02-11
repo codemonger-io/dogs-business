@@ -5,7 +5,9 @@ members = ["business-core", "map-api", "map-auth", "resource-api"]
 [workspace.dependencies]
 aws-config = "1.8"
 aws-sdk-dynamodb = "1.92"
+aws-sdk-ssm = "1.102"
 aws-smithy-async = "1.2"
+base64 = "0.22"
 business-core = { path = "./business-core" }
 derive_builder = "0.20"
 futures = "0.3"

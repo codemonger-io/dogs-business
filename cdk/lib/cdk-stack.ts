@@ -109,6 +109,7 @@ export class CdkStack extends Stack {
       allowOrigins,
       businessRecordTable,
       userPool: passquito.userPool.userPool,
+      tileAccessTokenSecretParameter: ssmParameters.tileAccessTokenSecretParameter,
     });
     const apiDistribution = new ApiDistribution(this, 'ApiDistribution', {
       resourceApi,
@@ -127,6 +128,10 @@ export class CdkStack extends Stack {
     new CfnOutput(this, 'MapboxAccessTokenParameterPath', {
       description: 'SSM parameter path for the Mapbox access token for online accounts',
       value: ssmParameters.mapboxAccessTokenParameterPath,
+    });
+    new CfnOutput(this, 'TileAccessTokenSecretParameterPath', {
+      description: 'SSM parameter path for the secret key to sign tile access tokens',
+      value: ssmParameters.tileAccessTokenSecretParameterPath,
     });
     new CfnOutput(this, 'AppDistributionDomainName', {
       description: 'Domain name of the CloudFront distribution for the app contents',
