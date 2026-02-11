@@ -124,7 +124,11 @@ export class MapApi extends Construct {
       architecture: lambda.Architecture.ARM_64,
       memorySize: 128,
       timeout: Duration.seconds(5),
+      environment: {
+        TILE_ACCESS_TOKEN_SECRET_PARAMETER_PATH: tileAccessTokenSecretParameter.parameterName,
+      },
     });
+    tileAccessTokenSecretParameter.grantRead(this.authorizeTileRequestLambda);
     // - get a tile
     this.getTileLambda = new RustFunction(this, 'GetTileLambda', {
       description: 'Get a map tile of business records',
