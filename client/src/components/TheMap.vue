@@ -110,6 +110,19 @@ const getBusinessIconUrl = (businessType: string) => {
 }
 const requestedImages = new Set<string>()
 
+// access token for business records tiles
+const tileAccessToken = ref<string>('invalid')
+const refreshTileAccessToken = async () => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('TheMap.refreshTileAccessToken', 'refreshing tile access token')
+  }
+  try {
+    tileAccessToken.value = await accountManager.requestTileAccessToken()
+  } catch (err) {
+    console.error('TheMap.refreshTileAccessToken', 'failed to refresh tile access token', err)
+  }
+}
+
 // initializes the map when necessary resources are changed
 watchEffect(() => {
   // initializes the map if the map is not initialized yet
@@ -146,10 +159,14 @@ watchEffect(() => {
       resourceType === 'Tile' &&
       url.startsWith(import.meta.env.VITE_DOGS_BUSINESS_MAP_API_BASE_URL)
     ) {
+      // requests a fresh tile access token.
+      // unfortunately, `TransformRequestFunction` cannot be async,
+      // the refreshed token will be available later.
+      refreshTileAccessToken()
       return {
         url,
         headers: {
-          Authorization: 'Bearer dummy-api-token'
+          Authorization: `Bearer ${tileAccessToken.value}`
         }
       }
     } else {
