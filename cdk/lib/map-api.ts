@@ -13,6 +13,7 @@ import {
   makeMethodResponsesAllowCors,
 } from '@codemonger-io/cdk-cors-utils';
 import { RestApiWithSpec, augmentAuthorizer } from '@codemonger-io/cdk-rest-api-with-spec';
+import type { GhostStringParameter } from '@codemonger-io/cdk-ghost-string-parameter';
 import { composeMappingTemplate } from '@codemonger-io/mapping-template-compose';
 
 import type { BusinessRecordTable } from './business-record-table';
@@ -20,6 +21,26 @@ import {
   INDEXED_ZOOM_LEVELS,
   TILE_INDEX_NAME_PREFIX,
 } from './business-record-table';
+
+/**
+ * Safety margin in seconds to update tile access tokens before they actually
+ * expire.
+ *
+ * @beta
+ */
+export const TILE_ACCESS_TOKEN_SAFETY_MARGIN_SECONDS = 5 * 60; // 5 minutes
+
+/**
+ * `max-age` in `Cache-Control` of a tile access token.
+ *
+ * @remarks
+ *
+ * The server-side safety margin (5 mins) minus client-side safety margin
+ * (supposed to be 1 min).
+ *
+ * @beta
+ */
+export const TILE_ACCESS_TOKEN_CACHE_TTL_SECONDS = 4 * 60; // 4 minutes
 
 /**
  * Props for {@link MapApi}.
@@ -44,6 +65,9 @@ export interface MapApiProps {
 
   /** User pool for authentication. */
   readonly userPool: cognito.UserPool;
+
+  /** SSM parameter for the secret key to sign tile access tokens. */
+  readonly tileAccessTokenSecretParameter: GhostStringParameter;
 }
 
 /**
@@ -52,6 +76,9 @@ export interface MapApiProps {
  * @beta
  */
 export class MapApi extends Construct {
+  /** Lambda function to get a tile access token. */
+  readonly getTileAccessTokenLambda: lambda.IFunction;
+
   /** Lambda function to authorize a tile request. */
   readonly authorizeTileRequestLambda: lambda.IFunction;
 
@@ -64,11 +91,31 @@ export class MapApi extends Construct {
   constructor(scope: Construct, id: string, readonly props: MapApiProps) {
     super(scope, id);
 
-    const { allowOrigins, basePath, businessRecordTable, userPool } = props;
+    const {
+      allowOrigins,
+      basePath,
+      businessRecordTable,
+      userPool,
+      tileAccessTokenSecretParameter,
+    } = props;
     const authManifestPath = path.join('lambda', 'map-auth', 'Cargo.toml');
     const tileManifestPath = path.join('lambda', 'map-api', 'Cargo.toml');
 
     // Lambda functions
+    // - get a tile access token
+    this.getTileAccessTokenLambda = new RustFunction(this, 'GetTileAccessToken', {
+      description: 'Get a map tile access token',
+      manifestPath: authManifestPath,
+      binaryName: 'get-tile-access-token',
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 128,
+      timeout: Duration.seconds(5),
+      environment: {
+        TILE_ACCESS_TOKEN_SECRET_PARAMETER_PATH: tileAccessTokenSecretParameter.parameterName,
+        TILE_ACCESS_TOKEN_SAFETY_MARGIN_SECONDS: `${TILE_ACCESS_TOKEN_SAFETY_MARGIN_SECONDS}`,
+      },
+    });
+    tileAccessTokenSecretParameter.grantRead(this.getTileAccessTokenLambda);
     // - authorize a tile request
     this.authorizeTileRequestLambda = new RustFunction(this, 'AuthorizeTileRequest', {
       description: 'Authorize a map tile request',
@@ -126,19 +173,31 @@ export class MapApi extends Construct {
       },
     });
 
+    // Cognito authorizer
+    const cognitoAuthorizer = augmentAuthorizer(
+      new apigw.CognitoUserPoolsAuthorizer(this, 'CognitoAuthorizer', {
+        cognitoUserPools: [userPool],
+      }),
+      {
+        description: 'Authorizer that authenticates users by ID tokens issued by the Cognito user pool',
+        type: 'apiKey',
+        in: 'header',
+        name: 'Authorization',
+      },
+    );
     // authorizer for tiles
-    const authorizer = augmentAuthorizer(
+    const tileAuthorizer = augmentAuthorizer(
       new apigw.RequestAuthorizer(this, 'Authorizer', {
         handler: this.authorizeTileRequestLambda,
         authorizerName: 'MapTileAccessAuthorizer',
         identitySources: [apigw.IdentitySource.header('Authorization')],
-        resultsCacheTtl: Duration.minutes(5), // default but explicit
+        resultsCacheTtl: Duration.seconds(TILE_ACCESS_TOKEN_CACHE_TTL_SECONDS),
       }),
       {
         description: 'Authorizer that validates tile access tokens',
-        type: 'apiKey',
-        in: 'header',
-        name: 'Authorization',
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'tileAccessToken',
       },
     );
 
@@ -167,6 +226,42 @@ export class MapApi extends Construct {
         (resource, part) => resource.addResource(part),
         this.api.root,
       );
+
+    // /tile-access-token
+    const accessToken = root.addResource('tile-access-token');
+    // - GET
+    accessToken.addMethod(
+      'GET',
+      new apigw.LambdaIntegration(this.getTileAccessTokenLambda, {
+        proxy: false,
+        passthroughBehavior: apigw.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          'application/json': '{}',
+        },
+        integrationResponses: makeIntegrationResponsesAllowCors([
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Cache-Control': `'max-age=${TILE_ACCESS_TOKEN_CACHE_TTL_SECONDS}, s-maxage=${TILE_ACCESS_TOKEN_CACHE_TTL_SECONDS}'`,
+            },
+          },
+        ]),
+      }),
+      {
+        description: 'Obtain a tile access token',
+        authorizer: cognitoAuthorizer,
+        authorizationType: apigw.AuthorizationType.COGNITO,
+        methodResponses: makeMethodResponsesAllowCors([
+          {
+            statusCode: '200',
+            description: 'Tile access token has successfully been obtained',
+            responseParameters: {
+              'method.response.header.Cache-Control': true,
+            },
+          },
+        ]),
+      },
+    );
 
     // tile endpoints
     // /tile
@@ -205,7 +300,7 @@ export class MapApi extends Construct {
       }),
       {
         description: 'Obtain a map tile at a given zoom level, x, and y coordinates',
-        authorizer,
+        authorizer: tileAuthorizer,
         authorizationType: apigw.AuthorizationType.CUSTOM,
         methodResponses: makeMethodResponsesAllowCors([
           {

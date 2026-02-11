@@ -67,9 +67,9 @@ export class ApiDistribution extends Construct {
         headerBehavior: cloudfront.CacheHeaderBehavior.allowList(
           'Authorization',
         ),
-        minTtl: Duration.minutes(5),
+        minTtl: Duration.minutes(0),
         maxTtl: Duration.minutes(15),
-        defaultTtl: Duration.minutes(5),
+        defaultTtl: Duration.minutes(15),
       },
     );
 
