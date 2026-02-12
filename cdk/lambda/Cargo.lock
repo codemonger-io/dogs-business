@@ -1740,6 +1740,7 @@ name = "map-auth"
 version = "0.1.0"
 dependencies = [
  "aws-config",
+ "aws-sdk-dynamodb",
  "aws-sdk-ssm",
  "aws_lambda_events",
  "base64",

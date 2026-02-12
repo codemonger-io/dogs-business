@@ -18,6 +18,7 @@ import { MapApi } from './map-api';
 import { ELIGIBLE_OIDC_SUB_CLAIMS } from './oidc-config';
 import { ResourceApi } from './resource-api';
 import { ResourceTable } from './resource-table';
+import { SessionTable } from './session-table';
 import { SsmParameters } from './ssm-parameters';
 import { StackReader } from './stack-reader';
 
@@ -93,6 +94,9 @@ export class CdkStack extends Stack {
     const resourceTable = new ResourceTable(this, 'ResourceTable', {
       deploymentStage,
     });
+    const sessionTable = new SessionTable(this, 'SessionTable', {
+      deploymentStage,
+    });
     const businessRecordTable = new BusinessRecordTable(this, 'BusinessRecordTable', {
       deploymentStage,
     });
@@ -108,6 +112,7 @@ export class CdkStack extends Stack {
       basePath: '/dogs-business-api/map',
       allowOrigins,
       businessRecordTable,
+      sessionTable,
       userPool: passquito.userPool.userPool,
       tileAccessTokenSecretParameter: ssmParameters.tileAccessTokenSecretParameter,
     });

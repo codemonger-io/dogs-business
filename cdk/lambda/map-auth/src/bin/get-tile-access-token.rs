@@ -11,6 +11,7 @@
 //! - `TILE_ACCESS_TOKEN_SAFETY_MARGIN_SECONDS`: safety margin in seconds to
 //!   update tile access tokens before they actually expires. Must be shorter
 //!   than `TILE_ACCESS_TOKEN_TTL_SECONDS`.
+//! - `SESSION_TABLE_NAME`: name of the DynamoDB table to store sessions.
 //!
 //! ## Input
 //!
@@ -27,6 +28,7 @@
 //! }
 //! ```
 
+use aws_sdk_dynamodb::types::AttributeValue;
 use base64::{engine::general_purpose::STANDARD as base64_engine, Engine as _};
 use hmac::{Hmac, Mac as _};
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
@@ -45,6 +47,12 @@ struct SharedState {
     /// Safety margin in seconds to update tile access tokens before they
     /// actually expire.
     safety_margin_seconds: Duration,
+
+    /// DynamoDB client.
+    dynamodb_client: aws_sdk_dynamodb::Client,
+
+    /// Session table name.
+    session_table_name: String,
 }
 
 impl SharedState {
@@ -74,9 +82,18 @@ impl SharedState {
             })
             .map(Duration::from_secs)?;
 
+        // initializes a DynamoDB client
+        let dynamodb_client = aws_sdk_dynamodb::Client::new(&config);
+
+        // reads the session table name from env
+        let session_table_name = std::env::var("SESSION_TABLE_NAME")
+            .map_err(|_| "SESSION_TABLE_NAME env is not set")?;
+
         Ok(Self {
             secret_key,
             safety_margin_seconds,
+            dynamodb_client,
+            session_table_name,
         })
     }
 }
@@ -103,12 +120,72 @@ async fn function_handler(
 ) -> Result<TileAccessToken, Error> {
     tracing::info!("obtaining tile access token: safety margin={}", shared_state.safety_margin_seconds.as_secs());
 
-    // TODO: obtain from the env
-    let expires_in: u64 = 15 * 60;
-
+    // reuses a previously issued token if it is not expiring within the safety margin
     let now = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)?
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .expect("Unix time should be valid")
         .as_secs();
+    let min_expires_at = now + shared_state.safety_margin_seconds.as_secs();
+    let existing_token = shared_state
+        .dynamodb_client
+        .query()
+        .table_name(&shared_state.session_table_name)
+        .key_condition_expression("#pk = :pk AND #sk >= :min_expires_at")
+        .expression_attribute_names("#pk", "pk")
+        .expression_attribute_names("#sk", "sk")
+        .expression_attribute_values(
+            ":pk",
+            AttributeValue::S("tile-access-token#global".to_string()),
+        )
+        .expression_attribute_values(
+            ":min_expires_at",
+            AttributeValue::N(format!("{min_expires_at}")),
+        )
+        .scan_index_forward(false) // newest first
+        .limit(1)
+        .send()
+        .await?
+        .items
+        .and_then(|items| items.first().map(|item| {
+            let expires_at = item
+                .get("sk")
+                .ok_or_else(|| {
+                    tracing::warn!("missing expiration time (sk) in the session table");
+                })
+                .and_then(|v| v.as_n().map_err(|_| {
+                    tracing::warn!("invalid expiration time (sk) in the session table");
+                }))
+                .and_then(|t| t.parse::<u64>().map_err(|e| {
+                    tracing::warn!("malformed expiration time (sk) in the session table: {e}");
+                }));
+            let token = item
+                .get("token")
+                .ok_or_else(|| {
+                    tracing::warn!("missing tile access token in the session table");
+                })
+                .and_then(|v| v.as_s().map_err(|_| {
+                    tracing::warn!("invalid tile access token in the session table");
+                }));
+            match (expires_at, token) {
+                (Ok(expires_at), Ok(token)) => Ok((expires_at, token.clone())),
+                _ => Err("invalid item in the session table")
+            }
+        }))
+        .transpose()?;
+    if let Some((expires_at, token)) = existing_token {
+        let expires_in = expires_at - now; // ignores the latency of the table query
+        tracing::info!("reusing existing tile access token: expires_in={expires_in}");
+        return Ok(TileAccessToken {
+            token,
+            expires_in,
+        });
+    }
+
+    // otherwise, issues a new token
+    tracing::info!("issuing new tile access token");
+
+    // TODO: obtain the duration from the env
+    let expires_in: u64 = 15 * 60;
     let expires_at = now + expires_in;
     let expires_at_bytes = expires_at.to_be_bytes();
 
@@ -124,6 +201,19 @@ async fn function_handler(
 
     // Base64-encodes the token bytes
     let token = base64_engine.encode(&token_bytes);
+
+    // saves the token in the session table
+    tracing::info!("saving tile access token in the session table");
+    shared_state
+        .dynamodb_client
+        .put_item()
+        .table_name(&shared_state.session_table_name)
+        .item("pk", AttributeValue::S("tile-access-token#global".to_string()))
+        .item("sk", AttributeValue::N(format!("{expires_at}")))
+        .item("token", AttributeValue::S(token.clone()))
+        .item("createdAt", AttributeValue::N(format!("{now}")))
+        .send()
+        .await?;
 
     Ok(TileAccessToken {
         token,
