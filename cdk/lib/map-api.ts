@@ -21,6 +21,7 @@ import {
   INDEXED_ZOOM_LEVELS,
   TILE_INDEX_NAME_PREFIX,
 } from './business-record-table';
+import type { SessionTable } from './session-table';
 
 /**
  * Safety margin in seconds to update tile access tokens before they actually
@@ -63,6 +64,9 @@ export interface MapApiProps {
   /** Business record table. */
   readonly businessRecordTable: BusinessRecordTable;
 
+  /** Session table. */
+  readonly sessionTable: SessionTable;
+
   /** User pool for authentication. */
   readonly userPool: cognito.UserPool;
 
@@ -95,6 +99,7 @@ export class MapApi extends Construct {
       allowOrigins,
       basePath,
       businessRecordTable,
+      sessionTable,
       userPool,
       tileAccessTokenSecretParameter,
     } = props;
@@ -113,9 +118,11 @@ export class MapApi extends Construct {
       environment: {
         TILE_ACCESS_TOKEN_SECRET_PARAMETER_PATH: tileAccessTokenSecretParameter.parameterName,
         TILE_ACCESS_TOKEN_SAFETY_MARGIN_SECONDS: `${TILE_ACCESS_TOKEN_SAFETY_MARGIN_SECONDS}`,
+        SESSION_TABLE_NAME: sessionTable.table.tableName,
       },
     });
     tileAccessTokenSecretParameter.grantRead(this.getTileAccessTokenLambda);
+    sessionTable.table.grantReadWriteData(this.getTileAccessTokenLambda);
     // - authorize a tile request
     this.authorizeTileRequestLambda = new RustFunction(this, 'AuthorizeTileRequest', {
       description: 'Authorize a map tile request',
