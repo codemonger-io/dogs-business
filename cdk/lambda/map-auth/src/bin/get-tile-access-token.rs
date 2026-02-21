@@ -27,6 +27,9 @@
 //!   "expiresIn": 900
 //! }
 //! ```
+//!
+//! - `token`: (string) Base64-encoded tile access token.
+//! - `expiresIn`: (number) duration in seconds for which the token is valid.
 
 use aws_sdk_dynamodb::types::AttributeValue;
 use base64::{engine::general_purpose::STANDARD as base64_engine, Engine as _};
@@ -34,10 +37,14 @@ use hmac::{Hmac, Mac as _};
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
 use serde::Serialize;
 use sha2::Sha256;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
-use map_auth::{ByteArrayExt as _, TileAccessTokenBytes};
+use map_auth::{
+    ByteArrayExt as _,
+    TileAccessTokenBytes,
+    TileAccessTokenBytesExt as _,
+};
 
 /// Shared state that lives while the Lambda instance is alive.
 struct SharedState {
@@ -53,6 +60,9 @@ struct SharedState {
 
     /// Session table name.
     session_table_name: String,
+
+    /// Last issued tile access token.
+    last_token: Mutex<Option<TileAccessTokenBytes>>,
 }
 
 impl SharedState {
@@ -94,6 +104,7 @@ impl SharedState {
             safety_margin_seconds,
             dynamodb_client,
             session_table_name,
+            last_token: Mutex::new(None),
         })
     }
 }
@@ -120,12 +131,29 @@ async fn function_handler(
 ) -> Result<TileAccessToken, Error> {
     tracing::info!("obtaining tile access token: safety margin={}", shared_state.safety_margin_seconds.as_secs());
 
-    // reuses a previously issued token if it is not expiring within the safety margin
     let now = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("Unix time should be valid")
         .as_secs();
     let min_expires_at = now + shared_state.safety_margin_seconds.as_secs();
+
+    // reuses the last issued token if it is not expiring within the safety margin
+    let mut last_token = shared_state.last_token.lock().unwrap();
+    if let Some(token_bytes) = last_token.as_ref() {
+        let expires_at = token_bytes.expires_at();
+        if expires_at >= min_expires_at {
+            let expires_in = expires_at - now;
+            tracing::info!("reusing last issued tile access token: expires_in={expires_in}");
+            return Ok(TileAccessToken {
+                token: base64_engine.encode(&token_bytes),
+                expires_in,
+            });
+        } else {
+            tracing::info!("skipping last issued tile access token that is expiring soon: expires_at={expires_at}");
+        }
+    }
+
+    // reuses a stored token if it is not expiring within the safety margin
     let existing_token = shared_state
         .dynamodb_client
         .query()
@@ -173,12 +201,25 @@ async fn function_handler(
         }))
         .transpose()?;
     if let Some((expires_at, token)) = existing_token {
-        let expires_in = expires_at - now; // ignores the latency of the table query
-        tracing::info!("reusing existing tile access token: expires_in={expires_in}");
-        return Ok(TileAccessToken {
-            token,
-            expires_in,
-        });
+        let token_bytes: Result<TileAccessTokenBytes, _> = base64_engine
+            .decode(token.as_bytes())
+            .map_err(|e| tracing::warn!("invalid Base64 encoding of tile access token in the session table: {e}"))
+            .and_then(|bytes| {
+                bytes
+                    .try_into()
+                    .map_err(|v: Vec<u8>| tracing::warn!("invalid length of tile access token bytes in the session table: {}", v.len()))
+            });
+        if let Ok(token_bytes) = token_bytes {
+            let expires_in = expires_at - now; // ignores the latency of the table query
+            tracing::info!("reusing stored tile access token: expires_in={expires_in}");
+            last_token.replace(token_bytes);
+            return Ok(TileAccessToken {
+                token,
+                expires_in,
+            });
+        } else {
+            tracing::warn!("skipping stored tile access token that is invalid Base64");
+        }
     }
 
     // otherwise, issues a new token
@@ -202,7 +243,7 @@ async fn function_handler(
     // Base64-encodes the token bytes
     let token = base64_engine.encode(&token_bytes);
 
-    // saves the token in the session table
+    // saves the token in the session table and caches it in memory
     tracing::info!("saving tile access token in the session table");
     shared_state
         .dynamodb_client
@@ -214,6 +255,7 @@ async fn function_handler(
         .item("createdAt", AttributeValue::N(format!("{now}")))
         .send()
         .await?;
+    last_token.replace(token_bytes);
 
     Ok(TileAccessToken {
         token,
