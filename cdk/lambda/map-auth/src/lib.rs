@@ -42,6 +42,13 @@ pub trait TileAccessTokenBytesExt {
     ///
     /// Returns a pair of (expiration time, signature).
     fn get_parts(&self) -> ([u8; 8], &[u8]);
+
+    /// Returns the expiration time as a `u64` value.
+    #[inline]
+    fn expires_at(&self) -> u64 {
+        let (expires_at_bytes, _) = self.get_parts();
+        u64::from_be_bytes(expires_at_bytes)
+    }
 }
 
 impl TileAccessTokenBytesExt for TileAccessTokenBytes {
