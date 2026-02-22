@@ -326,7 +326,7 @@ export const useAccountManager = defineStore('account-manager', () => {
       })
       try {
         if (process.env.NODE_ENV !== 'production') {
-          console.log('useAccountManager._requestTileAccessToken', 'getting a tile access token from Resource API')
+          console.log('useAccountManager._requestTileAccessToken', 'getting a tile access token from Map API')
         }
         const url = import.meta.env.VITE_DOGS_BUSINESS_MAP_API_BASE_URL + '/tile-access-token'
         const res = await fetch(url, {
@@ -353,7 +353,7 @@ export const useAccountManager = defineStore('account-manager', () => {
             authenticatorState.triggerReAuthentication()
           }
           const message = await res.text()
-          throw new Error(`failed to get tile access token from Resource API: ${res.status} ${message}`)
+          throw new Error(`failed to get tile access token from Map API: ${res.status} ${message}`)
         }
       } catch (err) {
         // rejects all pending requests
