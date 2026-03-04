@@ -21,6 +21,7 @@ import type { BusinessType } from '../lib/business-record-database'
 import { convertBusinessRecordsToGeoJSON } from '../lib/business-record-database'
 import { useAccountManager } from '../stores/account-manager'
 import { useLocationTracker } from '../stores/location-tracker'
+import type { LocationMarkerState } from '../types/location-marker-state'
 import type { MapViewerMode } from '../types/map-viewer-mode'
 import {
   DOGS_BUSINESS_DANGER_RGB,
@@ -41,6 +42,15 @@ const MARKER_RANGE_LAYER_ALPHA = 0.25
 
 const props = defineProps<{
   viewerMode: MapViewerMode
+}>()
+
+const resumeTrackingRequested = defineModel('resumeTrackingRequested', {
+  type: Boolean,
+  required: false
+})
+
+const emit = defineEmits<{
+  'location-marker-state-changed': [state: LocationMarkerState | undefined]
 }>()
 
 const snackbar = useSnackbar()
@@ -401,6 +411,7 @@ const onVisibilityChanged = async () => {
       isDraggingMarker.value = false
       pinnedLocation.value = undefined
       isOutOfRange.value = false
+      emit('location-marker-state-changed', undefined)
       // TODO: prohibit the user from placing business records until the
       //       location is updated
       break
@@ -457,7 +468,13 @@ watchEffect(() => {
       }
       isDraggingMarker.value = true
       if (pinnedLocation.value == null) {
-        pinnedLocation.value = locationMarker.value!.getLngLat()
+        const coords = locationTracker.currentLocation?.coords
+        if (coords != null) {
+          pinnedLocation.value = new maplibregl.LngLat(coords.longitude, coords.latitude)
+        } else {
+          console.warn('TheMap', 'cannot pin the location as the current tracked location is unavailable')
+          return
+        }
       }
       checkMarkerRange()
     })
@@ -477,13 +494,15 @@ watchEffect(() => {
   }
   actionsPopup.value
     .setLngLat([coords.longitude, coords.latitude])
-  if (jumpToLocation) {
+  if (resumeTrackingRequested.value || jumpToLocation) {
     map.value.jumpTo({
       center: [coords.longitude, coords.latitude]
     })
     actionsPopup.value.addTo(map.value)
     jumpToLocation = false
+    resumeTrackingRequested.value = false
   }
+  emit('location-marker-state-changed', 'tracking')
 })
 
 // checks if the dragged marker is in the acceptable range.
@@ -502,9 +521,11 @@ const checkMarkerRange = () => {
   if (isOutOfRange.value) {
     locationMarker.value.addClassName('marker-out-of-range')
     locationMarker.value.removeClassName('marker-within-range')
+    emit('location-marker-state-changed', 'pinned-out-of-range')
   } else {
     locationMarker.value.addClassName('marker-within-range')
     locationMarker.value.removeClassName('marker-out-of-range')
+    emit('location-marker-state-changed', 'pinned-within-range')
   }
 }
 
@@ -576,6 +597,15 @@ watch(() => locationTracker.state, (state) => {
     }
   }
 }, { immediate: true })
+
+watch(() => resumeTrackingRequested.value, (newValue, oldValue) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('TheMap', `resumeTrackingRequested changed: ${oldValue} -> ${newValue}`)
+  }
+  if (newValue) {
+    pinnedLocation.value = undefined
+  }
+})
 
 const hideActionsPopup = () => {
   const popup = actionsPopup.value

@@ -3,20 +3,44 @@ import { ref } from 'vue'
 
 import ControlsOverlay from '../components/ControlsOverlay.vue'
 import TheMap from '../components/TheMap.vue'
+import type { LocationMarkerState } from '../types/location-marker-state'
 import type { MapViewerMode } from '../types/map-viewer-mode'
 
 const mapParameters = ref<{
-  viewerMode: MapViewerMode
+  viewerMode: MapViewerMode,
+  locationMarkerState: LocationMarkerState | undefined,
+  resumeTrackingRequested: boolean
 }>({
-  viewerMode: 'active-dog'
+  viewerMode: 'active-dog',
+  locationMarkerState: undefined,
+  resumeTrackingRequested: false
 })
+
+const updateLocationMarkerState = (state: LocationMarkerState | undefined) => {
+  mapParameters.value.locationMarkerState = state
+}
+
+const resumeTracking = () => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('MapView', 'resuming location tracking')
+  }
+  mapParameters.value.resumeTrackingRequested = true
+}
 </script>
 
 <template>
   <main class="fullscreen">
-    <TheMap :viewer-mode="mapParameters.viewerMode" />
+    <TheMap
+      v-model:resume-tracking-requested="mapParameters.resumeTrackingRequested"
+      :viewer-mode="mapParameters.viewerMode"
+      @location-marker-state-changed="updateLocationMarkerState"
+    />
     <div class="map-overlay pointer-pass-through">
-      <ControlsOverlay v-model:viewer-mode="mapParameters.viewerMode" />
+      <ControlsOverlay
+        v-model:viewer-mode="mapParameters.viewerMode"
+        :location-marker-state="mapParameters.locationMarkerState"
+        @resume-tracking="resumeTracking"
+      />
     </div>
     <div class="map-overlay">
       <RouterView />

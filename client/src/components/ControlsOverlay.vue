@@ -4,15 +4,25 @@ import type { PropType } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import IconGlobe from '../components/icons/IconGlobe.vue'
+import IconLocationMarker from '../components/icons/IconLocationMarker.vue'
 import IconPaw from '../components/icons/IconPaw.vue'
 import IconUserCog from '../components/icons/IconUserCog.vue'
 import { useAccountManager } from '../stores/account-manager'
+import type { LocationMarkerState } from '../types/location-marker-state'
 import type { MapViewerMode } from '../types/map-viewer-mode'
+
+const props = defineProps<{
+  locationMarkerState: LocationMarkerState | undefined
+}>()
 
 const viewerMode = defineModel('viewerMode', {
   type: String as PropType<MapViewerMode>,
   required: true
 })
+
+const emit = defineEmits<{
+  'resume-tracking': []
+}>()
 
 const accountManager = useAccountManager()
 
@@ -26,6 +36,36 @@ const dogNameInitial = computed(() => {
     return null
   }
 })
+
+const markerButtonClass = computed(() => {
+  const classes = []
+  switch (props.locationMarkerState) {
+    case 'tracking':
+      classes.push('is-primary')
+      break
+    case 'pinned-within-range':
+      classes.push('is-warning')
+      break
+    case 'pinned-out-of-range':
+      classes.push('is-danger')
+      break
+    case undefined:
+      classes.push('is-static')
+      break
+    default: {
+      const unreachable: never = props.locationMarkerState
+      throw new RangeError(`unknown location marker state: ${unreachable}`)
+    }
+  }
+  return classes
+})
+
+const jumpToLocation = () => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('ControlsOverlay', 'resuming location tracking')
+  }
+  emit('resume-tracking')
+}
 
 const rotateViewerMode = () => {
   if (process.env.NODE_ENV !== 'production') {
@@ -68,6 +108,14 @@ const rotateViewerMode = () => {
       </router-link>
     </div>
     <div class="bottom-right-control-container">
+      <button
+        class="button is-rounded is-circle-icon"
+        :class="markerButtonClass"
+        :disabled="locationMarkerState == null"
+        @click="jumpToLocation()"
+      >
+        <icon-location-marker></icon-location-marker>
+      </button>
       <button
         class="button is-primary is-rounded is-circle-icon"
         @click="rotateViewerMode()"
