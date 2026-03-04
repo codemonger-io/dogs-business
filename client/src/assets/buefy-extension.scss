@@ -35,7 +35,8 @@ $danger: #C43F37;
     height: 100% !important;
   }
 
-  &.is-lucide-icon {
+  &.is-lucide-icon,
+  &.is-stroke-icon {
     svg {
       fill: none;
       stroke-width: var(--lucide-outline-icon-stroke-width);
