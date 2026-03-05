@@ -45,6 +45,7 @@ export class CdkStack extends Stack {
     const allowOrigins = [
       ...(appDistributionDomainName ? [`https://${appDistributionDomainName}`] : []),
       'http://localhost:5174',
+      'http://localhost:4173',
     ];
 
     // `FederatedPrincipal` turns into `sts:AssumeRole`
