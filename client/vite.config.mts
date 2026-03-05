@@ -22,11 +22,15 @@ export default defineConfig({
     }
   },
   // workaround to an error "Can't find variable: __publicField"
+  // optimizeDeps option is for development, build option is for production
   // https://github.com/maplibre/maplibre-gl-js/issues/6680#issuecomment-3825893338
   optimizeDeps: {
     include: ['maplibre-gl'],
     esbuildOptions: {
       target: 'es2022',
     },
+  },
+  build: {
+    target: 'es2022',
   },
 })
