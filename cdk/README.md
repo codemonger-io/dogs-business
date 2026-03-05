@@ -123,6 +123,12 @@ If you are locally testing the server, you can run:
 pnpm set-rp-origin http://localhost:5174
 ```
 
+In the preview mode, use:
+
+```sh
+pnpm set-rp-origin http://localhost:4173
+```
+
 You can also check the parameter name for the Relying Party with the following command:
 
 ```sh
