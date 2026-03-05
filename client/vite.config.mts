@@ -20,5 +20,13 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
-  }
+  },
+  // workaround to an error "Can't find variable: __publicField"
+  // https://github.com/maplibre/maplibre-gl-js/issues/6680#issuecomment-3825893338
+  optimizeDeps: {
+    include: ['maplibre-gl'],
+    esbuildOptions: {
+      target: 'es2022',
+    },
+  },
 })
