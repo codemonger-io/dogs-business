@@ -19,30 +19,6 @@ if (self == null) {
 
 const isAgreementChecked = ref(false);
 
-const showTermsOfService = () => {
-  if (self.proxy == null) {
-    throw new Error('no proxy instance exists')
-  }
-  // @ts-ignore
-  self.proxy.$buefy.modal.open({
-    component: TheTermsOfService,
-    customClass: 'is-full-screen-mobile',
-    onCancel: () => scrollToContents('instant')
-  })
-}
-
-const showPrivacyPolicy = () => {
-  if (self.proxy == null) {
-    throw new Error('no proxy instance exists')
-  }
-  // @ts-ignore
-  self.proxy.$buefy.modal.open({
-    component: ThePrivacyPolicy,
-    customClass: 'is-full-screen-mobile',
-    onCancel: () => scrollToContents('instant')
-  })
-}
-
 const showFunctionalities = () => {
   if (self.proxy == null) {
     throw new Error('no proxy instance exists')
@@ -95,8 +71,12 @@ onMounted(() => {
           <p class="block">
             <b-checkbox v-model="isAgreementChecked">
               <i18n-t keypath="message.agreement">
-                <a href="#" @click="showTermsOfService">{{ t('term.terms_of_service') }}</a>
-                <a href="#" @click="showPrivacyPolicy">{{ t('term.privacy_policy') }}</a>
+                <router-link :to="{ name: 'terms-of-service' }">
+                  {{ t('term.terms_of_service') }}
+                </router-link>
+                <router-link :to="{ name: 'privacy-policy' }">
+                  {{ t('term.privacy_policy') }}
+                </router-link>
               </i18n-t>
             </b-checkbox>
           </p>
@@ -130,7 +110,9 @@ onMounted(() => {
           <p class="block">
             {{ t('message.may_start_without_signup') }}
             <i18n-t keypath="message.functionalities_are_restricted">
-              <a href="#" @click="showFunctionalities">{{ t('term.functionality', 2) }}</a>
+              <router-link :to="{ name: 'functionalities' }">
+                {{ t('term.functionality', 2) }}
+              </router-link>
             </i18n-t>
           </p>
           <p class="block is-flex is-justify-content-center">

@@ -4,4 +4,5 @@ import RegistrationWelcome from '../components/RegistrationWelcome.vue'
 
 <template>
   <RegistrationWelcome />
+  <RouterView />
 </template>

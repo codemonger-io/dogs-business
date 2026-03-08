@@ -58,7 +58,24 @@ const router = createRouter({
     {
       path: '/welcome',
       name: 'welcome',
-      component: () => import('../views/WelcomeView.vue')
+      component: () => import('../views/WelcomeView.vue'),
+      children: [
+        {
+          path: 'terms-of-service',
+          name: 'terms-of-service',
+          component: () => import('../views/TermsOfServiceView.vue')
+        },
+        {
+          path: 'privacy-policy',
+          name: 'privacy-policy',
+          component: () => import('../views/PrivacyPolicyView.vue')
+        },
+        {
+          path: 'functionalities',
+          name: 'functionalities',
+          component: () => import('../views/FunctionalitiesView.vue')
+        }
+      ]
     },
     {
       path: '/welcome/sign-in',
