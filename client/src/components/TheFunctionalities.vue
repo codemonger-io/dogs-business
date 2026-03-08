@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 
+import IconCheck from './icons/IconCheck.vue'
+import IconMinus from './icons/IconMinus.vue'
+
 const { t } = useI18n()
 
 const functionalities = [
@@ -25,9 +28,6 @@ const functionalities = [
     woSignup: false
   }
 ] as const
-
-const enabled = '✅'
-const disabled = '-'
 </script>
 
 <template>
@@ -47,7 +47,8 @@ const disabled = '-'
           v-slot="props"
           centered
         >
-          {{ props.row.signup ? enabled : disabled }}
+          <IconCheck v-if="props.row.signup" />
+          <IconMinus v-else />
         </b-table-column>
         <b-table-column
           field="woSignup"
@@ -55,7 +56,8 @@ const disabled = '-'
           v-slot="props"
           centered
         >
-          {{ props.row.woSignup ? enabled : disabled }}
+          <IconCheck v-if="props.row.woSignup" />
+          <IconMinus v-else />
         </b-table-column>
       </b-table>
     </div>
