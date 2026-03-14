@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: "Definitions of resources necessary to operate Dog's Business"
+
+Parameters:
+  CdEligibleGitHubRefs:
+    Description: "Comma-separated list of GitHub refs allowed to assume the CDK deployment role for continuous delivery (CD). You can use wildcards (*)."
+    Type: CommaDelimitedList
+
+  DistributionDomainName:
+    Description: "Domain name for the CloudFront distribution. No certificate will be issued if this parameter is not provided."
+    Type: String
+    Default: ""
+
+  StackNamePrefix:
+    Description: "Prefix of the names for the CloudFormation stacks that provision core resources."
+    Type: String
+    Default: dogs-business
+
+  ProjectName:
+    Description: "Project name"
+    Type: String
+    Default: dogs-business
+
+Conditions:
+  HasDistributionDomainName: !Not [!Equals [!Ref DistributionDomainName, ""]]
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      ClientIdList:
+        - sts.amazonaws.com
+      Url: "https://token.actions.githubusercontent.com"
+      # thumbprints of GitHub are no longer required by AWS
+      Tags:
+        - Key: project
+          Value: !Ref ProjectName
+
+  CdkDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Role to be assumed by GitHub Actions to deploy CDK stacks
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubOidcProvider
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Ref CdEligibleGitHubRefs
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/PowerUserAccess
+      Tags:
+        - Key: project
+          Value: !Ref ProjectName
+
+  EnhancedIamManagementPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Policy granting enhanced IAM management
+      Roles:
+        - !Ref CdkDeployRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: IAMWildcard
+            Effect: Allow
+            Action:
+              - iam:Get*
+              - iam:List*
+              - iam:Tag*
+              - iam:Untag*
+            Resource: "*"
+          - Sid: IAMSpecific
+            Effect: Allow
+            Action:
+              - iam:AddRoleToInstanceProfile
+              - iam:AttachRolePolicy
+              - iam:CreateInstanceProfile
+              - iam:CreatePolicy
+              - iam:CreatePolicyVersion
+              - iam:CreateRole
+              - iam:CreateServiceLinkedRole
+              - iam:DeleteInstanceProfile
+              - iam:DeletePolicy
+              - iam:DeletePolicyVersion
+              - iam:DeleteRole
+              - iam:DeleteRolePolicy
+              - iam:DeleteServiceLinkedRole
+              - iam:DetachRolePolicy
+              - iam:PassRole
+              - iam:PutRolePolicy
+              - iam:RemoveRoleFromInstanceProfile
+              - iam:UpdateAssumeRolePolicy
+              - iam:UpdateRole
+              - iam:UpdateRoleDescription
+            Resource: "*"
+          - Sid: AssumeRole
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource: "*"
+
+  StackReaderRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Role to be assumed by GitHub Actions to read the CloudFormation stack information
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubOidcProvider
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Ref CdEligibleGitHubRefs
+      Policies:
+        - PolicyName: ReadStack
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/${StackNamePrefix}*"
+        - PolicyName: ListStacks
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:ListStacks
+                Resource: "*"
+      Tags:
+        - Key: project
+          Value: !Ref ProjectName
+
+  DistributionCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: HasDistributionDomainName
+    Properties:
+      DomainName: !Ref DistributionDomainName
+      SubjectAlternativeNames:
+        - !Sub "*.${DistributionDomainName}"
+      ValidationMethod: DNS
+      KeyAlgorithm: EC_prime256v1
+      Tags:
+        - Key: project
+          Value: !Ref ProjectName
+
+Outputs:
+  CdkDeployRoleArn:
+    Description: "ARN of the IAM role assumed by GitHub Actions to deploy CDK stacks"
+    Value: !GetAtt CdkDeployRole.Arn
+
+  StackReaderRoleArn:
+    Description: "ARN of the IAM role assumed by GitHub Actions to read the CloudFormation stack information"
+    Value: !GetAtt StackReaderRole.Arn
+
+  DistributionCertificateArn:
+    Condition: HasDistributionDomainName
+    Description: "ARN of the ACM certificate for the CloudFront distribution"
+    Value: !Ref DistributionCertificate
