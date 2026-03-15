@@ -187,6 +187,7 @@ export class CdkStack extends Stack {
     const apiDistribution = new ApiDistribution(this, 'ApiDistribution', {
       resourceApi,
       mapApi,
+      credentialsApi: passquito.credentialsApi,
       allowOrigins,
       customDomainName: apiDistributionCustomDomainName != null ? {
         domainName: apiDistributionCustomDomainName,
@@ -229,6 +230,10 @@ export class CdkStack extends Stack {
     new CfnOutput(this, 'DogsBusinessMapApiUrl', {
       description: "URL of the Dog's Business Map API",
       value: apiDistribution.mapApiUrl,
+    });
+    new CfnOutput(this, 'CredentialsApiUrl', {
+      description: "URL of the Credentials API",
+      value: apiDistribution.credentialsApiUrl,
     });
     new CfnOutput(this, 'ContentsBucketName', {
       description: 'Name of the S3 bucket for the contents',

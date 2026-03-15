@@ -5,6 +5,8 @@ import {
 } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
+import type { CredentialsApi } from '@codemonger-io/passquito-cdk-construct';
+
 import type { DeploymentStage } from './deployment-stage';
 import type { MapApi } from './map-api';
 import type { ResourceApi } from './resource-api';
@@ -20,6 +22,9 @@ export interface ApiDistributionProps {
 
   /** Dog's Business Map API. */
   readonly mapApi: MapApi;
+
+  /** Passquito Credentials API. */
+  readonly credentialsApi: CredentialsApi;
 
   /**
    * CORS allowed origins.
@@ -47,6 +52,7 @@ export class ApiDistribution extends Construct {
 
     const {
       allowOrigins,
+      credentialsApi,
       customDomainName,
       deploymentStage,
       mapApi,
@@ -80,6 +86,21 @@ export class ApiDistribution extends Construct {
         minTtl: Duration.minutes(0),
         maxTtl: Duration.minutes(15),
         defaultTtl: Duration.minutes(15),
+      },
+    );
+
+    // cache policy for the Credentials API
+    const credentialsApiCachePolicy = new cloudfront.CachePolicy(
+      this,
+      'CredentialsApiCachePolicy',
+      {
+        comment: 'cache policy for the Passquito Credentials API',
+        headerBehavior: cloudfront.CacheHeaderBehavior.allowList(
+          'Authorization',
+        ),
+        minTtl: Duration.seconds(0),
+        maxTtl: Duration.seconds(1), // we cannot set this to 0 due to validation error
+        defaultTtl: Duration.seconds(0),
       },
     );
 
@@ -123,6 +144,13 @@ export class ApiDistribution extends Construct {
           responseHeadersPolicy: corsHeadersPolicy,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
         },
+        [`${credentialsApi.basePath.replace(/\/$/, '')}/*`]: {
+          origin: new origins.RestApiOrigin(credentialsApi.credentialsApi),
+          cachePolicy: credentialsApiCachePolicy,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          responseHeadersPolicy: corsHeadersPolicy,
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+        },
       },
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
       enableLogging: true,
@@ -149,5 +177,10 @@ export class ApiDistribution extends Construct {
   /** URL of the Map API. */
   get mapApiUrl(): string {
     return `https://${this.domainName}${this.props.mapApi.basePath}`;
+  }
+
+  /** URL of the Credentials API. */
+  get credentialsApiUrl(): string {
+    return `https://${this.domainName}${this.props.credentialsApi.basePath}`;
   }
 }
