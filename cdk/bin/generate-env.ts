@@ -23,8 +23,8 @@ async function run(deploymentStage: DeploymentStage, outputPath: string) {
   }
   if (
     stackOutputs.credentialsApiInternalUrl == null ||
-    stackOutputs.resourceApiInternalUrl == null ||
-    stackOutputs.mapApiInternalUrl == null
+    stackOutputs.resourceApiUrl == null ||
+    stackOutputs.mapApiUrl == null
   ) {
     throw new Error('missing stack outputs');
   }
@@ -33,9 +33,9 @@ async function run(deploymentStage: DeploymentStage, outputPath: string) {
     outputPath,
     `VITE_CREDENTIALS_API_BASE_URL=${stackOutputs.credentialsApiInternalUrl}
 
-VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL=${stackOutputs.resourceApiInternalUrl}
+VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL=${stackOutputs.resourceApiUrl}
 
-VITE_DOGS_BUSINESS_MAP_API_BASE_URL=${stackOutputs.mapApiInternalUrl}
+VITE_DOGS_BUSINESS_MAP_API_BASE_URL=${stackOutputs.mapApiUrl}
 `
   );
   console.log('done!');

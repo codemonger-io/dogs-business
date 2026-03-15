@@ -222,12 +222,12 @@ export class CdkStack extends Stack {
       description: 'Internal URL of the app distribution',
       value: appDistribution.internalUrl,
     });
-    new CfnOutput(this, 'DogsBusinessResourceApiInternalUrl', {
-      description: "Internal URL of the Dog's Business Resource API",
+    new CfnOutput(this, 'DogsBusinessResourceApiUrl', {
+      description: "URL of the Dog's Business Resource API",
       value: apiDistribution.resourceApiUrl,
     });
-    new CfnOutput(this, 'DogsBusinessMapApiInternalUrl', {
-      description: "Internal URL of the Dog's Business Map API",
+    new CfnOutput(this, 'DogsBusinessMapApiUrl', {
+      description: "URL of the Dog's Business Map API",
       value: apiDistribution.mapApiUrl,
     });
     new CfnOutput(this, 'ContentsBucketName', {

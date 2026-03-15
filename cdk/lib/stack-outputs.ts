@@ -20,19 +20,19 @@ export interface StackOutputs {
   /** Internal URL of the Credentials API. */
   credentialsApiInternalUrl?: string;
 
-  /** Internal URL of the Dog's Business Resource API. */
-  resourceApiInternalUrl?: string;
+  /** URL of the Dog's Business Resource API. */
+  resourceApiUrl?: string;
 
-  /** Internal URL of the Dog's Business Map API. */
-  mapApiInternalUrl?: string;
+  /** URL of the Dog's Business Map API. */
+  mapApiUrl?: string;
 }
 
 const STACK_OUTPUT_MAP: { [key: string]: keyof StackOutputs } = {
   AppDistributionDomainName: 'appDistributionDomainName',
   RelyingPartyOriginParameterPath: 'rpOriginParameterPath',
   CredentialsApiInternalUrl: 'credentialsApiInternalUrl',
-  DogsBusinessResourceApiInternalUrl: 'resourceApiInternalUrl',
-  DogsBusinessMapApiInternalUrl: 'mapApiInternalUrl',
+  DogsBusinessResourceApiUrl: 'resourceApiUrl',
+  DogsBusinessMapApiUrl: 'mapApiUrl',
 } as const;
 
 /**
