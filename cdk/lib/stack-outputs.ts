@@ -17,8 +17,8 @@ export interface StackOutputs {
   /** SSM parameter path for the relying party origin. */
   rpOriginParameterPath?: string;
 
-  /** Internal URL of the Credentials API. */
-  credentialsApiInternalUrl?: string;
+  /** URL of the Credentials API. */
+  credentialsApiUrl?: string;
 
   /** URL of the Dog's Business Resource API. */
   resourceApiUrl?: string;
@@ -30,7 +30,7 @@ export interface StackOutputs {
 const STACK_OUTPUT_MAP: { [key: string]: keyof StackOutputs } = {
   AppDistributionDomainName: 'appDistributionDomainName',
   RelyingPartyOriginParameterPath: 'rpOriginParameterPath',
-  CredentialsApiInternalUrl: 'credentialsApiInternalUrl',
+  CredentialsApiUrl: 'credentialsApiUrl',
   DogsBusinessResourceApiUrl: 'resourceApiUrl',
   DogsBusinessMapApiUrl: 'mapApiUrl',
 } as const;

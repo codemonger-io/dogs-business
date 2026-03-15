@@ -22,7 +22,7 @@ async function run(deploymentStage: DeploymentStage, outputPath: string) {
     throw new Error(`did you deploy the CloudFormation stack for ${deploymentStage}?`);
   }
   if (
-    stackOutputs.credentialsApiInternalUrl == null ||
+    stackOutputs.credentialsApiUrl == null ||
     stackOutputs.resourceApiUrl == null ||
     stackOutputs.mapApiUrl == null
   ) {
@@ -31,7 +31,7 @@ async function run(deploymentStage: DeploymentStage, outputPath: string) {
   console.log(`generating ${outputPath} for ${deploymentStage}`);
   await fs.writeFile(
     outputPath,
-    `VITE_CREDENTIALS_API_BASE_URL=${stackOutputs.credentialsApiInternalUrl}
+    `VITE_CREDENTIALS_API_BASE_URL=${stackOutputs.credentialsApiUrl}
 
 VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL=${stackOutputs.resourceApiUrl}
 
