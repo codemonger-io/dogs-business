@@ -40,6 +40,16 @@ Remove `--toolkit-stack-name $TOOLKIT_STACK_NAME` option if you choose the defau
 pnpm cdk bootstrap --toolkit-stack-name $TOOLKIT_STACK_NAME --qualifier $BOOTSTRAP_QUALIFIER
 ```
 
+## Project configuration
+
+Some configuration parameters must be stored in AWS Systems Manager (SSM) Parameter Store.
+
+| Parameter name | Description |
+|--|--|
+| `/dogs-business/production/APP_DISTRIBUTION_CUSTOM_DOMAIN_NAME` | Custom domain name given to the CloudFront distribution for the app contents |
+| `/dogs-business/production/API_DISTRIBUTION_CUSTOM_DOMAIN_NAME` | Custom domain name given to the CloudFront distribution for the Dog's Business API |
+| `/dogs-business/production/DISTRIBUTION_CERTIFICATE_ARN` | ARN of the certificate to protect the CloudFront distributions. |
+
 ## Synthesizing CloudFormation template
 
 You have to [configure the `BOOTSTRAP_QUALIFIER` environment](#configuring-bootstrap-qualifier) variable prior to synthesizing the CloudFormation template.
@@ -134,3 +144,8 @@ You can also check the parameter name for the Relying Party with the following c
 ```sh
 aws cloudformation describe-stacks --stack-name dogs-business-$DEPLOYMENT_STAGE --query "Stacks[0].Outputs[?OutputKey=='RelyingPartyOriginParameterPath'].OutputValue" --output text
 ```
+
+### Configuring the secret to sign map tile access tokens
+
+You have to configure the following parameter in SSM Parameter Store.
+- `/dogs-business/$DEPLOYMENT_STAGE/TILE_ACCESS_TOKE_SECRET`
