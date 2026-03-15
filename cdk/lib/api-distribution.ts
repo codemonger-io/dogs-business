@@ -129,13 +129,25 @@ export class ApiDistribution extends Construct {
     });
   }
 
+  /**
+   * Distribution domain name.
+   *
+   * @returns
+   *
+   *   Custom domain name if specified in `props`, otherwise the auto-generated
+   *   CloudFront domain name.
+   */
+  get domainName(): string {
+    return this.props.customDomainName?.domainName ?? this.distribution.distributionDomainName;
+  }
+
   /** URL of the Resource API. */
   get resourceApiUrl(): string {
-    return `https://${this.distribution.distributionDomainName}${this.props.resourceApi.basePath}`;
+    return `https://${this.domainName}${this.props.resourceApi.basePath}`;
   }
 
   /** URL of the Map API. */
   get mapApiUrl(): string {
-    return `https://${this.distribution.distributionDomainName}${this.props.mapApi.basePath}`;
+    return `https://${this.domainName}${this.props.mapApi.basePath}`;
   }
 }
