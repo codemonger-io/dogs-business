@@ -9,6 +9,7 @@ import { Construct } from 'constructs';
 
 import type { DeploymentStage } from './deployment-stage';
 import * as servicePaths from './service-paths';
+import type { CustomDomainNameConfig } from './types';
 
 /** Properties for {@link AppDistribution}. */
 export interface AppDistributionProps {
@@ -21,6 +22,9 @@ export interface AppDistributionProps {
    * Supposed to be a federated principal for GitHub OIDC.
    */
   readonly uploaderPrincipal: iam.IPrincipal;
+
+  /** Optional custom domain name configuration. */
+  readonly customDomainName?: CustomDomainNameConfig;
 
   /** Deployment stage. */
   readonly deploymentStage: DeploymentStage;
@@ -50,7 +54,7 @@ export class AppDistribution extends Construct {
   constructor(scope: Construct, id: string, props: AppDistributionProps) {
     super(scope, id);
 
-    const { deploymentStage, uploaderPrincipal } = props;
+    const { customDomainName, deploymentStage, uploaderPrincipal } = props;
 
     this.contentsBucket = new s3.Bucket(this, 'ContentsBucket', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -60,6 +64,8 @@ export class AppDistribution extends Construct {
 
     this.distribution = new cloudfront.Distribution(this, 'Distribution', {
       comment: `Dog's Business App distribution (${deploymentStage})`,
+      domainNames: customDomainName != null ? [customDomainName.domainName] : undefined,
+      certificate: customDomainName?.certificate,
       defaultBehavior: {
         origin: new origins.S3Origin(this.contentsBucket),
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,

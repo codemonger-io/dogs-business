@@ -8,6 +8,7 @@ import { Construct } from 'constructs';
 import type { DeploymentStage } from './deployment-stage';
 import type { MapApi } from './map-api';
 import type { ResourceApi } from './resource-api';
+import type { CustomDomainNameConfig } from './types';
 
 /** Properties for {@link ApiDistribution}. */
 export interface ApiDistributionProps {
@@ -28,6 +29,9 @@ export interface ApiDistributionProps {
    * No CORS is allowed if omitted or empty.
    */
   readonly allowOrigins?: string[];
+
+  /** Optional custom domain name configuration for the CloudFront distribution. */
+  readonly customDomainName?: CustomDomainNameConfig;
 }
 
 /**
@@ -41,7 +45,13 @@ export class ApiDistribution extends Construct {
   constructor(scope: Construct, id: string, readonly props: ApiDistributionProps) {
     super(scope, id);
 
-    const { allowOrigins, deploymentStage, mapApi, resourceApi } = props;
+    const {
+      allowOrigins,
+      customDomainName,
+      deploymentStage,
+      mapApi,
+      resourceApi,
+    } = props;
 
     // cache policy for the Resource API
     const resourceApiCachePolicy = new cloudfront.CachePolicy(
@@ -95,6 +105,8 @@ export class ApiDistribution extends Construct {
 
     this.distribution = new cloudfront.Distribution(this, 'Distribution', {
       comment: 'Dog\'s Business APIs',
+      domainNames: customDomainName != null ? [customDomainName.domainName] : undefined,
+      certificate: customDomainName?.certificate,
       // routes to the Resource API by default
       defaultBehavior: {
         origin:  new origins.RestApiOrigin(resourceApi.api),

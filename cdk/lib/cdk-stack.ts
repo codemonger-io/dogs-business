@@ -2,6 +2,7 @@ import {
   Arn,
   CfnOutput,
   Stack,
+  aws_certificatemanager as acm,
   aws_dynamodb as dynamodb,
   aws_iam as iam,
 } from 'aws-cdk-lib';
@@ -25,6 +26,7 @@ import { StackReader } from './stack-reader';
 export interface CdkStackProps extends StackProps {
   /** Deployment stage. */
   readonly deploymentStage: DeploymentStage;
+
   /**
    * Domain name of the CloudFront distribution for the app contents.
    *
@@ -34,19 +36,74 @@ export interface CdkStackProps extends StackProps {
    * You may leave this empty at the first deployment.
    */
   readonly appDistributionDomainName?: string;
+
+  /**
+   * Optional custom domain name of the CloudFront distribution for the app
+   * contents.
+   *
+   * @remarks
+   *
+   * You have to specify {@link distributionCertificateArn} if this property is
+   * specified.
+   */
+  readonly appDistributionCustomDomainName?: string;
+
+  /**
+   * Optional custom domain name of the CloudFront distribution for the Dog's
+   * Business APIs.
+   *
+   * @remarks
+   *
+   * You have to specify {@link distributionCertificateArn} if this property is
+   * specified.
+   */
+  readonly apiDistributionCustomDomainName?: string;
+
+  /**
+   * ARN of the certificate to protect the CloudFront distribution.
+   *
+   * @remarks
+   *
+   * You may leave this `undefined` if you do not configure the CloudFront
+   * distribution to use a custom domain name.
+   */
+  readonly distributionCertificateArn?: string;
 }
 
 export class CdkStack extends Stack {
   constructor(scope: Construct, id: string, props: CdkStackProps) {
     super(scope, id, props);
 
-    const { appDistributionDomainName, deploymentStage } = props;
+    const {
+      apiDistributionCustomDomainName,
+      appDistributionCustomDomainName,
+      appDistributionDomainName,
+      deploymentStage,
+      distributionCertificateArn,
+    } = props;
+    const isProduction = deploymentStage === 'production';
 
-    const allowOrigins = [
-      ...(appDistributionDomainName ? [`https://${appDistributionDomainName}`] : []),
+    if ((appDistributionCustomDomainName != null || apiDistributionCustomDomainName != null) && distributionCertificateArn == null) {
+      throw new RangeError('custom domain name is specified but missing distribution certificate ARN');
+    }
+
+    const localhostOrigins = isProduction ? [] : [
       'http://localhost:5174',
       'http://localhost:4173',
     ];
+    const allowOrigins = [
+      ...(appDistributionCustomDomainName ? [`https://${appDistributionCustomDomainName}`] : []),
+      ...(appDistributionDomainName ? [`https://${appDistributionDomainName}`] : []),
+      ...localhostOrigins,
+    ];
+
+    const distributionCertificateRef = distributionCertificateArn != null
+      ? acm.CfnCertificate.fromCertificateId(
+        this,
+        'DistributionCertificate',
+        distributionCertificateArn,
+      )
+      : undefined;
 
     // `FederatedPrincipal` turns into `sts:AssumeRole`
     // but we need `sts:AssumeRoleWithWebIdentity`
@@ -78,16 +135,26 @@ export class CdkStack extends Stack {
         config: deploymentStage,
       },
       allowOrigins,
-      // TODO: allow more request units for production
-      billingForSessionTable: dynamodb.Billing.onDemand({
-        maxReadRequestUnits: 2,
-        maxWriteRequestUnits: 2,
-      }),
-      // TODO: allow more request units for production
-      billingForCredentialTable: dynamodb.Billing.onDemand({
-        maxReadRequestUnits: 2,
-        maxWriteRequestUnits: 2,
-      }),
+      billingForSessionTable: dynamodb.Billing.onDemand(isProduction
+        ? {
+          // TODO: monitor capacity usage to determine appropirate caps
+          maxReadRequestUnits: 20,
+          maxWriteRequestUnits: 20,
+        }
+        : {
+          maxReadRequestUnits: 2,
+          maxWriteRequestUnits: 2,
+        }),
+      billingForCredentialTable: dynamodb.Billing.onDemand(isProduction
+        ? {
+          // TODO: monitor capacity usage to determine appropriate caps
+          maxReadRequestUnits: 20,
+          maxWriteRequestUnits: 20,
+        }
+        : {
+          maxReadRequestUnits: 2,
+          maxWriteRequestUnits: 2,
+        }),
     });
     const ssmParameters = new SsmParameters(this, 'SsmParameters', {
       deploymentStage,
@@ -121,10 +188,18 @@ export class CdkStack extends Stack {
       resourceApi,
       mapApi,
       allowOrigins,
+      customDomainName: apiDistributionCustomDomainName != null ? {
+        domainName: apiDistributionCustomDomainName,
+        certificate: distributionCertificateRef!,
+      } : undefined,
       deploymentStage,
     });
     const appDistribution = new AppDistribution(this, 'AppDistribution', {
       uploaderPrincipal: githubOidcPricinpal,
+      customDomainName: appDistributionCustomDomainName != null ? {
+        domainName: appDistributionCustomDomainName,
+        certificate: distributionCertificateRef!,
+      } : undefined,
       deploymentStage,
     });
     const stackReader = new StackReader(this, 'StackReader', {

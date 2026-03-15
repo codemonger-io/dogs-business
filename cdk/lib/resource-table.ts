@@ -79,6 +79,9 @@ export class ResourceTable extends Construct {
   constructor(scope: Construct, id: string, props: ResourceTableProps) {
     super(scope, id);
 
+    const { deploymentStage } = props;
+    const isProduction = deploymentStage === 'production';
+
     this.table = new dynamodb.TableV2(this, 'ResourceTable', {
       partitionKey: {
         name: 'pk',
@@ -89,11 +92,16 @@ export class ResourceTable extends Construct {
         type: dynamodb.AttributeType.STRING,
       },
       timeToLiveAttribute: 'expiresAt',
-      // TODO: increase the caps for production
-      billing: dynamodb.Billing.onDemand({
-        maxReadRequestUnits: 2,
-        maxWriteRequestUnits: 2,
-      }),
+      billing: dynamodb.Billing.onDemand(isProduction
+        ? {
+          // TODO: monitor the capacity usage and adjust the caps accordingly
+          maxReadRequestUnits: 20,
+          maxWriteRequestUnits: 20,
+        }
+        : {
+          maxReadRequestUnits: 2,
+          maxWriteRequestUnits: 2,
+        }),
       // TODO: enable point-in-time recovery for production
     });
   }

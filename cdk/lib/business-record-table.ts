@@ -155,6 +155,9 @@ export class BusinessRecordTable extends Construct {
   constructor(scope: Construct, id: string, props: BusinessRecordTableProps) {
     super(scope, id);
 
+    const { deploymentStage } = props;
+    const isProduction = deploymentStage === 'production';
+
     this.table = new dynamodb.TableV2(this, 'BusinessRecordTable', {
       partitionKey: {
         name: 'pk',
@@ -164,11 +167,16 @@ export class BusinessRecordTable extends Construct {
         name: 'sk',
         type: dynamodb.AttributeType.STRING,
       },
-      // TODO: increase the caps for production
-      billing: dynamodb.Billing.onDemand({
-        maxReadRequestUnits: 2,
-        maxWriteRequestUnits: 2,
-      }),
+      billing: dynamodb.Billing.onDemand(isProduction
+        ? {
+          // TODO: monitor the capacity usage and adjust the caps accordingly
+          maxReadRequestUnits: 20,
+          maxWriteRequestUnits: 20,
+        }
+        : {
+          maxReadRequestUnits: 2,
+          maxWriteRequestUnits: 2,
+        }),
       // TODO: enable point-in-time recovery for production
     });
 

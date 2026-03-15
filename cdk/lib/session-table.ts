@@ -50,6 +50,9 @@ export class SessionTable extends Construct {
   constructor(scope: Construct, id: string, props: SessionTableProps) {
     super(scope, id);
 
+    const { deploymentStage } = props;
+    const isProduction = deploymentStage === 'production';
+
     this.table = new dynamodb.TableV2(this, 'SessionTable', {
       partitionKey: {
         name: 'pk',
@@ -60,11 +63,16 @@ export class SessionTable extends Construct {
         type: dynamodb.AttributeType.NUMBER,
       },
       timeToLiveAttribute: 'sk',
-      // TODO: increase the caps for production
-      billing: dynamodb.Billing.onDemand({
-        maxReadRequestUnits: 2,
-        maxWriteRequestUnits: 2,
-      }),
+      billing: dynamodb.Billing.onDemand(isProduction
+        ? {
+          // TODO: monitor the capacity usage and adjust the caps accordingly
+          maxReadRequestUnits: 20,
+          maxWriteRequestUnits: 20,
+        }
+        : {
+          maxReadRequestUnits: 2,
+          maxWriteRequestUnits: 2,
+        }),
     });
   }
 }
