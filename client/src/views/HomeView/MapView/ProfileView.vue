@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import { useAccountManager } from '../stores/account-manager'
+import { useAccountManager } from '../../../stores/account-manager'
 
 const props = defineProps<{
   // ID of the dog to show the profile

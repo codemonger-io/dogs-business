@@ -4,7 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import { SvgOptions, initFastQr, qrSvg } from '../lib/fast_qr_wrapper'
+import { SvgOptions, initFastQr, qrSvg } from '../../../lib/fast_qr_wrapper'
 
 const router = useRouter()
 const { t } = useI18n()

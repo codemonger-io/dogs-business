@@ -3,9 +3,9 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import IconInfo from '../components/icons/IconInfo.vue'
-import { useAccountManager } from '../stores/account-manager'
-import { capitalize } from '../utils/strings'
+import IconInfo from '../../../components/icons/IconInfo.vue'
+import { useAccountManager } from '../../../stores/account-manager'
+import { capitalize } from '../../../utils/strings'
 
 const router = useRouter()
 const { t } = useI18n()

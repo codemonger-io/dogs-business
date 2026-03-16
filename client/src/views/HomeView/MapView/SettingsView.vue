@@ -3,8 +3,8 @@ import { BButton, BModal, useDialog } from 'buefy'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import { useAccountManager } from '../stores/account-manager'
-import { capitalize } from '../utils/strings'
+import { useAccountManager } from '../../../stores/account-manager'
+import { capitalize } from '../../../utils/strings'
 
 const dialog = useDialog()
 const router = useRouter()

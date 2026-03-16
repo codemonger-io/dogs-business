@@ -13,17 +13,17 @@ const router = createRouter({
         {
           path: 'map',
           name: 'map',
-          component: () => import('../views/MapView.vue'),
+          component: () => import('../views/HomeView/MapView.vue'),
           children: [
             {
               path: 'new-profile',
               name: 'new-profile',
-              component: () => import('../views/NewProfileView.vue')
+              component: () => import('../views/HomeView/MapView/NewProfileView.vue')
             },
             {
               path: 'profile/:dogId',
               name: 'profile',
-              component: () => import('../views/ProfileView.vue'),
+              component: () => import('../views/HomeView/MapView/ProfileView.vue'),
               props: router => ({
                 dogId: router.params.dogId
               })
@@ -31,7 +31,7 @@ const router = createRouter({
             {
               path: 'profile/:dogId/invitation/:invitationId',
               name: 'show-invitation',
-              component: () => import('../views/ShowInvitationView.vue'),
+              component: () => import('../views/HomeView/MapView/ShowInvitationView.vue'),
               props: router => ({
                 dogId: router.params.dogId,
                 invitationId: router.params.invitationId,
@@ -42,14 +42,14 @@ const router = createRouter({
             {
               path: 'settings',
               name: 'settings',
-              component: () => import('../views/SettingsView.vue')
+              component: () => import('../views/HomeView/MapView/SettingsView.vue')
             }
           ]
         },
         {
           path: 'invitation/:invitationId',
           name: 'accept-invitation',
-          component: () => import('../views/AcceptInvitationView.vue'),
+          component: () => import('../views/HomeView/AcceptInvitationView.vue'),
           props: true
         }
       ]
@@ -63,42 +63,34 @@ const router = createRouter({
         {
           path: 'terms-of-service',
           name: 'terms-of-service',
-          component: () => import('../views/TermsOfServiceView.vue')
+          component: () => import('../views/WelcomeView/TermsOfServiceView.vue')
         },
         {
           path: 'privacy-policy',
           name: 'privacy-policy',
-          component: () => import('../views/PrivacyPolicyView.vue')
+          component: () => import('../views/WelcomeView/PrivacyPolicyView.vue')
         },
         {
           path: 'functionalities',
           name: 'functionalities',
-          component: () => import('../views/FunctionalitiesView.vue')
+          component: () => import('../views/WelcomeView/FunctionalitiesView.vue')
         }
       ]
     },
     {
-      path: '/welcome/sign-in',
+      path: '/sign-in',
       name: 'sign-in',
       component: () => import('../views/SigninView.vue')
     },
     {
-      path: '/welcome/sign-up',
+      path: '/sign-up',
       name: 'sign-up',
       component: () => import('../views/SignupView.vue')
     },
     {
-      path: '/welcome/wo-sign-up',
+      path: '/wo-sign-up',
       name: 'wo-sign-up',
       component: () => import('../views/WithoutSignupView.vue')
-    },
-    {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
     }
   ]
 })

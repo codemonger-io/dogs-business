@@ -5,12 +5,12 @@ import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import { useAccountManager } from '../stores/account-manager'
+import { useAccountManager } from '../../stores/account-manager'
 import type {
   HumanFriendInvitationStatus,
   HumanFriendInvitationAcceptanceResult
-} from '../types/human-friend-invitation'
-import { capitalize } from '../utils/strings'
+} from '../../types/human-friend-invitation'
+import { capitalize } from '../../utils/strings'
 
 const props = defineProps<{
   invitationId: string

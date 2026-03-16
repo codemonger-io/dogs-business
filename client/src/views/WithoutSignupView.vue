@@ -63,12 +63,13 @@ const createGuestAccountAndGo = async () => {
         <p class="block">
           <b-checkbox v-model="isAgreementChecked">
             <i18n-t keypath="message.agreement">
-              <a href="#" @click.prevent="showTermsOfService">
+              <router-link :to="{ name: 'terms-of-service' }">
                 {{ t('term.terms_of_service') }}
-              </a>
-              <a href="#" @click.prevent="showPrivacyPolicy">
+              </router-link>
+              <router-link :to="{ name: 'privacy-policy' }">
                 {{ t('term.privacy_policy') }}
               </a>
+              </router-link>
             </i18n-t>
           </b-checkbox>
         </p>

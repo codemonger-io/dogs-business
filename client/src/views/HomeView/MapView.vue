@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import ControlsOverlay from '../components/ControlsOverlay.vue'
-import TheMap from '../components/TheMap.vue'
-import type { LocationMarkerState } from '../types/location-marker-state'
-import type { MapViewerMode } from '../types/map-viewer-mode'
+import ControlsOverlay from '../../components/ControlsOverlay.vue'
+import TheMap from '../../components/TheMap.vue'
+import type { LocationMarkerState } from '../../types/location-marker-state'
+import type { MapViewerMode } from '../../types/map-viewer-mode'
 
 const mapParameters = ref<{
   viewerMode: MapViewerMode,
