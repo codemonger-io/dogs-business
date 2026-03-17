@@ -15,8 +15,8 @@ importers:
         specifier: 0.1.0-e0d4986
         version: 0.1.0-e0d4986(maplibre-gl@5.19.0)
       '@codemonger-io/passquito-client-js':
-        specifier: 0.0.3-2f4476f
-        version: 0.0.3-2f4476f
+        specifier: 0.0.4-9b90e5e
+        version: 0.0.4-9b90e5e
       '@vueuse/core':
         specifier: ^13.9.0
         version: 13.9.0(vue@3.5.26(typescript@5.9.3))
@@ -160,8 +160,8 @@ packages:
     peerDependencies:
       maplibre-gl: '>=5 <6'
 
-  '@codemonger-io/passquito-client-js@0.0.3-2f4476f':
-    resolution: {integrity: sha512-Q/L3NrwsFHo5tD8/z+Vt+03NnBWlX+2bM1k3FFqY+fQXIdYaPU2hI4sXN4aD6VVyv+X3PJljt4NttbWn+EKEoA==, tarball: https://npm.pkg.github.com/download/@codemonger-io/passquito-client-js/0.0.3-2f4476f/eb297f18e1699dc2cfe4d656adc8533b98679264}
+  '@codemonger-io/passquito-client-js@0.0.4-9b90e5e':
+    resolution: {integrity: sha512-3dQ95q41K9pJ865JPtPHFLqqsHa82OGYBWUeAKJTPn5sLXi7L045cBb9QngeAffVOaTOT9k+kjDufjKP5L+yng==, tarball: https://npm.pkg.github.com/download/@codemonger-io/passquito-client-js/0.0.4-9b90e5e/919de04bbba8916888bcf3385422a3aeee712986}
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -3004,7 +3004,7 @@ snapshots:
     dependencies:
       maplibre-gl: 5.19.0
 
-  '@codemonger-io/passquito-client-js@0.0.3-2f4476f':
+  '@codemonger-io/passquito-client-js@0.0.4-9b90e5e':
     dependencies:
       '@github/webauthn-json': 2.1.1
 
