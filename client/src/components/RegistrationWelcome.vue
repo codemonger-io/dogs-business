@@ -4,9 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 
 import TheDogsBusinessLogo from './TheDogsBusinessLogo.vue'
-import TheFunctionalities from './TheFunctionalities.vue'
-import ThePrivacyPolicy from './ThePrivacyPolicy.vue'
-import TheTermsOfService from './TheTermsOfService.vue'
 
 const { t } = useI18n()
 
@@ -18,18 +15,6 @@ if (self == null) {
 }
 
 const isAgreementChecked = ref(false);
-
-const showFunctionalities = () => {
-  if (self.proxy == null) {
-    throw new Error('no proxy instance exists')
-  }
-  // @ts-ignore
-  self.proxy.$buefy.modal.open({
-    component: TheFunctionalities,
-    customClass: 'is-full-screen-mobile',
-    onCancel: () => scrollToContents('instant')
-  })
-}
 
 const signIn = () => {
   if (process.env.NODE_ENV !== 'production') {

@@ -3,8 +3,6 @@ import { getCurrentInstance, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import ThePrivacyPolicy from '../components/ThePrivacyPolicy.vue'
-import TheTermsOfService from '../components/TheTermsOfService.vue'
 import { useAccountManager } from '../stores/account-manager'
 
 const { t } = useI18n()
@@ -19,28 +17,6 @@ if (self == null) {
 }
 
 const isAgreementChecked = ref(false)
-
-const showTermsOfService = () => {
-  if (self.proxy == null) {
-    throw new Error('no insance proxy exists')
-  }
-  // @ts-ignore
-  self.proxy.$buefy.modal.open({
-    component: TheTermsOfService,
-    customClass: 'is-full-screen-mobile'
-  })
-}
-
-const showPrivacyPolicy = () => {
-  if (self.proxy == null) {
-    throw new Error('no instance proxy exists')
-  }
-  // @ts-ignore
-  self.proxy.$buefy.modal.open({
-    component: ThePrivacyPolicy,
-    customClass: 'is-full-screen-mobile'
-  })
-}
 
 const createGuestAccountAndGo = async () => {
   try {
@@ -68,7 +44,6 @@ const createGuestAccountAndGo = async () => {
               </router-link>
               <router-link :to="{ name: 'privacy-policy' }">
                 {{ t('term.privacy_policy') }}
-              </a>
               </router-link>
             </i18n-t>
           </b-checkbox>
