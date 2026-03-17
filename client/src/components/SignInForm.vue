@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BInput, BNotification } from 'buefy'
+import { BInput, BLoading, BNotification } from 'buefy'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PublicKeyInfo } from '@codemonger-io/passquito-client-js'
@@ -33,6 +33,8 @@ const passquitoClientStore = usePassquitoClientStore()
 
 const authenticatorState = useAuthenticatorState()
 
+const isLoading = ref(true)
+
 // reason for sign-in. `undefined` if no reason is specified.
 const reasonForSignIn = computed(() => {
   if (props.signInReason == null) {
@@ -52,11 +54,6 @@ const reasonForSignIn = computed(() => {
 
 // passkey input field which gets focused when mounted.
 const passkeyInput = ref<InstanceType<typeof BInput> | null>(null)
-watch(passkeyInput, (input) => {
-  if (input) {
-    input.focus()
-  }
-})
 
 // checks the passkey capabilities on mounted
 onMounted(() => {
@@ -80,10 +77,26 @@ watch(
     // aborts the authentication ceremony that might be running
     abortAuthentication.value('starting new authentication ceremony')
     const userId = props.publicKeyInfo?.userHandle
-    const { abort, credentials } = userId != null
+    const { abort, credentials, eventEmitter } = userId != null
       ? passquitoClientStore.client.doAuthenticationCeremonyForUser(userId)
       : passquitoClientStore.client.doAuthenticationCeremony()
     abortAuthentication.value = abort
+    eventEmitter.addListener((event) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('SignInForm', 'authentication ceremony event', event)
+      }
+      switch (event) {
+        case 'credential-request-options-obtained':
+          isLoading.value = false
+          passkeyInput.value?.focus()
+          break
+        case 'credential-provided':
+          isLoading.value = true
+          break
+        default:
+          // ignores other events
+      }
+    })
     try {
       const { publicKeyInfo, tokens } = await credentials
       if (process.env.NODE_ENV !== 'production') {
@@ -153,5 +166,6 @@ onBeforeUnmount(() => {
         </div>
       </section>
     </div>
+    <b-loading :model-value="isLoading"></b-loading>
   </div>
 </template>
