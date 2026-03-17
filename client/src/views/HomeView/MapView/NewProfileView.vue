@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import IconInfo from '../../../components/icons/IconInfo.vue'
+import ModalPage from '../../../components/ModalPage.vue'
 import { useAccountManager } from '../../../stores/account-manager'
 import { capitalize } from '../../../utils/strings'
 
@@ -33,61 +34,55 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <div class="container is-max-desktop">
-    <b-modal
-      custom-class="is-full-screen-mobile"
-      :model-value="true"
-      @cancel="close"
-    >
-      <div class="card paper">
-        <div class="card-content">
-          <section class="section">
-            <h1 class="title is-3">{{ capitalize(t('term.new_profile')) }}</h1>
-            <div class="block">
-              <p class="block">{{ t('message.tell_us_about_your_dog_friend') }}</p>
-              <form @submit.prevent="onSubmit">
-                <b-field>
-                  <template #label>
-                    <b-tooltip
-                      type="is-info"
-                      :label="t('tooltip.dog_friend_name')"
-                      position="is-top"
-                      multilined
-                      :triggers="['click']"
-                      :auto-close="['inside', 'outside']"
-                    >
-                      <span class="icon-text tooltip-trigger-label">
-                        {{ capitalize(t('term.dog_friend_name')) }}
-                        <icon-info></icon-info>
-                      </span>
-                    </b-tooltip>
-                  </template>
-                  <b-input
-                    v-model="dogName"
-                    :placeholder="t('placeholder.dog_friend_name')"
-                  ></b-input>
-                </b-field>
-                <p class="is-flex is-justify-content-center">
-                  <input
-                    class="button is-primary"
-                    type="submit"
-                    :value="t('message.register_profile')"
-                    :disabled="!trimmedDogName"
+  <ModalPage no-rewind-on-close @closed="close">
+    <div class="card paper">
+      <div class="card-content">
+        <section class="section">
+          <h1 class="title is-3">{{ capitalize(t('term.new_profile')) }}</h1>
+          <div class="block">
+            <p class="block">{{ t('message.tell_us_about_your_dog_friend') }}</p>
+            <form @submit.prevent="onSubmit">
+              <b-field>
+                <template #label>
+                  <b-tooltip
+                    type="is-info"
+                    :label="t('tooltip.dog_friend_name')"
+                    position="is-top"
+                    multilined
+                    :triggers="['click']"
+                    :auto-close="['inside', 'outside']"
                   >
-                </p>
-              </form>
-            </div>
-            <!-- TODO: disable for guest accounts -->
-            <div v-if="accountManager.accountInfo.type === 'online'" class="block">
-              <p>
-                <a href="#">
-                  &#x1F91D;{{ t('message.do_you_want_to_be_a_friend_of_other_dog') }}
-                </a>
+                    <span class="icon-text tooltip-trigger-label">
+                      {{ capitalize(t('term.dog_friend_name')) }}
+                      <icon-info></icon-info>
+                    </span>
+                  </b-tooltip>
+                </template>
+                <b-input
+                  v-model="dogName"
+                  :placeholder="t('placeholder.dog_friend_name')"
+                ></b-input>
+              </b-field>
+              <p class="is-flex is-justify-content-center">
+                <input
+                  class="button is-primary"
+                  type="submit"
+                  :value="t('message.register_profile')"
+                  :disabled="!trimmedDogName"
+                >
               </p>
-            </div>
-          </section>
-        </div>
+            </form>
+          </div>
+          <!-- TODO: disable for guest accounts -->
+          <div v-if="accountManager.accountInfo.type === 'online'" class="block">
+            <p>
+              <a href="#">
+                &#x1F91D;{{ t('message.do_you_want_to_be_a_friend_of_other_dog') }}
+              </a>
+            </p>
+          </div>
+        </section>
       </div>
-    </b-modal>
-  </div>
+    </div>
+  </ModalPage>
 </template>
