@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { BModal } from 'buefy'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import ModalPage from '../../../components/ModalPage.vue'
 import { useAccountManager } from '../../../stores/account-manager'
 
 const props = defineProps<{
@@ -55,39 +55,33 @@ const close = () => {
 </script>
 
 <template>
-  <div class="container is-max-desktop">
-    <b-modal
-      custom-class="is-full-screen-mobile"
-      :model-value="true"
-      @cancel="close"
-    >
-      <div class="card paper">
-        <div class="card-content">
-          <section class="section">
-            <div class="block is-flex is-justify-content-center">
-              <div class="avatar">
-                <!-- TODO: show an image in the future -->
-                <span class="icon">{{ dogNameInitial }}</span>
-              </div>
+  <ModalPage no-rewind-on-close @closed="close">
+    <div class="card paper">
+      <div class="card-content">
+        <section class="section">
+          <div class="block is-flex is-justify-content-center">
+            <div class="avatar">
+              <!-- TODO: show an image in the future -->
+              <span class="icon">{{ dogNameInitial }}</span>
             </div>
-            <div class="block is-flex is-justify-content-center">
-              <span class="is-size-2"><strong>{{ dogName }}</strong></span>
-            </div>
-            <div class="block">
-              <p class="block is-flex is-justify-content-center">
-                <b-button
-                  type="is-primary"
-                  @click="inviteNewHumanFriend()"
-                >
-                  {{ t('message.invite_new_human_friend') }}
-                </b-button>
-              </p>
-            </div>
-          </section>
-        </div>
+          </div>
+          <div class="block is-flex is-justify-content-center">
+            <span class="is-size-2"><strong>{{ dogName }}</strong></span>
+          </div>
+          <div class="block">
+            <p class="block is-flex is-justify-content-center">
+              <b-button
+                type="is-primary"
+                @click="inviteNewHumanFriend()"
+              >
+                {{ t('message.invite_new_human_friend') }}
+              </b-button>
+            </p>
+          </div>
+        </section>
       </div>
-    </b-modal>
-  </div>
+    </div>
+  </ModalPage>
 </template>
 
 <style scoped>
