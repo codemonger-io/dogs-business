@@ -26,42 +26,14 @@ import { isUserInfo } from './types/account-info'
 import type { OnlineAccountProvider } from './types/online-account-provider'
 import { wrapFetchResponse } from './utils/api-response'
 import router from './router'
-import messages from './i18n'
+import { datetimeFormats, messages } from './i18n'
 
 const i18n = createI18n({
   legacy: false, // prefers the composition API
   locale: 'ja',
   fallbackLocale: 'en',
   messages,
-  // TODO: move to the i18n folder
-  datetimeFormats: {
-    'en': {
-      date: {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        weekday: 'short'
-      },
-      time: {
-        hour: 'numeric',
-        minute: 'numeric',
-        timeZoneName: 'shortGeneric'
-      }
-    },
-    'ja': {
-      date: {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        weekday: 'short',
-      },
-      time: {
-        hour: 'numeric',
-        minute: 'numeric',
-        timeZoneName: 'shortGeneric'
-      }
-    }
-  }
+  datetimeFormats
 })
 
 const app = createApp(App)
