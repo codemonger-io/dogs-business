@@ -21,6 +21,7 @@ export default {
       location_tracking_unavailable: '位置情報を利用できません',
       loading_data: 'データの読み込み中...',
       may_start_without_signup: 'サインアップせずに利用を開始することもできます。',
+      no_business_recorded_in_the_last_24_hours: '直近24時間に記録されたご用件はありません。',
       no_passkey_registration_supported: 'お使いのブラウザーでは{0}の登録がサポートされていません。',
       qr_code_is_registered_trademark: 'QRコードは株式会社デンソーウェーブの登録商標です。',
       register_your_dog_friend: 'お友達(犬)を登録してください。',
@@ -50,6 +51,7 @@ export default {
     },
     term: {
       attention: 'ご注意',
+      business_in_the_last_24_hours: '直近24時間のご用件',
       display_name: '表示する名前',
       dog_friend_name: 'お友達(犬)のお名前',
       dogs_business: 'Dog\'s Business',
@@ -106,6 +108,7 @@ export default {
       location_tracking_unavailable: 'Location tracking unavailable',
       loading_data: 'Loading data...',
       may_start_without_signup: 'You may start using without signing up.',
+      no_business_recorded_in_the_last_24_hours: 'No business was recorded in the last 24 hours.',
       no_passkey_registration_supported: 'Your browser does not support registration of {0}.',
       qr_code_is_registered_trademark: 'QR Code is a registered trademark of DENSO WAVE INCORPORATED in Japan and in other countries.',
       register_your_dog_friend: 'Register your dog-friend.',
@@ -135,6 +138,7 @@ export default {
     },
     term: {
       attention: 'attention',
+      business_in_the_last_24_hours: 'business in the last 24 hours',
       display_name: 'Display Name',
       dog_friend_name: 'dog-friend\'s name',
       dogs_business: 'Dog\'s Business',

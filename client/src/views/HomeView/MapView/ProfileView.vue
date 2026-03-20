@@ -4,7 +4,10 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import ModalPage from '../../../components/ModalPage.vue'
+import IconPee from '../../../components/icons/IconPee.vue'
+import IconPoo from '../../../components/icons/IconPoo.vue'
 import { useAccountManager } from '../../../stores/account-manager'
+import { capitalize } from '../../../utils/strings'
 
 const props = defineProps<{
   // ID of the dog to show the profile
@@ -12,7 +15,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
-const { t } = useI18n()
+const { d, t } = useI18n()
 
 const accountManager = useAccountManager()
 
@@ -25,6 +28,20 @@ const dogNameInitial = computed(() => {
   } else {
     return null
   }
+})
+
+const recentBusinessRecords = computed(() => {
+  const fromTimestamp = (Date.now() / 1000) - 24 * 60 * 60
+  const records = accountManager.activeBusinessRecords ?? []
+  return records
+    .filter((r) => r.timestamp >= fromTimestamp)
+    .map((r) => {
+      const datetime = new Date(r.timestamp * 1000)
+      return {
+        ...r,
+        datetime,
+      }
+    })
 })
 
 const inviteNewHumanFriend = async () => {
@@ -69,6 +86,37 @@ const close = () => {
             <span class="is-size-2"><strong>{{ dogName }}</strong></span>
           </div>
           <div class="block">
+            <h2 class="title is-4">
+              {{ capitalize(t('term.business_in_the_last_24_hours')) }}
+            </h2>
+            <div v-if="recentBusinessRecords.length > 0">
+              <div
+                v-for="record in recentBusinessRecords"
+                :key="`record-${record.recordId}`"
+                class="business-record"
+              >
+                <div class="business-record-type">
+                  <span class="icon">
+                    <IconPoo v-if="record.businessType === 'poo'" />
+                    <IconPee v-else-if="record.businessType === 'pee'" />
+                    <template v-else>?</template>
+                  </span>
+                </div>
+                <div class="business-record-datetime">
+                  <span class="date-part">
+                    {{ d(record.datetime, 'date') }}
+                  </span>
+                  <span class="time-part">
+                    {{ d(record.datetime, 'time') }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div v-else>
+              {{ t('message.no_business_recorded_in_the_last_24_hours') }}
+            </div>
+          </div>
+          <div class="block control-block">
             <p class="block is-flex is-justify-content-center">
               <b-button
                 type="is-primary"
@@ -105,5 +153,38 @@ const close = () => {
     width: var(--dogs-avatar-size);
     height: var(--dogs-avatar-size);
   }
+}
+
+.business-record {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+
+  &:not(:first-child) {
+    margin-top: 0.75em;
+  }
+
+  .business-record-type {
+    display: inline-block;
+    width: 2em;
+    max-width: 2em;
+    min-width: 2em;
+  }
+
+  .business-record-datetime {
+    display: block;
+
+    .date-part {
+      display: inline-block;
+      margin-right: 0.5em;
+    }
+    .time-part {
+      display: inline-block;
+    }
+  }
+}
+
+.control-block {
+  margin-top: 3rem;
 }
 </style>
