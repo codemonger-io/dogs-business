@@ -33,7 +33,6 @@ const i18n = createI18n({
   locale: 'ja',
   fallbackLocale: 'en',
   messages,
-  // @ts-expect-error - FIXME imported datetimeFormats causes type error
   datetimeFormats
 })
 

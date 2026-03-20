@@ -1,4 +1,4 @@
-export default {
+const datetimeFormats: Record<string, Record<string, Intl.DateTimeFormatOptions>> = {
   en: {
     date: {
       year: 'numeric',
@@ -26,3 +26,5 @@ export default {
     }
   }
 }
+
+export default datetimeFormats
