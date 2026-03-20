@@ -33,6 +33,35 @@ const i18n = createI18n({
   locale: 'ja',
   fallbackLocale: 'en',
   messages,
+  // TODO: move to the i18n folder
+  datetimeFormats: {
+    'en': {
+      date: {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        weekday: 'short'
+      },
+      time: {
+        hour: 'numeric',
+        minute: 'numeric',
+        timeZoneName: 'shortGeneric'
+      }
+    },
+    'ja': {
+      date: {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        weekday: 'short',
+      },
+      time: {
+        hour: 'numeric',
+        minute: 'numeric',
+        timeZoneName: 'shortGeneric'
+      }
+    }
+  }
 })
 
 const app = createApp(App)
