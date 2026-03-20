@@ -9,6 +9,9 @@
 .paper {
   background-color: var(--paper-color);
 
+  &.maplibregl-popup {
+    background-color: transparent;
+  }
   .maplibregl-popup-tip {
     border-top-color: var(--paper-color);
   }

@@ -215,10 +215,10 @@ watchEffect(() => {
   map.value.on('load', () => {
     isMapLoaded.value = true
   })
-  actionsPopup.value = markRaw(new maplibregl.Popup())
+
+  actionsPopup.value = markRaw(new maplibregl.Popup({ className: 'paper' }))
   actionsPopup.value
     .setDOMContent(actionsPopupContainer.value)
-    .addClassName('paper')
 })
 
 // configures the layer for active business records
