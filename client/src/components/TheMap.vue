@@ -242,7 +242,7 @@ watchEffect(() => {
   recordStatsPopup.value = markRaw(new maplibregl.Popup({ className: 'paper' }))
   recordStatsPopup.value
     .setDOMContent(recordStatsPopupContainer.value)
-    .setOffset([0, -12])
+    .setOffset(12)
 })
 
 // configures the layer for active business records

@@ -12,11 +12,34 @@
   &.maplibregl-popup {
     background-color: transparent;
   }
-  .maplibregl-popup-tip {
-    border-top-color: var(--paper-color);
-  }
+
   .maplibregl-popup-content {
     background-color: var(--paper-color);
+  }
+
+  &.maplibregl-popup-anchor-bottom,
+  &.maplibregl-popup-anchor-bottom-left,
+  &.maplibregl-popup-anchor-bottom-right {
+    .maplibregl-popup-tip {
+      border-top-color: var(--paper-color);
+    }
+  }
+  &.maplibregl-popup-anchor-top,
+  &.maplibregl-popup-anchor-top-left,
+  &.maplibregl-popup-anchor-top-right {
+    .maplibregl-popup-tip {
+      border-bottom-color: var(--paper-color);
+    }
+  }
+  &.maplibregl-popup-anchor-left {
+    .maplibregl-popup-tip {
+      border-right-color: var(--paper-color);
+    }
+  }
+  &.maplibregl-popup-anchor-right {
+    .maplibregl-popup-tip {
+      border-left-color: var(--paper-color);
+    }
   }
 }
 
