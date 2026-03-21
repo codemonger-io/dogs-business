@@ -290,14 +290,14 @@ watchEffect(() => {
       if (process.env.NODE_ENV !== 'production') {
         console.log('TheMap', 'active business record clicked', event)
       }
-      const clickedRecordId = event.features?.[0].id
+      const clickedRecordId = event.features?.[0].properties?.recordId
       console.log('clicked record ID', clickedRecordId)
       const collisionBoxes = await collectCollisionBoxesAndFeatures(
         map.value!,
         ACTIVE_BUSINESS_LAYER_ID
       )
       const clickedBox = collisionBoxes
-        .find((box) => box.feature.id === clickedRecordId)
+        .find((box) => box.feature.properties?.recordId === clickedRecordId)
       if (clickedBox == null) {
         console.warn('TheMap', 'clicked business record not found')
         return
