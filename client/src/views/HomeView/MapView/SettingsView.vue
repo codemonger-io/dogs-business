@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { BButton, useDialog } from 'buefy'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 
 import ModalPage from '../../../components/ModalPage.vue'
 import { useAccountManager } from '../../../stores/account-manager'
