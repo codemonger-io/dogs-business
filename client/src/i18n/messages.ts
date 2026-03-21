@@ -51,6 +51,7 @@ export default {
     },
     term: {
       attention: 'ご注意',
+      business_around_here: 'この辺りのご用件',
       business_in_the_last_n_hours: '直近{count}時間のご用件',
       display_name: '表示する名前',
       dog_friend_name: 'お友達(犬)のお名前',
@@ -138,6 +139,7 @@ export default {
     },
     term: {
       attention: 'attention',
+      business_around_here: 'business around here',
       business_in_the_last_n_hours: 'business in the last {count} hours',
       display_name: 'Display Name',
       dog_friend_name: 'dog-friend\'s name',

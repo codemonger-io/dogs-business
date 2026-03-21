@@ -18,7 +18,10 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 
 import type { BusinessType } from '../lib/business-record-database'
-import { convertBusinessRecordsToGeoJSON } from '../lib/business-record-database'
+import {
+  convertBusinessRecordsToGeoJSON,
+  isBusinessType
+} from '../lib/business-record-database'
 import { useAccountManager } from '../stores/account-manager'
 import { useLocationTracker } from '../stores/location-tracker'
 import type { LocationMarkerState } from '../types/location-marker-state'
@@ -28,6 +31,7 @@ import {
   DOGS_BUSINESS_PRIMARY,
   DOGS_BUSINESS_PRIMARY_RGB
 } from '../utils/colors'
+import { capitalize } from '../utils/strings'
 import MapActionsPopup from './MapActionsPopup.vue'
 
 const ACTIVE_BUSINESS_SOURCE_ID = 'active-business'
@@ -77,8 +81,17 @@ const actionsPopup = ref<maplibregl.Popup>()
 const isDraggingMarker = ref(false)
 const pinnedLocation = ref<maplibregl.LngLat>()
 const isOutOfRange = ref(false)
+const recordStatsPopupContainer = ref<HTMLElement>()
+const recordStatsPopup = ref<maplibregl.Popup>()
 // toast to tell the start of location tracking
 const toastForTrackingStart = ref<{ close: () => void }>()
+
+const businessRecordStats = ref({
+  peeCount: 0,
+  pooCount: 0,
+  peePercentage: 0,
+  pooPercentage: 0
+})
 
 // layer to show the region within the user can adjust the marker
 const markerRangeLayer = new GeoCircleLayer(MARKER_RANGE_LAYER_ID, {
@@ -154,6 +167,12 @@ watchEffect(() => {
     }
     return
   }
+  if (recordStatsPopupContainer.value == null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'record stats popup container is unavailable')
+    }
+    return
+  }
   if (process.env.NODE_ENV !== 'production') {
     console.log('TheMap', 'initializing the map')
   }
@@ -219,6 +238,11 @@ watchEffect(() => {
   actionsPopup.value = markRaw(new maplibregl.Popup({ className: 'paper' }))
   actionsPopup.value
     .setDOMContent(actionsPopupContainer.value)
+
+  recordStatsPopup.value = markRaw(new maplibregl.Popup({ className: 'paper' }))
+  recordStatsPopup.value
+    .setDOMContent(recordStatsPopupContainer.value)
+    .setOffset([0, -12])
 })
 
 // configures the layer for active business records
@@ -273,17 +297,38 @@ watchEffect(() => {
         ACTIVE_BUSINESS_LAYER_ID
       )
       const clickedBox = collisionBoxes
-        .find((box) => box.feature.id=== clickedRecordId)
+        .find((box) => box.feature.id === clickedRecordId)
       if (clickedBox == null) {
         console.warn('TheMap', 'clicked business record not found')
         return
       }
-      const hiddenBoxes = collisionBoxes.filter((box) => {
-        return box !== clickedBox && boxesIntersect(box.box, clickedBox.box)
+      const intersectingBoxes = collisionBoxes.filter((box) => {
+        return boxesIntersect(box.box, clickedBox.box)
       })
-      for (const box of hiddenBoxes) {
-        console.log('hidden record ID', box.feature.id)
+      const newBusinessRecordStats = {
+        peeCount: 0,
+        pooCount: 0
       }
+      for (const box of intersectingBoxes) {
+        console.log('intersecting record', box.feature.properties)
+        const businessType = box.feature.properties.businessType
+        if (isBusinessType(businessType)) {
+          newBusinessRecordStats[`${businessType}Count`] += 1
+        } else {
+          console.warn('TheMap', 'unknown business type:', businessType)
+        }
+      }
+      const recordCount = newBusinessRecordStats.peeCount + newBusinessRecordStats.pooCount
+      const peePercentage = recordCount > 0 ? Math.round(100 * newBusinessRecordStats.peeCount / recordCount) : 0
+      const pooPercentage = recordCount > 0 ? 100 - peePercentage : 0
+      businessRecordStats.value = {
+        ...newBusinessRecordStats,
+        peePercentage,
+        pooPercentage
+      }
+      recordStatsPopup.value
+        ?.setLngLat(event.lngLat)
+        .addTo(map.value!)
     })
     isActiveBusinessLayerReady.value = true
   }
@@ -688,6 +733,23 @@ const askCleanup = () => {
         </p>
       </template>
     </div>
+    <div ref="recordStatsPopupContainer">
+      <div>
+        <p>{{ capitalize(t('term.business_around_here')) }}</p>
+      </div>
+      <div class="stacked-bar-chart">
+        <span
+          v-if="businessRecordStats.peeCount > 0"
+          class="stacked-bar-chart-item fill-pee"
+          :style="`width: ${businessRecordStats.peePercentage}%;`"
+        >{{ businessRecordStats.peeCount }}</span>
+        <span
+          v-if="businessRecordStats.pooCount > 0"
+          class="stacked-bar-chart-item fill-poo"
+          :style="`width: ${businessRecordStats.pooPercentage}%;`"
+        >{{ businessRecordStats.pooCount }}</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -699,5 +761,36 @@ const askCleanup = () => {
 
 .hidden {
   display: none;
+}
+
+.stacked-bar-chart {
+  width: 200px;
+  height: 20px;
+  background-color: lightgray;
+  border-radius: 6px;
+  border: 1px solid gray;
+
+  .stacked-bar-chart-item {
+    display: inline-block;
+    height: 100%;
+    width: attr(percentage, %);
+    text-align: center;
+
+    &.fill-pee {
+      background-color: #fee663;
+    }
+    &.fill-poo {
+      background-color: #ab7421;
+    }
+
+    &span:first-child {
+      border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+    }
+    &span:last-child {
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+    }
+  }
 }
 </style>
