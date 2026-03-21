@@ -30,8 +30,9 @@ const dogNameInitial = computed(() => {
   }
 })
 
+const QUERY_HOURS = 8
 const recentBusinessRecords = computed(() => {
-  const fromTimestamp = (Date.now() / 1000) - 24 * 60 * 60
+  const fromTimestamp = (Date.now() / 1000) - QUERY_HOURS * 60 * 60
   const records = accountManager.activeBusinessRecords ?? []
   return records
     .filter((r) => r.timestamp >= fromTimestamp)
@@ -87,7 +88,7 @@ const close = () => {
           </div>
           <div class="block">
             <h2 class="title is-4">
-              {{ capitalize(t('term.business_in_the_last_24_hours')) }}
+              {{ capitalize(t('term.business_in_the_last_n_hours', QUERY_HOURS)) }}
             </h2>
             <div v-if="recentBusinessRecords.length > 0">
               <div
@@ -113,7 +114,7 @@ const close = () => {
               </div>
             </div>
             <div v-else>
-              {{ t('message.no_business_recorded_in_the_last_24_hours') }}
+              {{ t('message.no_business_recorded_in_the_last_n_hours', QUERY_HOURS) }}
             </div>
           </div>
           <div class="block control-block">
