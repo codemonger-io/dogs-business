@@ -285,11 +285,17 @@ watchEffect(() => {
   actionsPopup.value = markRaw(new maplibregl.Popup({ className: 'paper' }))
   actionsPopup.value
     .setDOMContent(actionsPopupContainer.value)
+    .on('open', () => {
+      recordStatsPopup.value?.remove()
+    })
 
   recordStatsPopup.value = markRaw(new maplibregl.Popup({ className: 'paper' }))
   recordStatsPopup.value
     .setDOMContent(recordStatsPopupContainer.value)
     .setOffset(12)
+    .on('open', () => {
+      actionsPopup.value?.remove()
+    })
 })
 
 // configures the layer for active business records
@@ -374,6 +380,12 @@ watchEffect(() => {
     // because the remote layer should be laid under it.
     if (process.env.NODE_ENV !== 'production') {
       console.log('TheMap', 'active business layer is not ready yet')
+    }
+    return
+  }
+  if (accountManager.accountInfo.type !== 'online') {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('TheMap', 'remote business records are available only for online accounts')
     }
     return
   }
@@ -569,6 +581,7 @@ watchEffect(() => {
     map.value.jumpTo({
       center: [coords.longitude, coords.latitude]
     })
+    isOutOfRange.value = false
     actionsPopup.value.addTo(map.value)
     jumpToLocation = false
     resumeTrackingRequested.value = false
