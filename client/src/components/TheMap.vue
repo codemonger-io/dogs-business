@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { boxesIntersect, collectCollisionBoxesAndFeatures } from '@codemonger-io/maplibre-collision-boxes'
 import { GeoCircleLayer } from '@codemonger-io/maplibre-geo-circle-layer'
+import { computedAsync } from '@vueuse/core'
 import { useSnackbar, useToast } from 'buefy'
 import maplibregl from 'maplibre-gl'
 import type { GeoJSONSource } from 'maplibre-gl'
@@ -8,6 +9,7 @@ import {
   computed,
   getCurrentInstance,
   markRaw,
+  nextTick,
   onMounted,
   onUnmounted,
   ref,
@@ -81,17 +83,14 @@ const actionsPopup = ref<maplibregl.Popup>()
 const isDraggingMarker = ref(false)
 const pinnedLocation = ref<maplibregl.LngLat>()
 const isOutOfRange = ref(false)
+const selectedRecordRef = ref<{
+  layerId: string,
+  recordId: number | string
+}>()
 const recordStatsPopupContainer = ref<HTMLElement>()
 const recordStatsPopup = ref<maplibregl.Popup>()
 // toast to tell the start of location tracking
 const toastForTrackingStart = ref<{ close: () => void }>()
-
-const businessRecordStats = ref({
-  peeCount: 0,
-  pooCount: 0,
-  peePercentage: 0,
-  pooPercentage: 0
-})
 
 // layer to show the region within the user can adjust the marker
 const markerRangeLayer = new GeoCircleLayer(MARKER_RANGE_LAYER_ID, {
@@ -127,6 +126,65 @@ const activeBusinessRecordsGeoJson = computed(() => {
   const records = accountManager.activeBusinessRecords ?? []
   return markRaw(convertBusinessRecordsToGeoJSON(records))
 })
+
+// updates business records statistics when the selected record is updated
+const businessRecordStats = computedAsync(
+  async () => {
+    const recordRef = selectedRecordRef.value
+    if (recordRef == null || map.value == null) {
+      return {
+        peeCount: 0,
+        pooCount: 0,
+        peePercentage: 0,
+        pooPercentage: 0
+      }
+    }
+    const collisionBoxes = await collectCollisionBoxesAndFeatures(
+      map.value,
+      recordRef.layerId
+    )
+    const selectedBox = collisionBoxes
+      .find((box) => box.feature.properties?.recordId === recordRef.recordId)
+    if (selectedBox == null) {
+      console.warn('TheMap', 'selected business record not found', recordRef)
+      return {
+        peeCount: 0,
+        pooCount: 0,
+        peePercentage: 0,
+        pooPercentage: 0
+      }
+    }
+    const intersectingBoxes = collisionBoxes.filter((box) => {
+      return boxesIntersect(box.box, selectedBox.box)
+    })
+    const accumulator = {
+      peeCount: 0,
+      pooCount: 0
+    }
+    for (const box of intersectingBoxes) {
+      const businessType = box.feature.properties?.businessType
+      if (isBusinessType(businessType)) {
+        accumulator[`${businessType}Count`] += 1
+      } else {
+        console.warn('TheMap', 'unknown business type:', businessType)
+      }
+    }
+    const recordCount = accumulator.peeCount + accumulator.pooCount
+    const peePercentage = recordCount > 0 ? Math.round(100 * accumulator.peeCount / recordCount) : 0
+    const pooPercentage = recordCount > 0 ? 100 - peePercentage : 0
+    return {
+      ...accumulator,
+      peePercentage,
+      pooPercentage
+    }
+  },
+  {
+    peeCount: 0,
+    pooCount: 0,
+    peePercentage: 0,
+    pooPercentage: 0
+  }
+)
 
 const getBusinessIconUrl = (businessType: string) => {
   return new URL(`../assets/icons/${businessType}.png`, import.meta.url).href
@@ -279,42 +337,21 @@ watchEffect(() => {
       if (process.env.NODE_ENV !== 'production') {
         console.log('TheMap', 'active business record clicked', event)
       }
-      const clickedRecordId = event.features?.[0].properties?.recordId
-      console.log('clicked record ID', clickedRecordId)
-      const collisionBoxes = await collectCollisionBoxesAndFeatures(
-        map.value!,
-        ACTIVE_BUSINESS_LAYER_ID
-      )
-      const clickedBox = collisionBoxes
-        .find((box) => box.feature.properties?.recordId === clickedRecordId)
-      if (clickedBox == null) {
-        console.warn('TheMap', 'clicked business record not found')
+      if (props.viewerMode !== 'active-dog') {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('TheMap', 'ignore click as viewer mode is not active-dog')
+        }
         return
       }
-      const intersectingBoxes = collisionBoxes.filter((box) => {
-        return boxesIntersect(box.box, clickedBox.box)
-      })
-      const newBusinessRecordStats = {
-        peeCount: 0,
-        pooCount: 0
+      const clickedRecordId = event.features?.[0].properties?.recordId
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('TheMap', 'clicked record ID', clickedRecordId)
       }
-      for (const box of intersectingBoxes) {
-        console.log('intersecting record', box.feature.properties)
-        const businessType = box.feature.properties.businessType
-        if (isBusinessType(businessType)) {
-          newBusinessRecordStats[`${businessType}Count`] += 1
-        } else {
-          console.warn('TheMap', 'unknown business type:', businessType)
-        }
+      selectedRecordRef.value = {
+        layerId: ACTIVE_BUSINESS_LAYER_ID,
+        recordId: clickedRecordId
       }
-      const recordCount = newBusinessRecordStats.peeCount + newBusinessRecordStats.pooCount
-      const peePercentage = recordCount > 0 ? Math.round(100 * newBusinessRecordStats.peeCount / recordCount) : 0
-      const pooPercentage = recordCount > 0 ? 100 - peePercentage : 0
-      businessRecordStats.value = {
-        ...newBusinessRecordStats,
-        peePercentage,
-        pooPercentage
-      }
+      await nextTick()
       recordStatsPopup.value
         ?.setLngLat(event.lngLat)
         .addTo(map.value!)
@@ -369,24 +406,24 @@ watchEffect(() => {
       if (process.env.NODE_ENV !== 'production') {
         console.log('TheMap', 'remote business record clicked', event)
       }
-      const clickedRecordId = event.features?.[0].id
-      console.log('clicked record ID', clickedRecordId)
-      const collisionBoxes = await collectCollisionBoxesAndFeatures(
-        map.value!,
-        REMOTE_BUSINESS_LAYER_ID
-      )
-      const clickedBox = collisionBoxes
-        .find((box) => box.feature.id=== clickedRecordId)
-      if (clickedBox == null) {
-        console.warn('TheMap', 'clicked business record not found')
+      if (props.viewerMode !== 'global') {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('TheMap', 'ignore click as viewer mode is not global')
+        }
         return
       }
-      const hiddenBoxes = collisionBoxes.filter((box) => {
-        return box !== clickedBox && boxesIntersect(box.box, clickedBox.box)
-      })
-      for (const box of hiddenBoxes) {
-        console.log('hidden record ID', box.feature.id, box.feature.properties?.recordId)
+      const clickedRecordId = event.features?.[0].properties?.recordId
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('TheMap', 'clicked record ID', clickedRecordId)
       }
+      selectedRecordRef.value = {
+        layerId: REMOTE_BUSINESS_LAYER_ID,
+        recordId: clickedRecordId
+      }
+      await nextTick()
+      recordStatsPopup.value
+        ?.setLngLat(event.lngLat)
+        .addTo(map.value!)
     })
 
   } else {
