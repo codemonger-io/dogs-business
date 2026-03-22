@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@codemonger-io/maplibre-collision-boxes':
-        specifier: 0.1.1-1de20cd
-        version: 0.1.1-1de20cd(maplibre-gl@5.19.0)
+        specifier: 0.1.2-ab0b191
+        version: 0.1.2-ab0b191(maplibre-gl@5.21.0)
       '@codemonger-io/maplibre-geo-circle-layer':
         specifier: 0.1.0-e0d4986
-        version: 0.1.0-e0d4986(maplibre-gl@5.19.0)
+        version: 0.1.0-e0d4986(maplibre-gl@5.21.0)
       '@codemonger-io/passquito-client-js':
         specifier: 0.0.4-9b90e5e
         version: 0.0.4-9b90e5e
@@ -33,8 +33,8 @@ importers:
         specifier: ^0.563.0
         version: 0.563.0
       maplibre-gl:
-        specifier: 5.19.0
-        version: 5.19.0
+        specifier: 5.21.0
+        version: 5.21.0
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.9.3)(vue@3.5.26(typescript@5.9.3))
@@ -149,8 +149,8 @@ packages:
     resolution: {integrity: sha512-0ZrskXVEHSWIqZM/sQZ4EV3jZJXRkio/WCxaqKZP1g//CEWEPSfeZFcms4XeKBCHU0ZKnIkdJeU/kF+eRp5lBg==}
     engines: {node: '>=6.9.0'}
 
-  '@codemonger-io/maplibre-collision-boxes@0.1.1-1de20cd':
-    resolution: {integrity: sha512-hdbWyd8qD9zCAOt6n8V9Ua4i+fzE4ALX0lgfNdCnpOabwVRcuJhsIZpKbOYg1n+qUQINRsxe5dInT2271OOJTw==, tarball: https://npm.pkg.github.com/download/@codemonger-io/maplibre-collision-boxes/0.1.1-1de20cd/11ce2ce05c3f69717ee10fd16a219165ce828ff7}
+  '@codemonger-io/maplibre-collision-boxes@0.1.2-ab0b191':
+    resolution: {integrity: sha512-I9Asww/p5dzxfvibudem3Lot9IZ+rMyItvpqfRYbLFE+gFm3LpYPYhdL9rVQbmXO5exZieDDhyvyRZX+86K2VA==, tarball: https://npm.pkg.github.com/download/@codemonger-io/maplibre-collision-boxes/0.1.2-ab0b191/024aa2fd9ff929c4810ffc025653c049e9872cca}
     peerDependencies:
       maplibre-gl: '>=5 <6'
 
@@ -614,10 +614,6 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@mapbox/geojson-rewind@0.5.2':
-    resolution: {integrity: sha512-tJaT+RbYGJYStt7wI3cq4Nl4SXxG8W7JDG5DMJu97V25RnbNg3QtQtf+KD+VLjNpWKYsRvXDNmNrBgEETr1ifA==}
-    hasBin: true
-
   '@mapbox/jsonlint-lines-primitives@2.0.2':
     resolution: {integrity: sha512-rY0o9A5ECsTQRVhv7tL/OyDpGAoUB4tTvLiW1DSzQGq4bvTPhNw1VpSNjDJc5GFZ2XuyOtSWSVN05qOtcD71qQ==}
     engines: {node: '>= 0.6'}
@@ -641,12 +637,15 @@ packages:
   '@maplibre/geojson-vt@5.0.4':
     resolution: {integrity: sha512-KGg9sma45S+stfH9vPCJk1J0lSDLWZgCT9Y8u8qWZJyjFlP8MNP1WGTxIMYJZjDvVT3PDn05kN1C95Sut1HpgQ==}
 
-  '@maplibre/maplibre-gl-style-spec@24.6.0':
-    resolution: {integrity: sha512-+lxMYE+DvInshwVrqSQ3CkW9YRwVlRXeDzfthVOa1c9pwK5d7YgCwhgFwlSmjJLvTXn4gL8EvPUGT620sk2Pzg==}
+  '@maplibre/geojson-vt@6.0.4':
+    resolution: {integrity: sha512-HYv3POhMRCdhP3UPPATM/hfcy6/WuVIf5FKboH8u/ZuFMTnAIcSVlq5nfOqroLokd925w2QtE7YwquFOIacwVQ==}
+
+  '@maplibre/maplibre-gl-style-spec@24.7.0':
+    resolution: {integrity: sha512-Ed7rcKYU5iELfablg9Mj+TVCsXsPBgdMyXPRAxb2v7oWg9YJnpQdZ5msDs1LESu/mtXy3Z48Vdppv2t/x5kAhw==}
     hasBin: true
 
-  '@maplibre/mlt@1.1.6':
-    resolution: {integrity: sha512-rgtY3x65lrrfXycLf6/T22ZnjTg5WgIOsptOIoCaMZy4O4UAKTyZlYY0h6v8le721pTptF94U65yMDQkug+URw==}
+  '@maplibre/mlt@1.1.8':
+    resolution: {integrity: sha512-8vtfYGidr1rNkv5IwIoU2lfe3Oy+Wa8HluzQYcQi9cveU9K3pweAal/poQj4GJ0K/EW4bTQp2wVAs09g2yDRZg==}
 
   '@maplibre/vt-pbf@4.3.0':
     resolution: {integrity: sha512-jIvp8F5hQCcreqOOpEt42TJMUlsrEcpf/kI1T2v85YrQRV6PPXUcEXUg5karKtH6oh47XJZ4kHu56pUkOuqA7w==}
@@ -2112,8 +2111,8 @@ packages:
   map-stream@0.1.0:
     resolution: {integrity: sha512-CkYQrPYZfWnu/DAmVCpTSX/xHpKZ80eKh2lAkyA6AJTef6bW+6JpbQZN5rofum7da+SyN1bi5ctTm+lTfcCW3g==}
 
-  maplibre-gl@5.19.0:
-    resolution: {integrity: sha512-REhYUN8gNP3HlcIZS6QU2uy8iovl31cXsrNDkCcqWSQbCkcpdYLczqDz5PVIwNH42UQNyvukjes/RoHPDrOUmQ==}
+  maplibre-gl@5.21.0:
+    resolution: {integrity: sha512-n0v4J/Ge0EG8ix/z3TY3ragtJYMqzbtSnj1riOC0OwQbzwp0lUF2maS1ve1z8HhitQCKtZZiZJhb8to36aMMfQ==}
     engines: {node: '>=16.14.0', npm: '>=8.1.0'}
 
   markdown-it-async@2.2.0:
@@ -2996,13 +2995,13 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@codemonger-io/maplibre-collision-boxes@0.1.1-1de20cd(maplibre-gl@5.19.0)':
+  '@codemonger-io/maplibre-collision-boxes@0.1.2-ab0b191(maplibre-gl@5.21.0)':
     dependencies:
-      maplibre-gl: 5.19.0
+      maplibre-gl: 5.21.0
 
-  '@codemonger-io/maplibre-geo-circle-layer@0.1.0-e0d4986(maplibre-gl@5.19.0)':
+  '@codemonger-io/maplibre-geo-circle-layer@0.1.0-e0d4986(maplibre-gl@5.21.0)':
     dependencies:
-      maplibre-gl: 5.19.0
+      maplibre-gl: 5.21.0
 
   '@codemonger-io/passquito-client-js@0.0.4-9b90e5e':
     dependencies:
@@ -3316,11 +3315,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@mapbox/geojson-rewind@0.5.2':
-    dependencies:
-      get-stream: 6.0.1
-      minimist: 1.2.8
-
   '@mapbox/jsonlint-lines-primitives@2.0.2': {}
 
   '@mapbox/point-geometry@1.1.0': {}
@@ -3339,7 +3333,11 @@ snapshots:
 
   '@maplibre/geojson-vt@5.0.4': {}
 
-  '@maplibre/maplibre-gl-style-spec@24.6.0':
+  '@maplibre/geojson-vt@6.0.4':
+    dependencies:
+      kdbush: 4.0.2
+
+  '@maplibre/maplibre-gl-style-spec@24.7.0':
     dependencies:
       '@mapbox/jsonlint-lines-primitives': 2.0.2
       '@mapbox/unitbezier': 0.0.1
@@ -3349,7 +3347,7 @@ snapshots:
       rw: 1.3.3
       tinyqueue: 3.0.0
 
-  '@maplibre/mlt@1.1.6':
+  '@maplibre/mlt@1.1.8':
     dependencies:
       '@mapbox/point-geometry': 1.1.0
 
@@ -4922,21 +4920,19 @@ snapshots:
 
   map-stream@0.1.0: {}
 
-  maplibre-gl@5.19.0:
+  maplibre-gl@5.21.0:
     dependencies:
-      '@mapbox/geojson-rewind': 0.5.2
       '@mapbox/jsonlint-lines-primitives': 2.0.2
       '@mapbox/point-geometry': 1.1.0
       '@mapbox/tiny-sdf': 2.0.7
       '@mapbox/unitbezier': 0.0.1
       '@mapbox/vector-tile': 2.0.4
       '@mapbox/whoots-js': 3.1.0
-      '@maplibre/geojson-vt': 5.0.4
-      '@maplibre/maplibre-gl-style-spec': 24.6.0
-      '@maplibre/mlt': 1.1.6
+      '@maplibre/geojson-vt': 6.0.4
+      '@maplibre/maplibre-gl-style-spec': 24.7.0
+      '@maplibre/mlt': 1.1.8
       '@maplibre/vt-pbf': 4.3.0
       '@types/geojson': 7946.0.16
-      '@types/supercluster': 7.1.3
       earcut: 3.0.2
       gl-matrix: 3.4.4
       kdbush: 4.0.2
@@ -4944,7 +4940,6 @@ snapshots:
       pbf: 4.0.1
       potpack: 2.1.0
       quickselect: 3.0.0
-      supercluster: 8.0.1
       tinyqueue: 3.0.0
 
   markdown-it-async@2.2.0:
