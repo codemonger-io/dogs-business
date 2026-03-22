@@ -270,6 +270,7 @@ export const useAccountManager = defineStore('account-manager', () => {
     accountInfo,
     (account) => {
       if (account.type !== 'guest' && account.type !== 'online') {
+        currentDog.value = undefined
         return
       }
       isLoadingDog.value = true
