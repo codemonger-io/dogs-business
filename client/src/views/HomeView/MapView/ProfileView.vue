@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computedAsync } from '@vueuse/core'
+import { BSkeleton, BTooltip } from 'buefy'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import ModalPage from '../../../components/ModalPage.vue'
+import IconCircleUser from '../../../components/icons/IconCircleUser.vue'
+import IconHeartShield from '../../../components/icons/IconHeartShield.vue'
 import IconPee from '../../../components/icons/IconPee.vue'
 import IconPoo from '../../../components/icons/IconPoo.vue'
 import { useAccountManager } from '../../../stores/account-manager'
@@ -30,6 +34,13 @@ const dogNameInitial = computed(() => {
   }
 })
 
+const userId = computed(() => {
+  if (accountManager.accountInfo.type !== 'online') {
+    return undefined
+  }
+  return accountManager.accountInfo.publicKeyInfo.userHandle
+})
+
 const QUERY_HOURS = 8
 const recentBusinessRecords = computed(() => {
   const fromTimestamp = (Date.now() / 1000) - QUERY_HOURS * 60 * 60
@@ -43,6 +54,36 @@ const recentBusinessRecords = computed(() => {
         datetime,
       }
     })
+})
+
+// queries human friends of the current dog
+const isFetchingHumanFriends = ref(false)
+const humanFriends = computedAsync(async () => {
+  if (accountManager.accountInfo.type !== 'online') {
+    return
+  }
+  const currentDogId = accountManager.currentDog?.dogId
+  if (currentDogId == null) {
+    console.warn('ProfileView', 'no dog is active')
+    return
+  }
+  if (typeof currentDogId !== 'string') {
+    console.warn('ProfileView', 'current dog ID must be a string')
+    return
+  }
+  try {
+    isFetchingHumanFriends.value = true
+    const friendsRes = await accountManager.resourceApi.getHumanFriendsOfDog(currentDogId)
+    if (friendsRes.ok) {
+      return await friendsRes.parse()
+    } else {
+      console.error('ProfileView', 'failed to query human friends of the dog', await friendsRes.text())
+    }
+  } catch (err) {
+    console.error('ProfileView', 'failed to query human friend of the dog', err)
+  } finally {
+    isFetchingHumanFriends.value = false
+  }
 })
 
 const inviteNewHumanFriend = async () => {
@@ -117,6 +158,53 @@ const close = () => {
               {{ t('message.no_business_recorded_in_the_last_n_hours', QUERY_HOURS) }}
             </div>
           </div>
+          <div class="block">
+            <h2 class="title is-4">
+              {{ capitalize(t('term.human_friend', humanFriends?.length ?? 0)) }}
+            </h2>
+            <div>
+              <div
+                v-for="(friend, i) in humanFriends"
+                :key="`friend-${i}`"
+                class="human-friend-item"
+              >
+                <div class="human-friend-name">
+                  {{ friend.userName }}
+                </div>
+                <div class="human-friend-identity">
+                  <b-tooltip
+                    v-if="userId === friend.userId"
+                    type="is-info"
+                    :label="t('tooltip.this_user_is_you')"
+                    position="is-top"
+                    multilined
+                    :triggers="['click']"
+                    :auto-close="['inside', 'outside']"
+                  >
+                    <IconCircleUser />
+                  </b-tooltip>
+                </div>
+                <div class="human-friend-guardian">
+                  <b-tooltip
+                    v-if="friend.isGuardian"
+                    type="is-info"
+                    :label="t('tooltip.this_user_is_a_guardian_of_the_dog', { dogName: dogName })"
+                    position="is-top"
+                    multilined
+                    :triggers="['click']"
+                    :auto-close="['inside', 'outside']"
+                  >
+                    <IconHeartShield v-if="friend.isGuardian" />
+                  </b-tooltip>
+                </div>
+              </div>
+              <b-skeleton
+                :active="isFetchingHumanFriends"
+                size="is-large"
+              >
+              </b-skeleton>
+            </div>
+          </div>
           <div class="block control-block">
             <p class="block is-flex is-justify-content-center">
               <b-button
@@ -182,6 +270,28 @@ const close = () => {
     .time-part {
       display: inline-block;
     }
+  }
+}
+
+.human-friend-item {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+
+  &:not(:first-child) {
+    margin-top: 0.75em;
+  }
+
+  .human-friend-name {
+    max-width: 150px;
+  }
+
+  .human-friend-identity {
+    color: var(--dogs-theme);
+  }
+
+  .human-friend-guardian {
+    color: var(--dogs-theme);
   }
 }
 
