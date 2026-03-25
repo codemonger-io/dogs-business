@@ -16,8 +16,9 @@ import type { KeyValue } from '@codemonger-io/mapping-template-compose';
 import { composeMappingTemplate, ifThen } from '@codemonger-io/mapping-template-compose';
 
 import type { BusinessRecordTable } from './business-record-table';
-import { DOG_INDEX_NAME } from './business-record-table';
+import { DOG_INDEX_NAME as RECORD_TABLE_DOG_INDEX_NAME } from './business-record-table';
 import type { ResourceTable } from './resource-table';
+import { DOG_INDEX_NAME as RESOURCE_TABLE_DOG_INDEX_NAME } from './resource-table';
 import type { SsmParameters } from './ssm-parameters';
 
 /**
@@ -74,6 +75,9 @@ export class ResourceApi extends Construct {
 
   /** Lambda function to get business records. */
   readonly getBusinessRecordsLambda: lambda.IFunction;
+
+  /** Lambda function to get human friends of a dog. */
+  readonly getHumanFriendsLambda: lambda.IFunction;
 
   /** Lambda function to invite a human friend. */
   readonly inviteHumanFriendLambda: lambda.IFunction;
@@ -173,11 +177,27 @@ export class ResourceApi extends Construct {
       environment: {
         RESOURCE_TABLE_NAME: resourceTable.table.tableName,
         BUSINESS_RECORD_TABLE_NAME: businessRecordTable.table.tableName,
-        DOG_INDEX_NAME: DOG_INDEX_NAME,
+        DOG_INDEX_NAME: RECORD_TABLE_DOG_INDEX_NAME,
       },
     });
     resourceTable.table.grantReadData(this.getBusinessRecordsLambda);
     businessRecordTable.table.grantReadData(this.getBusinessRecordsLambda);
+    // - get human friends of a dog
+    this.getHumanFriendsLambda = new RustFunction(this, 'GetHumanFriendsLambda', {
+      description: 'Obtains the human friends of a dog friend',
+      manifestPath,
+      binaryName: 'get-human-friends',
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 128,
+      timeout: Duration.seconds(5),
+      environment: {
+        RESOURCE_TABLE_NAME: resourceTable.table.tableName,
+        DOG_INDEX_NAME: RESOURCE_TABLE_DOG_INDEX_NAME,
+        USER_POOL_ID: userPool.userPoolId,
+      },
+    });
+    resourceTable.table.grantReadData(this.getHumanFriendsLambda);
+    userPool.grant(this.getHumanFriendsLambda, 'cognito-idp:ListUsers');
     // - invite a human friend
     this.inviteHumanFriendLambda = new RustFunction(this, 'InviteHumanFriendLambda', {
       description: 'Invites a human friend to be a friend of a dog',
@@ -471,6 +491,39 @@ export class ResourceApi extends Construct {
           {
             statusCode: '200',
             description: 'Business records have successfully been obtained',
+          },
+        ]),
+      },
+    );
+
+    // /dog/{dogId}/human-friends
+    const humanFriends = dogId.addResource('human-friends');
+    // - GET
+    humanFriends.addMethod(
+      'GET',
+      new apigw.LambdaIntegration(this.getHumanFriendsLambda, {
+        proxy: false,
+        passthroughBehavior: apigw.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          'application/json': composeMappingTemplate([
+            mappingTemplateParts.userId,
+            mappingTemplateParts.dogIdSegment,
+          ])
+        },
+        integrationResponses: makeIntegrationResponsesAllowCors([
+          {
+            statusCode: '200',
+          },
+        ]),
+      }),
+      {
+        description: 'Obtain the human friends of a given dog',
+        authorizer,
+        authorizationType: apigw.AuthorizationType.COGNITO,
+        methodResponses: makeMethodResponsesAllowCors([
+          {
+            statusCode: '200',
+            description: 'Human friends have successfully been obtained',
           },
         ]),
       },

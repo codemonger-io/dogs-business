@@ -20,6 +20,7 @@ use crate::types::{
     BusinessRecordBuilder,
     BusinessType,
     GeolocationCoordinates,
+    HumanDogFriendship,
 };
 
 /// Resource table.
@@ -43,6 +44,17 @@ impl ResourceTable {
         }
     }
 
+    /// Extends the table capability with the GSI for querying by dog ID.
+    pub fn with_dog_index(
+        self,
+        dog_index_name: impl Into<String>,
+    ) -> ResourceTableWithDogIndex {
+        ResourceTableWithDogIndex {
+            underlying: self,
+            dog_index_name: dog_index_name.into(),
+        }
+    }
+
     /// Returns the relationship between a given user and dog.
     pub async fn get_user_dog_relationship(
         &self,
@@ -60,6 +72,80 @@ impl ResourceTable {
         res.item
             .map(|_| Ok(UserDogRelationship::Friend))
             .transpose()
+    }
+}
+
+/// Resource table with the GSI for querying by dog ID.
+#[derive(Debug)]
+pub struct ResourceTableWithDogIndex {
+    /// Underlying resource table.
+    underlying: ResourceTable,
+    /// GSI name for querying by dog ID.
+    dog_index_name: String,
+}
+
+impl ResourceTableWithDogIndex {
+    /// Queries human friends of a given dog.
+    ///
+    /// Returns a [`Stream`](https://docs.rs/futures/latest/futures/stream/trait.Stream.html) of the human-dog friendships.
+    pub fn get_human_friends_of_dog(
+        &self,
+        dog_id: impl Into<String>,
+    ) -> impl Stream<Item = Result<HumanDogFriendship, TableError>> {
+        let paginator = self
+            .client
+            .query()
+            .table_name(&self.table_name)
+            .index_name(&self.dog_index_name)
+            .key_condition_expression("#dogId = :dogId AND #pk BETWEEN :pkStart AND :pkStop")
+            .expression_attribute_names("#dogId", "dogId")
+            .expression_attribute_names("#pk", "pk")
+            .expression_attribute_values(":dogId", AttributeValue::S(dog_id.into()))
+            .expression_attribute_values(":pkStart", AttributeValue::S("friend-of#".into()))
+            .expression_attribute_values(":pkStop", AttributeValue::S("friend-of#~".into()))
+            .into_paginator()
+            .send();
+        PaginationStreamExt(paginator)
+            .and_then(|output| {
+                let items = output
+                    .items
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(Self::parse_friendship_item);
+                future::ok(stream::iter(items))
+            })
+            .try_flatten()
+    }
+
+    fn parse_friendship_item(
+        item: HashMap<String, AttributeValue>,
+    ) -> Result<HumanDogFriendship, TableError> {
+        let user_id = item
+            .get("pk")
+            .ok_or_else(|| TableError::item_error("pk (user ID) is missing"))
+            .and_then(|v| v.as_s().map_err(|_| TableError::item_error("pk (user ID) must be a string")))
+            .and_then(|s| s.strip_prefix("friend-of#").ok_or_else(|| TableError::item_error("pk (user ID) must start with 'friend-of#'")))?;
+        let dog_id = item
+            .get("dogId")
+            .ok_or_else(|| TableError::item_error("dogId is missing"))
+            .and_then(|v| v.as_s().map_err(|_| TableError::item_error("dogId must be a string")))?;
+        let is_guardian = item
+            .get("isGuardian")
+            .ok_or_else(|| TableError::item_error("isGuardian is missing"))
+            .and_then(|v| v.as_bool().map_err(|_| TableError::item_error("isGuardian must be a boolean")))?;
+        Ok(HumanDogFriendship {
+            user_id: user_id.to_string(),
+            dog_id: dog_id.to_string(),
+            is_guardian: *is_guardian,
+        })
+    }
+}
+
+impl std::ops::Deref for ResourceTableWithDogIndex {
+    type Target = ResourceTable;
+
+    fn deref(&self) -> &Self::Target {
+        &self.underlying
     }
 }
 

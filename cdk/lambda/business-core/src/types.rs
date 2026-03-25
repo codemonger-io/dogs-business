@@ -56,6 +56,17 @@ pub struct GeolocationCoordinates {
     pub latitude: f64,
 }
 
+/// Friendship between a human and a dog.
+#[derive(Clone, Debug, Serialize)]
+pub struct HumanDogFriendship {
+    /// ID of the human (user).
+    pub user_id: String,
+    /// ID of the dog.
+    pub dog_id: String,
+    /// Whether the human is a guardian of the dog.
+    pub is_guardian: bool,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

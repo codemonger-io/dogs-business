@@ -17,6 +17,7 @@ description = "Dog's Business Resource API"
 
 [dependencies]
 aws-config.workspace = true
+aws-sdk-cognitoidentityprovider = "1.113.0"
 aws-sdk-dynamodb.workspace = true
 aws-sdk-ssm = "1.85"
 base64 = "0.22"
