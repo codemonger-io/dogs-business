@@ -3,6 +3,9 @@ import { Construct } from 'constructs';
 
 import type { DeploymentStage } from './deployment-stage';
 
+/** Name of the global secondary index for querying by dog IDs. */
+export const DOG_INDEX_NAME = 'DogIndex';
+
 /**
  * Properties for {@link ResourceTable}.
  *
@@ -37,6 +40,8 @@ export class ResourceTable extends Construct {
    * - `timestamp`: (number) timestamp represented as the number of seconds
    *   elapsed since 00:00:00 on January 1, 1970 UTC.
    *
+   * ## Items types
+   *
    * ### Users
    *
    * - `pk`: "user#{userId}"
@@ -53,6 +58,8 @@ export class ResourceTable extends Construct {
    *   - `dogId`: unique dog ID
    * - `sk`: "info"
    * - `name`: (string) dog name
+   * - `isAdvocate`: (boolean) whether the dog is an advocate of Dog's Business
+   * - `consistencyToken`: (string) token for ensuring data consistency
    * - `createdAt`: (timestamp) time of creation
    * - `updatedAt`: (timestamp) time of last update
    *
@@ -62,6 +69,8 @@ export class ResourceTable extends Construct {
    *   - `userId`: unique user ID
    * - `sk`: "dog#{dogId}"
    *   - `dogId`: unique dog ID
+   * - `dogId`: ID of the dog friend. this is duplicated here in favor of the
+   *   GSI
    * - `isGuardian`: (boolean) whether the user is a guardian of the dog
    * - `createdAt`: (timestamp) time of creation
    *
@@ -73,8 +82,16 @@ export class ResourceTable extends Construct {
    * - `dogId`: unique ID of the dog who issued the invitation
    * - `createdAt`: (timestamp) time of creation
    * - `expiresAt`: (timestamp) time of expiration
+   *
+   * ## Global secondary indices (GSIs)
+   *
+   * ### GSI to query relationships by dog ID
+   *
+   * Primary keys:
+   * - `dogId`: (string) partition key. unique ID of the dog
+   * - `pk`: (string) sort key. same as the partition key of the base table
    */
-  readonly table: dynamodb.ITableV2;
+  readonly table: dynamodb.TableV2;
 
   constructor(scope: Construct, id: string, props: ResourceTableProps) {
     super(scope, id);
@@ -103,6 +120,20 @@ export class ResourceTable extends Construct {
           maxWriteRequestUnits: 2,
         }),
       // TODO: enable point-in-time recovery for production
+    });
+
+    // adds a global secondary index to query relationships by dog IDs
+    this.table.addGlobalSecondaryIndex({
+      indexName: DOG_INDEX_NAME,
+      partitionKey: {
+        name: 'dogId',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'pk',
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: dynamodb.ProjectionType.ALL,
     });
   }
 }
