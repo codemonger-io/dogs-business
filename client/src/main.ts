@@ -23,8 +23,10 @@ import {
 } from './stores/account-manager'
 import { locationTrackerProvider } from './stores/location-tracker'
 import { isUserInfo } from './types/account-info'
+import { isHumanFriend } from './types/human-friend'
 import type { OnlineAccountProvider } from './types/online-account-provider'
 import { wrapFetchResponse } from './utils/api-response'
+import { makeTypePredicateForArrayOf } from './utils/type-predicates'
 import router from './router'
 import { datetimeFormats, messages } from './i18n'
 
@@ -74,6 +76,16 @@ app.use(new ResourceApiProvider({
       }
     })
     return wrapFetchResponse(res, isUserInfo)
+  },
+  getHumanFriendsOfDog: async (idToken: string, dogId: string) => {
+    const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/dog/${dogId}/human-friends`
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${idToken}`
+      }
+    })
+    return wrapFetchResponse(res, makeTypePredicateForArrayOf(isHumanFriend))
   }
 }))
 

@@ -26,7 +26,8 @@ import type { ResourceApi } from '@/types/resource-api'
 const ACCOUNT_INFO_LOCAL_STORAGE_KEY = 'dogs-business.account'
 
 const dummyResourceApi: ResourceApi = {
-  getCurrentUserInfo: vi.fn()
+  getCurrentUserInfo: vi.fn(),
+  getHumanFriendsOfDog: vi.fn()
 }
 
 const dummyGuestDogDatabaseManager = {
@@ -119,7 +120,8 @@ describe('useAccountManager', () => {
     beforeEach(() => {
       const app = createApp({})
       resourceApi = {
-        getCurrentUserInfo: vi.fn()
+        getCurrentUserInfo: vi.fn(),
+        getHumanFriendsOfDog: vi.fn()
       }
       guestDogDatabase = {
         async createDog(params: DogParams) {

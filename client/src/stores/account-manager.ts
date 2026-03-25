@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import {
   type App,
   type InjectionKey,
+  computed,
   inject,
   markRaw,
   ref,
@@ -23,6 +24,7 @@ import type {
   GenericDog
 } from '../lib/dog-database'
 import { isGuestDog, isOnlineDog } from '../lib/dog-database'
+import type { AuthenticatedResourceApi } from '../lib/resource-api'
 import { makeValidatingSerializer } from '../lib/storage-serializer'
 import { RESOURCE_API_INJECTION_KEY } from '../providers/resource-api'
 import type {
@@ -80,8 +82,8 @@ export const useAccountManager = defineStore('account-manager', () => {
   if (businessRecordDatabaseManager == null) {
     throw new Error('no business record database manager is provided')
   }
-  const resourceApi = inject(RESOURCE_API_INJECTION_KEY)
-  if (resourceApi == null) {
+  const rawResourceApi = inject(RESOURCE_API_INJECTION_KEY)
+  if (rawResourceApi == null) {
     throw new Error('no Resource API is provided')
   }
 
@@ -191,7 +193,7 @@ export const useAccountManager = defineStore('account-manager', () => {
         if (process.env.NODE_ENV !== 'production') {
           console.log('useAccountManager.watchAuthenticatorState', 'fetching user info associated with the ID token')
         }
-        const res = await resourceApi.getCurrentUserInfo(state.tokens.idToken)
+        const res = await rawResourceApi.getCurrentUserInfo(state.tokens.idToken)
         if (res.ok) {
           const userInfo = await res.parse()
           _updateOnlineAccountInfo(state.publicKeyInfo, state.tokens, userInfo)
@@ -723,6 +725,28 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
   }
 
+  // resource API associated with the ID token.
+  // any request fails unless the account type is "online"
+  const resourceApi = computed((): AuthenticatedResourceApi => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('useAccountManager.resourceApi', 'updating resource API for account type', accountInfo.value.type)
+    }
+    if (accountInfo.value.type === 'online') {
+      return {
+        getHumanFriendsOfDog: async (dogId: string) => {
+          const idToken = await _requestIdToken()
+          return rawResourceApi.getHumanFriendsOfDog(idToken, dogId)
+        }
+      }
+    } else {
+      return {
+        getHumanFriendsOfDog: async () => {
+          throw new Error('resource API is only available for online account')
+        }
+      }
+    }
+  })
+
   const inviteNewHumanFriendForCurrentDog = async () => {
     const account = accountInfo.value
     if (account.type !== 'online') {
@@ -846,6 +870,7 @@ export const useAccountManager = defineStore('account-manager', () => {
     lastError,
     registerNewDogFriend,
     requestTileAccessToken,
+    resourceApi,
     setActiveDogFriend,
     signOut
   }
