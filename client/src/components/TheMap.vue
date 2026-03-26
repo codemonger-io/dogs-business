@@ -734,7 +734,7 @@ const addBusinessRecordAtCurrentMarker = (businessType: BusinessType) => {
 const askCleanup = () => {
   const dogName = currentDog.value?.name || t('term.your_dog_friend')
   snackbar.open({
-    message: t('message.clean_up_after', [dogName]),
+    message: t('message.clean_up_after', { dogName }),
     type: 'is-info',
     position: 'is-top',
     actionText: t('term.undo'),
