@@ -48,6 +48,27 @@ export class OnlineBusinessRecordDatabaseImpl implements OnlineBusinessRecordDat
     }
   }
 
+  /** Deletes a specified business record from the database. */
+  async deleteBusinessRecord(recordId: string): Promise<void> {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('OnlineBusinessRecordDatabaseImpl.deleteBusinessRecord', recordId)
+    }
+    const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/dog/-/business-record/${recordId}`
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': await this.accountProvider.requestIdToken()
+      }
+    })
+    if (!res.ok) {
+      if (res.status === 401) {
+        this.accountProvider.handleUnauthorized()
+      }
+      const message = await res.text()
+      throw new Error(`failed to delete business record: ${res.status} ${message}`)
+    }
+  }
+
   /** Loads business records of a given dog from the database. */
   async loadBusinessRecords(dogId: string): Promise<BusinessRecord<string, string>[]> {
     if (process.env.NODE_ENV !== 'production') {
@@ -74,7 +95,7 @@ export class OnlineBusinessRecordDatabaseImpl implements OnlineBusinessRecordDat
         this.accountProvider.handleUnauthorized()
       }
       const message = await res.text()
-      throw new Error(`failed to create business record: ${res.status} ${message}`)
+      throw new Error(`failed to load business records: ${res.status} ${message}`)
     }
   }
 }

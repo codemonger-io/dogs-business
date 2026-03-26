@@ -94,6 +94,52 @@ export class BusinessRecordStore implements GuestBusinessRecordDatabase {
     })
   }
 
+  /** Deletes a business record of a given dog. */
+  deleteBusinessRecord(recordId: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        let deleted = false
+        const transaction =
+          this.db.transaction(BUSINESS_RECORD_STORE_NAME, 'readwrite')
+        transaction.oncomplete = (event) => {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('BusinessRecordStore.deleteBusinessRecord', 'transaction.oncomplete', event)
+          }
+          if (!deleted) {
+            console.warn('BusinessRecordStore.deleteBusinessRecord', 'transaction.oncomplete', 'no business record was deleted')
+          }
+          resolve()
+        }
+        transaction.onerror = (event) => {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('BusinessRecordStore.deleteBusinessRecord', 'transaction.onerror', event)
+          }
+          reject(transaction.error)
+        }
+        transaction.onabort = (event) => {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('BusinessRecordStore.deleteBusinessRecord', 'transaction.onabort', event)
+          }
+          reject(new Error('deleteBusinessRecord transaction aborted'))
+        }
+        const store = transaction.objectStore(BUSINESS_RECORD_STORE_NAME)
+        const deleteRequest = store.delete(recordId)
+        deleteRequest.onsuccess = (event) => {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('BusinessRecordStore.deleteBusinessRecord', 'deleteRequest.onsuccess', deleteRequest.result, event)
+          }
+          deleted = true
+        }
+        // does nothing onerror and onabort since transaction handles them
+        transaction.commit()
+      } catch (err) {
+        // IndexedDB APIs may throw an exception
+        console.error('BusinessRecordStore.deleteBusinessRecord', err)
+        reject(err)
+      }
+    })
+  }
+
   /** Loads business records of a given dog. */
   loadBusinessRecords(dogId: number):
     Promise<BusinessRecord<number, number>[]>

@@ -56,6 +56,7 @@ const dummyBusinessRecordDatabaseManager = {
           recordId: 1
         }
       },
+      async deleteBusinessRecord() {},
       async loadBusinessRecords() {
         return []
       }
@@ -150,6 +151,7 @@ describe('useAccountManager', () => {
             recordId: 1
           }
         },
+        async deleteBusinessRecord() {},
         async loadBusinessRecords() {
           return []
         }

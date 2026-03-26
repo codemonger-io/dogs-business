@@ -661,6 +661,7 @@ export const useAccountManager = defineStore('account-manager', () => {
       record,
       ...(activeBusinessRecords.value ?? [])
     ])
+    return record
   }
 
   const _addBusinessRecordOfOnlineAccount = async (
@@ -689,6 +690,7 @@ export const useAccountManager = defineStore('account-manager', () => {
       record,
       ...(activeBusinessRecords.value ?? [])
     ])
+    return record
   }
 
   const addBusinessRecord = async (recordParams: BusinessRecordParams) => {
@@ -703,20 +705,79 @@ export const useAccountManager = defineStore('account-manager', () => {
     switch (account.type) {
       case 'guest':
         try {
-          await _addBusinessRecordOfGuest(account, dog, recordParams)
+          return _addBusinessRecordOfGuest(account, dog, recordParams)
         } catch (err) {
           console.error('failed to add business record of guest', err)
           throw err
         }
-        break
       case 'online':
-        await runAndCaptureErrorAsync(
+        return runAndCaptureErrorAsync(
           () => _addBusinessRecordOfOnlineAccount(dog, recordParams)
         )
-        break
       case 'no-account':
         throw new Error('account must be created first')
-        break
+      default: {
+        // exhaustive cases must not lead here
+        const unreachable: never = account
+        throw new Error(`unknown account type: ${unreachable}`)
+      }
+    }
+  }
+
+  const _deleteBusinessRecordOfGuest = async (
+    accountInfo: GuestAccountInfo,
+    recordId: number,
+  ) => {
+    const recordDb = await businessRecordDatabaseManager
+      .getGuestBusinessRecordDatabase(accountInfo)
+    await recordDb.deleteBusinessRecord(recordId)
+    // filters out the deleted record from `activeBusinessRecords`
+    // avoids deep reactivity to reduce the overhead
+    activeBusinessRecords.value = activeBusinessRecords.value != null
+      ? markRaw(activeBusinessRecords.value.filter((r) => r.recordId !== recordId))
+      : undefined
+  }
+
+  const _deleteBusinessRecordOfOnlineAccount = async (recordId: string) => {
+    const recordDb = await businessRecordDatabaseManager
+      .getOnlineBusinessRecordDatabase({
+        requestIdToken() {
+          return _requestIdToken()
+        },
+        handleUnauthorized() {
+          authenticatorState.triggerReAuthentication()
+        }
+      })
+    await recordDb.deleteBusinessRecord(recordId)
+    // filters out the deleted record from `activeBusinessRecords`
+    // avoids deep reactivity to reduce the overhead
+    activeBusinessRecords.value = activeBusinessRecords.value != null
+      ? markRaw(activeBusinessRecords.value.filter((r) => r.recordId !== recordId))
+      : undefined
+  }
+
+  const deleteBusinessRecord = async (recordId: number | string) => {
+    const account = accountInfo.value
+    if (account == null) {
+      throw new Error('no account info available')
+    }
+    switch (account.type) {
+      case 'guest':
+        if (typeof recordId !== 'number') {
+          throw new RangeError('record ID of a guest must be a number')
+        }
+        return runAndCaptureErrorAsync(
+          () => _deleteBusinessRecordOfGuest(account, recordId)
+        )
+      case 'online':
+        if (typeof recordId !== 'string') {
+          throw new RangeError('record ID of an online account must be a string')
+        }
+        return runAndCaptureErrorAsync(
+          () => _deleteBusinessRecordOfOnlineAccount(recordId)
+        )
+      case 'no-account':
+        throw new Error('account must be created first')
       default: {
         // exhaustive cases must not lead here
         const unreachable: never = account
@@ -863,6 +924,7 @@ export const useAccountManager = defineStore('account-manager', () => {
     addBusinessRecord,
     createGuestAccount,
     currentDog,
+    deleteBusinessRecord,
     getDogFriend,
     getHumanFriendInvitationStatus,
     inviteNewHumanFriendForCurrentDog,

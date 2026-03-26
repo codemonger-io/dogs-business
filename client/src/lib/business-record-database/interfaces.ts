@@ -53,6 +53,9 @@ export interface BusinessRecordDatabase<
     record: BusinessRecordParamsOfDog<DogId>
   ): Promise<BusinessRecord<RecordId, DogId>>
 
+  /** Deletes a specified business record in the database. */
+  deleteBusinessRecord(recordId: RecordId): Promise<void>
+
   /**
    * Loads business records of a given dog from the database.
    *
