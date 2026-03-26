@@ -15,6 +15,9 @@ use std::sync::Arc;
 
 use business_core::tables::ResourceTable;
 
+/// Maximum number of parallel requests to resolve user names.
+const MAX_PARALLEL_USER_REQUESTS: usize = 2;
+
 /// State shared.
 ///
 /// Holds resources reused throughout the lifetime of the Lambda instance.
@@ -100,13 +103,15 @@ async fn function_handler(
     let human_friends = resource_table
         .get_human_friends_of_dog(&dog_id)
         .map_err(Into::into)
-        .and_then(move |friendship| {
+        // maps to Future so that `try_buffered` can resolve in parallel
+        .map_ok(move |friendship| {
             resolve_user_name_by_id(
                 shared_state.clone(),
                 friendship.user_id.to_string(),
             )
                 .map_ok(|user_name| (friendship, user_name))
         })
+        .try_buffered(MAX_PARALLEL_USER_REQUESTS)
         .map_ok(|(friendship, user_name)| HumanFriendInfo {
             dog_id: friendship.dog_id,
             user_id: friendship.user_id.clone(),
@@ -123,6 +128,7 @@ async fn resolve_user_name_by_id(
     shared_state: Arc<SharedState>,
     user_id: String,
 ) -> Result<String, Error> {
+    tracing::info!("resolving user name by user ID: {}", user_id);
     let response = shared_state
         .cognito_client
         .list_users()
