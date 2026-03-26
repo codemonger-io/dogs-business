@@ -698,30 +698,30 @@ const hideActionsPopup = () => {
   }
 }
 
-const placePee = () => {
+const placePee = async () => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('TheMap', 'placing pee')
   }
-  addBusinessRecordAtCurrentMarker('pee')
+  const recordId = await addBusinessRecordAtCurrentMarker('pee')
   hideActionsPopup()
-  askCleanup()
+  askCleanup(recordId)
 }
 
-const placePoo = () => {
+const placePoo = async () => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('TheMap', 'placing poo')
   }
-  addBusinessRecordAtCurrentMarker('poo')
+  const recordId = await addBusinessRecordAtCurrentMarker('poo')
   hideActionsPopup()
-  askCleanup()
+  askCleanup(recordId)
 }
 
-const addBusinessRecordAtCurrentMarker = (businessType: BusinessType) => {
+const addBusinessRecordAtCurrentMarker = async (businessType: BusinessType) => {
   if (locationMarker.value == null) {
     throw new Error('location marker is unavailable')
   }
   const { lng, lat } = locationMarker.value.getLngLat()
-  accountManager.addBusinessRecord({
+  const record = await accountManager.addBusinessRecord({
     businessType,
     location: {
       longitude: lng,
@@ -729,9 +729,10 @@ const addBusinessRecordAtCurrentMarker = (businessType: BusinessType) => {
     },
     timestamp: Math.floor(Date.now() / 1000)
   })
+  return record.recordId
 }
 
-const askCleanup = () => {
+const askCleanup = (recordId: number | string) => {
   const dogName = currentDog.value?.name || t('term.your_dog_friend')
   snackbar.open({
     message: t('message.clean_up_after', { dogName }),
@@ -739,8 +740,19 @@ const askCleanup = () => {
     position: 'is-top',
     actionText: t('term.undo'),
     duration: 3000,
-    onAction: () => {
-      console.log('undoing')
+    onAction: async () => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('TheMap', 'undoing business record', recordId)
+      }
+      try {
+        await accountManager.deleteBusinessRecord(recordId)
+        toast.open({
+          message: t('message.undone'),
+          type: 'is-info'
+        })
+      } catch (err) {
+        console.error('TheMap', 'failed to undo business record', err)
+      }
     }
   })
 }
