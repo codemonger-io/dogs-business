@@ -70,6 +70,9 @@ export class ResourceApi extends Construct {
   /** Lambda function to get a dog friend. */
   readonly getDogLambda: lambda.IFunction;
 
+  /** Lambda function to operate a business record. */
+  readonly operateBusinessRecordLambda: lambda.IFunction;
+
   /** Lambda function to create a business record. */
   readonly createBusinessRecordLambda: lambda.IFunction;
 
@@ -151,6 +154,21 @@ export class ResourceApi extends Construct {
       },
     });
     resourceTable.table.grantReadData(this.getDogLambda);
+    // - operate business record
+    this.operateBusinessRecordLambda = new RustFunction(this, 'OperateBusinessRecordLambda', {
+      description: 'Operates a business record of a dog friend',
+      manifestPath,
+      binaryName: 'operate-business-record',
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 128,
+      timeout: Duration.seconds(5),
+      environment: {
+        RESOURCE_TABLE_NAME: resourceTable.table.tableName,
+        BUSINESS_RECORD_TABLE_NAME: businessRecordTable.table.tableName,
+      },
+    });
+    resourceTable.table.grantReadData(this.operateBusinessRecordLambda);
+    businessRecordTable.table.grantReadWriteData(this.operateBusinessRecordLambda);
     // - create business record
     this.createBusinessRecordLambda = new RustFunction(this, 'CreateBusinessRecordLambda', {
       description: 'Creates a new business record of a dog friend',
@@ -277,6 +295,7 @@ export class ResourceApi extends Construct {
     const mappingTemplateParts = {
       userId: ['userId', '"$context.authorizer.claims["cognito:username"]"'] as KeyValue,
       dogIdSegment: ['dogId', escapedInputParam('dogId')] as KeyValue,
+      recordIdSegment: ['recordId', escapedInputParam('recordId')] as KeyValue,
       invitationId: ['invitationId', escapedInputParam('invitationId')] as KeyValue,
     };
 
@@ -451,13 +470,48 @@ export class ResourceApi extends Construct {
         ]),
       }),
       {
-        description: 'Create a new business record carried out by the dog friend identified by a given ID token',
+        description: 'Create a new business record carried out by a dog friend of the user identified by a given ID token',
         authorizer,
         authorizationType: apigw.AuthorizationType.COGNITO,
         methodResponses: makeMethodResponsesAllowCors([
           {
             statusCode: '200',
             description: 'Business record has successfully been created',
+          },
+        ]),
+      },
+    );
+    // /dog/{dogId}/business-record/{recordId}
+    const businessRecordId = businessRecord.addResource('{recordId}');
+    // - DELETE
+    businessRecordId.addMethod(
+      'DELETE',
+      new apigw.LambdaIntegration(this.operateBusinessRecordLambda, {
+        proxy: false,
+        passthroughBehavior: apigw.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          'application/json': composeMappingTemplate([
+            mappingTemplateParts.userId,
+            mappingTemplateParts.dogIdSegment,
+            ['delete', composeMappingTemplate([
+              mappingTemplateParts.recordIdSegment,
+            ])],
+          ])
+        },
+        integrationResponses: makeIntegrationResponsesAllowCors([
+          {
+            statusCode: '200',
+          },
+        ]),
+      }),
+      {
+        description: 'Delete a specified business record carried out by a dog friend of the user identified the given ID token. The dogId may be omitted by specifying a dash (-).',
+        authorizer,
+        authorizationType: apigw.AuthorizationType.COGNITO,
+        methodResponses: makeMethodResponsesAllowCors([
+          {
+            statusCode: '200',
+            description: 'Business record has successfully been deleted',
           },
         ]),
       },

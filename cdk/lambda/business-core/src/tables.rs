@@ -2,7 +2,11 @@
 
 use aws_sdk_dynamodb::{
     error::SdkError,
-    operation::{get_item::GetItemError, query::QueryError},
+    operation::{
+        delete_item::DeleteItemError,
+        get_item::GetItemError,
+        query::QueryError,
+    },
     types::AttributeValue,
 };
 use aws_smithy_async::future::pagination_stream::PaginationStream;
@@ -73,6 +77,59 @@ impl ResourceTable {
             .map(|_| Ok(UserDogRelationship::Friend))
             .transpose()
     }
+
+    /// Queries dog friends of a given user.
+    ///
+    /// Returns a [`Stream`](https://docs.rs/futures/latest/futures/stream/trait.Stream.html) of the human-dog friendships.
+    pub fn get_dog_friends_of_user(
+        &self,
+        user_id: impl Into<String>,
+    ) -> impl Stream<Item = Result<HumanDogFriendship, TableError>> {
+        let paginator = self
+            .client
+            .query()
+            .table_name(&self.table_name)
+            .key_condition_expression("#pk = :pk AND begins_with(#sk, :skPrefix)")
+            .expression_attribute_names("#pk", "pk")
+            .expression_attribute_names("#sk", "sk")
+            .expression_attribute_values(":pk", AttributeValue::S(format!("friend-of#{}", user_id.into())))
+            .expression_attribute_values(":skPrefix", AttributeValue::S("dog#".to_string()))
+            .into_paginator()
+            .send();
+        PaginationStreamExt(paginator)
+            .and_then(|output| {
+                let items = output
+                    .items
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(Self::parse_friendship_item);
+                future::ok(stream::iter(items))
+            })
+            .try_flatten()
+    }
+
+    fn parse_friendship_item(
+        item: HashMap<String, AttributeValue>,
+    ) -> Result<HumanDogFriendship, TableError> {
+        let user_id = item
+            .get("pk")
+            .ok_or_else(|| TableError::item_error("pk (user ID) is missing"))
+            .and_then(|v| v.as_s().map_err(|_| TableError::item_error("pk (user ID) must be a string")))
+            .and_then(|s| s.strip_prefix("friend-of#").ok_or_else(|| TableError::item_error("pk (user ID) must start with 'friend-of#'")))?;
+        let dog_id = item
+            .get("dogId")
+            .ok_or_else(|| TableError::item_error("dogId is missing"))
+            .and_then(|v| v.as_s().map_err(|_| TableError::item_error("dogId must be a string")))?;
+        let is_guardian = item
+            .get("isGuardian")
+            .ok_or_else(|| TableError::item_error("isGuardian is missing"))
+            .and_then(|v| v.as_bool().map_err(|_| TableError::item_error("isGuardian must be a boolean")))?;
+        Ok(HumanDogFriendship {
+            user_id: user_id.to_string(),
+            dog_id: dog_id.to_string(),
+            is_guardian: *is_guardian,
+        })
+    }
 }
 
 /// Resource table with the GSI for querying by dog ID.
@@ -111,33 +168,10 @@ impl ResourceTableWithDogIndex {
                     .items
                     .unwrap_or_default()
                     .into_iter()
-                    .map(Self::parse_friendship_item);
+                    .map(ResourceTable::parse_friendship_item);
                 future::ok(stream::iter(items))
             })
             .try_flatten()
-    }
-
-    fn parse_friendship_item(
-        item: HashMap<String, AttributeValue>,
-    ) -> Result<HumanDogFriendship, TableError> {
-        let user_id = item
-            .get("pk")
-            .ok_or_else(|| TableError::item_error("pk (user ID) is missing"))
-            .and_then(|v| v.as_s().map_err(|_| TableError::item_error("pk (user ID) must be a string")))
-            .and_then(|s| s.strip_prefix("friend-of#").ok_or_else(|| TableError::item_error("pk (user ID) must start with 'friend-of#'")))?;
-        let dog_id = item
-            .get("dogId")
-            .ok_or_else(|| TableError::item_error("dogId is missing"))
-            .and_then(|v| v.as_s().map_err(|_| TableError::item_error("dogId must be a string")))?;
-        let is_guardian = item
-            .get("isGuardian")
-            .ok_or_else(|| TableError::item_error("isGuardian is missing"))
-            .and_then(|v| v.as_bool().map_err(|_| TableError::item_error("isGuardian must be a boolean")))?;
-        Ok(HumanDogFriendship {
-            user_id: user_id.to_string(),
-            dog_id: dog_id.to_string(),
-            is_guardian: *is_guardian,
-        })
     }
 }
 
@@ -250,6 +284,46 @@ impl BusinessRecordTable {
             })
             .try_flatten();
         Ok(records)
+    }
+
+    /// Deletes a business record identified by a given record ID and made by
+    /// one of given dogs.
+    pub async fn delete_made_by_dogs(
+        &self,
+        record_id: impl Into<String>,
+        dog_ids: &[impl AsRef<str>],
+    ) -> Result<(), TableError> {
+        // conditionally deletes the private record first
+        // if any private record is deleted, unconditionally deletes the public record
+        let record_id = record_id.into();
+        let dog_ids_expression = (0..dog_ids.len())
+            .map(|i| format!(":dogId{i}"))
+            .collect::<Vec<_>>()
+            .join(",");
+        let mut command = self.client
+            .delete_item()
+            .table_name(&self.table_name)
+            .key("pk", AttributeValue::S(record_id.clone()))
+            .key("sk", AttributeValue::S("private".to_string()))
+            .condition_expression(format!("#dogId IN ({dog_ids_expression})"))
+            .expression_attribute_names("#dogId", "dogId");
+        for (i, dog_id) in dog_ids.iter().enumerate() {
+            command = command.expression_attribute_values(
+                format!(":dogId{i}"),
+                AttributeValue::S(dog_id.as_ref().to_string()),
+            )
+        }
+        command.send().await?;
+
+        self.client
+            .delete_item()
+            .table_name(&self.table_name)
+            .key("pk", AttributeValue::S(record_id))
+            .key("sk", AttributeValue::S("public".to_string()))
+            .send()
+            .await?;
+
+        Ok(())
     }
 
     fn parse_business_record_item(
@@ -367,6 +441,7 @@ macro_rules! impl_from_dynamodb_service_error {
     };
 }
 
+impl_from_dynamodb_service_error!(DeleteItemError);
 impl_from_dynamodb_service_error!(GetItemError);
 impl_from_dynamodb_service_error!(QueryError);
 
