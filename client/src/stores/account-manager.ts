@@ -917,7 +917,19 @@ export const useAccountManager = defineStore('account-manager', () => {
     accountInfo.value = { type: 'no-account' }
   }
 
+  // abandon the current guest account.
+  const abandonGuestAccount = () => {
+    if (accountInfo.value.type !== 'guest') {
+      throw new Error('current account is not a guest account')
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('useAccountManager.abandonGuestAccount', 'abandoning guest account')
+    }
+    accountInfo.value = { type: 'no-account' }
+  }
+
   return {
+    abandonGuestAccount,
     acceptHumanFriendInvitation,
     accountInfo,
     activeBusinessRecords,

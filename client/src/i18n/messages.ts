@@ -1,6 +1,7 @@
 export default {
   ja: {
     action: {
+      abandon_guest_account: '@:{\'term.guest_account\'}を放棄',
       cancel: 'キャンセル',
       sign_out: 'サインアウト'
     },
@@ -10,6 +11,7 @@ export default {
       agreement: '{0}および{1}に同意します。',
       checking_passkey_registration_capability: '@:{\'term.passkey\'}の登録機能を確認中・・・',
       clean_up_after: '{dogName}の後片付けをしましょう!',
+      confirm_abandon_guest_account: '本当に@:{\'term.guest_account\'}を放棄してもよろしいですか? このアカウントに紐づくデータ(お友達(犬)、ご用件など)はすべて失われます。',
       confirm_sign_out: 'サインアウトしてもよろしいですか?',
       decline_invitation: '辞退する',
       do_you_accept_invitation_and_become_friend_of_dog: '招待を受け入れて{dog-name}のお友達になりますか?',
@@ -65,6 +67,7 @@ export default {
       },
       functionality: '機能',
       guardian: '保護者',
+      guest_account: 'ゲストアカウント',
       human_friend: 'お友達(人間)',
       invitation: 'ご招待',
       new_profile: '新しいプロフィール',
@@ -93,6 +96,7 @@ export default {
   },
   en: {
     action: {
+      abandon_guest_account: 'Abandon @:term.guest_account',
       cancel: 'Cancel',
       sign_out: 'Sign out'
     },
@@ -102,6 +106,7 @@ export default {
       agreement: 'I agree to the {0} and the {1}.',
       checking_passkey_registration_capability: 'Checking @:term.passkey registration capability...',
       clean_up_after: 'Clean up after {dogName}!',
+      confirm_abandon_guest_account: 'Are you sure you want to abandon your @:{\'term.guest_account\'}? You will permanently lose all the data, e.g., dog friends, and business records, associated with this account.',
       confirm_sign_out: 'Are you sure you want to sign out?',
       decline_invitation: 'Decline',
       do_you_accept_invitation_and_become_friend_of_dog: 'Do you accept the invitation and become a friend of {dog-name}?',
@@ -157,6 +162,7 @@ export default {
       },
       functionality: 'functionality | functionalities',
       guardian: 'guardian | guardians',
+      guest_account: 'guest account',
       human_friend: 'human friend | human friends',
       invitation: 'invitation | invitations',
       new_profile: 'new profile',

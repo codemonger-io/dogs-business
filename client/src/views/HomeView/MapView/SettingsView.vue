@@ -20,9 +20,25 @@ const signOut = () => {
     type: 'is-warning',
     onConfirm: () => {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('signing out...')
+        console.log('SettingsView', 'signing out...')
       }
       accountManager.signOut()
+    }
+  })
+}
+
+const abandonGuestAccount = () => {
+  dialog.confirm({
+    title: t('action.abandon_guest_account'),
+    message: t('message.confirm_abandon_guest_account'),
+    confirmText: t('action.abandon_guest_account'),
+    cancelText: t('action.cancel'),
+    type: 'is-danger',
+    onConfirm: () => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('SettingsView', 'abandoning guest account...')
+      }
+      accountManager.abandonGuestAccount()
     }
   })
 }
@@ -46,6 +62,13 @@ const signOut = () => {
               @click="signOut()"
             >
               {{ t('action.sign_out') }}
+            </b-button>
+            <b-button
+              v-if="accountManager.accountInfo.type === 'guest'"
+              type="is-danger"
+              @click="abandonGuestAccount()"
+            >
+              {{ t('action.abandon_guest_account') }}
             </b-button>
           </div>
         </section>
