@@ -2,6 +2,7 @@
 import { BButton, useDialog } from 'buefy'
 import { useI18n } from 'vue-i18n'
 
+import LanguageSelector from '../../../components/LanguageSelector.vue'
 import ModalPage from '../../../components/ModalPage.vue'
 import { useAccountManager } from '../../../stores/account-manager'
 import { capitalize } from '../../../utils/strings'
@@ -52,6 +53,9 @@ const abandonGuestAccount = () => {
           <h1 class="title is-3 has-text-centered">
             {{ capitalize(t('term.settings')) }}
           </h1>
+          <div class="block">
+            <LanguageSelector />
+          </div>
           <div class="block">
             <h2 class="title is-4">{{ capitalize(t('term.your_dog_friend', 2)) }}</h2>
           </div>
