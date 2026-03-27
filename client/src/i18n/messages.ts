@@ -70,6 +70,10 @@ export default {
       guest_account: 'ゲストアカウント',
       human_friend: 'お友達(人間)',
       invitation: 'ご招待',
+      locale: {
+        ja: '日本語',
+        en: 'English'
+      },
       new_profile: '新しいプロフィール',
       passkey: 'パスキー',
       pee: 'おしっこ💦',
@@ -165,6 +169,10 @@ export default {
       guest_account: 'guest account',
       human_friend: 'human friend | human friends',
       invitation: 'invitation | invitations',
+      locale: {
+        ja: '日本語',
+        en: 'English'
+      },
       new_profile: 'new profile',
       passkey: 'passkey | passkeys',
       pee: 'pee💦',

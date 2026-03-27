@@ -22,6 +22,7 @@ import {
   dogDatabaseManagerProvider
 } from './stores/account-manager'
 import { locationTrackerProvider } from './stores/location-tracker'
+import { readSystemLocale } from './stores/system-config'
 import { isUserInfo } from './types/account-info'
 import { isHumanFriend } from './types/human-friend'
 import type { OnlineAccountProvider } from './types/online-account-provider'
@@ -32,7 +33,7 @@ import { datetimeFormats, messages } from './i18n'
 
 const i18n = createI18n({
   legacy: false, // prefers the composition API
-  locale: 'ja',
+  locale: readSystemLocale() ?? 'ja',
   fallbackLocale: 'en',
   messages,
   datetimeFormats
