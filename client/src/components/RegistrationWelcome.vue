@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { BField, BRadioButton } from 'buefy'
 import { getCurrentInstance, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 
-import { useSystemConfig } from '../stores/system-config'
+import LanguageSelector from '../components/LanguageSelector.vue'
 
 import TheDogsBusinessLogo from './TheDogsBusinessLogo.vue'
 
-const systemConfig = useSystemConfig()
 const i18n = useI18n()
 const { t } = i18n
 
@@ -58,22 +56,7 @@ onMounted(() => {
       <div class="box welcome-box paper">
         <section class="section">
           <p class="block">
-            <b-field position="is-right">
-              <b-radio-button
-                v-model="systemConfig.locale"
-                native-value="ja"
-                type="is-info"
-              >
-                {{ t('term.locale.ja') }}
-              </b-radio-button>
-              <b-radio-button
-                v-model="systemConfig.locale"
-                native-value="en"
-                type="is-info"
-              >
-                {{ t('term.locale.en') }}
-              </b-radio-button>
-            </b-field>
+            <LanguageSelector />
           </p>
           <h1 class="title is-3">{{ t('message.sign_up_now') }}</h1>
           <p class="block">
