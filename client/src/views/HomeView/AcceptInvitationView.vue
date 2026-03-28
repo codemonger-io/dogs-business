@@ -52,7 +52,7 @@ const selectDogFriend = async (dogId: string) => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('AcceptInvitationView.selectDogFriend', dogId)
   }
-  await accountManager.setActiveDogFriend(dogId)
+  await accountManager.setActiveDogFriendId(dogId)
   router.push({ name: 'profile', params: { dogId } })
 }
 

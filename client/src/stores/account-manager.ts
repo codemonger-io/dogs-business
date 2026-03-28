@@ -540,7 +540,7 @@ export const useAccountManager = defineStore('account-manager', () => {
   }
 
   // the user must become a friend of the dog first.
-  const _setActiveDogFriendOfOnlineAccount = async (dogId: string) => {
+  const _setActiveDogFriendIdOfOnlineAccount = async (dogId: string) => {
     const url = `${import.meta.env.VITE_DOGS_BUSINESS_RESOURCE_API_BASE_URL}/user`
     const res = await fetch(url, {
       method: 'PATCH',
@@ -579,7 +579,7 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
   }
 
-  const setActiveDogFriend = (dogId: number | string) => {
+  const setActiveDogFriendId = (dogId: number | string) => {
     switch (accountInfo.value.type) {
       case 'guest':
         throw new Error('not yet implemented for guest account')
@@ -590,7 +590,7 @@ export const useAccountManager = defineStore('account-manager', () => {
         if (typeof dogId !== 'string') {
           throw new Error('dog ID must be a string for online account')
         }
-        return _setActiveDogFriendOfOnlineAccount(dogId)
+        return _setActiveDogFriendIdOfOnlineAccount(dogId)
       case 'no-account':
         throw new Error('no account info available')
       default: {
@@ -945,7 +945,7 @@ export const useAccountManager = defineStore('account-manager', () => {
     registerNewDogFriend,
     requestTileAccessToken,
     resourceApi,
-    setActiveDogFriend,
+    setActiveDogFriendId,
     signOut
   }
 })
