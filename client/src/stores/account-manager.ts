@@ -24,6 +24,7 @@ import type {
   GenericDog
 } from '../lib/dog-database'
 import { isGuestDog, isOnlineDog } from '../lib/dog-database'
+import type { Dog } from '../lib/dog-database'
 import type { AuthenticatedResourceApi } from '../lib/resource-api'
 import { makeValidatingSerializer } from '../lib/storage-serializer'
 import { RESOURCE_API_INJECTION_KEY } from '../providers/resource-api'
@@ -470,14 +471,7 @@ export const useAccountManager = defineStore('account-manager', () => {
   ) => {
     try {
       const dogDb = await dogDatabaseManager.getGuestDogDatabase(guest)
-      // we have to update currentDog then accountInfo.activeDogId
-      // otherwise, the watcher of accountInfo will try to load the dog friend
-      const dog = await dogDb.createDog(dogParams)
-      currentDog.value = dog
-      accountInfo.value = {
-        ...guest,
-        activeDogId: dog.dogId
-      }
+      return await dogDb.createDog(dogParams)
     } catch (err) {
       console.error('failed to register guest dog friend', err)
       throw err
@@ -496,46 +490,39 @@ export const useAccountManager = defineStore('account-manager', () => {
           authenticatorState.triggerReAuthentication()
         }
       })
-      const dog = await dogDb.createDog(dogParams)
-      // makes sure that the account info is still online after the API call
-      if (accountInfo.value.type === 'online') {
-        // we have to update currentDog then accountInfo.userInfo.activeDogId
-        // otherwise, the watcher of accountInfo will try to load the dog friend
-        currentDog.value = dog
-        accountInfo.value = {
-          ...accountInfo.value,
-          userInfo: {
-            ...accountInfo.value.userInfo,
-            activeDogId: dog.dogId
-          }
-        }
-        // TODO: save the activeDogId to the server
-      }
+      return await dogDb.createDog(dogParams)
     } catch (err) {
       console.error('useAccountManager._registerNewDogFriendOfOnlineAccount', err)
       throw err
     }
   }
 
+  // registers a new dog friend and returns the registered dog.
+  // the active dog friend won't be updated by this function;
+  // use `setActiveDogFriend` to update it.
   const registerNewDogFriend = async (dogParams: DogParams) => {
     if (accountInfo.value == null) {
       throw new Error('no account info available')
     }
     switch (accountInfo.value.type) {
       case 'guest':
-        await _registerNewDogFriendOfGuest(accountInfo.value, dogParams)
-        break
+        return _registerNewDogFriendOfGuest(accountInfo.value, dogParams)
       case 'online':
-        await _registerNewDogFriendOfOnlineAccount(dogParams)
-        break
+        return _registerNewDogFriendOfOnlineAccount(dogParams)
       case 'no-account':
         throw new Error('account must be created first')
-        break
       default: {
         // exhaustive cases must not lead here
         const unreachable: never = accountInfo.value
         throw new Error(`unknown account type: ${unreachable}`)
       }
+    }
+  }
+
+  const _setActiveDogFriendIdOfGuestAccount = (guest: GuestAccountInfo, dogId: number) => {
+    accountInfo.value = {
+      ...guest,
+      activeDogId: dogId
     }
   }
 
@@ -579,23 +566,65 @@ export const useAccountManager = defineStore('account-manager', () => {
     }
   }
 
-  const setActiveDogFriendId = (dogId: number | string) => {
+  const setActiveDogFriendId = async (dogId: number | string) => {
     switch (accountInfo.value.type) {
       case 'guest':
-        throw new Error('not yet implemented for guest account')
+        if (typeof dogId !== 'number') {
+          throw new RangeError('dog ID must be a number for guest account')
+        }
+        _setActiveDogFriendIdOfGuestAccount(accountInfo.value, dogId)
+        break
       case 'online':
         if (accountInfo.value.userInfo.activeDogId === dogId) {
           return
         }
         if (typeof dogId !== 'string') {
-          throw new Error('dog ID must be a string for online account')
+          throw new RangeError('dog ID must be a string for online account')
         }
-        return _setActiveDogFriendIdOfOnlineAccount(dogId)
+        await _setActiveDogFriendIdOfOnlineAccount(dogId)
+        return
       case 'no-account':
         throw new Error('no account info available')
       default: {
         const neverAccount: never = accountInfo.value
         throw new Error(`unknown account type: ${neverAccount}`)
+      }
+    }
+  }
+
+  const _setActiveDogFriendOfGuestAccount = (guest: GuestAccountInfo, dog: Dog<number>) => {
+    // we have to update currentDog then accountInfo.userInfo.activeDogId
+    // otherwise, the watcher of accountInfo will try to load the dog friend
+    currentDog.value = dog
+    _setActiveDogFriendIdOfGuestAccount(guest, dog.dogId)
+  }
+
+  const _setActiveDogFriendOfOnlineAccount = async (dog: Dog<string>) => {
+    // we have to update currentDog then accountInfo.userInfo.activeDogId
+    // otherwise, the watcher of accountInfo will try to load the dog friend
+    currentDog.value = dog
+    await _setActiveDogFriendIdOfOnlineAccount(dog.dogId)
+  }
+
+  const setActiveDogFriend = async (dog: GenericDog) => {
+    switch (accountInfo.value.type) {
+      case 'guest':
+        if (!isGuestDog(dog)) {
+          throw new RangeError('dog must be a dog friend of the guest account')
+        }
+        _setActiveDogFriendOfGuestAccount(accountInfo.value, dog)
+        break
+      case 'online':
+        if (!isOnlineDog(dog)) {
+          throw new RangeError('dog must be a dog friend of the online account')
+        }
+        await _setActiveDogFriendOfOnlineAccount(dog)
+        break
+      case 'no-account':
+        throw new Error('no account info available')
+      default: {
+        const unreachable: never = accountInfo.value
+        throw new Error(`unknown account type: ${unreachable}`)
       }
     }
   }
@@ -945,6 +974,7 @@ export const useAccountManager = defineStore('account-manager', () => {
     registerNewDogFriend,
     requestTileAccessToken,
     resourceApi,
+    setActiveDogFriend,
     setActiveDogFriendId,
     signOut
   }

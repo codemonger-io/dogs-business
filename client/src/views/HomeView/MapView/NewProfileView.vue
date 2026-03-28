@@ -24,7 +24,8 @@ const onSubmit = async () => {
     console.log('creating new dog profile for', trimmedDogName.value)
   }
   try {
-    await accountManager.registerNewDogFriend({ name: trimmedDogName.value })
+    const newDog = await accountManager.registerNewDogFriend({ name: trimmedDogName.value })
+    await accountManager.setActiveDogFriend(newDog)
     close()
   } catch (err) {
     // TODO: what can we do here?
