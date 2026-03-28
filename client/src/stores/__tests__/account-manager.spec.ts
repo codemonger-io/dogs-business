@@ -12,6 +12,7 @@ import type {
 import type {
   DogDatabaseManager,
   DogParams,
+  GenericDog,
   GuestDogDatabase
 } from '@/lib/dog-database'
 import { ResourceApiProvider } from '@/providers/resource-api'
@@ -312,6 +313,8 @@ describe('useAccountManager', () => {
         })
 
         describe('after registerNewDogFriend', () => {
+          let dog: GenericDog
+
           beforeEach(async () => {
             // makes the database return a dummy dog
             // so that subsequent access to the dog info succeeds
@@ -320,14 +323,13 @@ describe('useAccountManager', () => {
               name: 'ポチ'
             })
 
-            await accountManager.registerNewDogFriend({ name: 'ポチ' })
+            dog = await accountManager.registerNewDogFriend({ name: 'ポチ' })
           })
 
-          it('should store the updated account info', () => {
-            const storedAccountInfo = JSON.parse(localStorage.getItem(ACCOUNT_INFO_LOCAL_STORAGE_KEY)!)
-            expect(storedAccountInfo).toEqual({
-              type: 'guest',
-              activeDogId: 1
+          it('registerNewDogFriend should return the registered dog', () => {
+            expect(dog).toEqual({
+              dogId: 1,
+              name: 'ポチ'
             })
           })
 
@@ -337,35 +339,56 @@ describe('useAccountManager', () => {
             })
           })
 
-          it('should have the current dog', () => {
-            expect(accountManager.currentDog).toEqual({
-              dogId: 1,
-              name: 'ポチ'
+          it('should not update the active (current) dog', () => {
+            expect(accountManager.accountInfo).toEqual({
+              type: 'guest'
             })
+            expect(accountManager.currentDog).toBeUndefined()
           })
 
-          it('should have empty active business records', () => {
-            expect(accountManager.activeBusinessRecords).toEqual([])
-          })
-
-          describe('after addBusinessRecord', () => {
-            const businessRecordParams: BusinessRecordParams = {
-              businessType: 'pee',
-              location: {
-                latitude: 35.6812,
-                longitude: 139.7671
-              },
-              timestamp: 1527001200
-            }
-
+          describe('after setActiveDogFriend', () => {
             beforeEach(async () => {
-              await accountManager.addBusinessRecord(businessRecordParams)
+              await accountManager.setActiveDogFriend(dog)
             })
 
-            it('should request to add a business record', () => {
-              expect(guestBusinessRecordDatabase.createBusinessRecord).toHaveBeenCalledWith({
+            it('should store the updated account info', () => {
+              const storedAccountInfo = JSON.parse(localStorage.getItem(ACCOUNT_INFO_LOCAL_STORAGE_KEY)!)
+              expect(storedAccountInfo).toEqual({
+                type: 'guest',
+                activeDogId: 1
+              })
+            })
+
+            it('should have the current dog', () => {
+              expect(accountManager.currentDog).toEqual({
                 dogId: 1,
-                ...businessRecordParams
+                name: 'ポチ'
+              })
+            })
+
+            it('should have empty active business records', () => {
+              expect(accountManager.activeBusinessRecords).toEqual([])
+            })
+
+            describe('after addBusinessRecord', () => {
+              const businessRecordParams: BusinessRecordParams = {
+                businessType: 'pee',
+                location: {
+                  latitude: 35.6812,
+                  longitude: 139.7671
+                },
+                timestamp: 1527001200
+              }
+
+              beforeEach(async () => {
+                await accountManager.addBusinessRecord(businessRecordParams)
+              })
+
+              it('should request to add a business record', () => {
+                expect(guestBusinessRecordDatabase.createBusinessRecord).toHaveBeenCalledWith({
+                  dogId: 1,
+                  ...businessRecordParams
+                })
               })
             })
           })
