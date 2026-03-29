@@ -40,14 +40,14 @@ export default {
       tell_us_about_your_dog_friend: 'あなたのお友達(犬)について教えてください!',
       too_far_from_your_detected_location: '検出された位置から遠すぎます。',
       undone: '取り消しました!',
-      we_wont_rely_on_passwords: '@:{\'term.dogs_business\'}はパスワードを使いません! 代わりにより安全な{0}を使用します。{0}はお使いのデバイスの指紋認証や顔認証などを用いてあなたが本人であるかどうかを認証します。お使いのデバイスが{0}に対応していない場合は@:{\'term.dogs_business\'}にサインアップしていただくことができません。また、お使いのデバイスと本サービスとの相性などの問題でご利用いただくことができない場合もございますので、ご容赦ください。',
+      we_wont_rely_on_passwords: '@:{\'term.dogs_business\'}はパスワードを使いません! 代わりにより安全な{passkeys}を使用します。@:{\'term.passkey\'}はお使いのデバイスで安全に管理されている指紋認証や顔認証などを用いてあなたが本人であるかどうかを認証します。お使いのデバイスが@:{\'term.passkey\'}に対応していない場合は@:{\'term.dogs_business\'}にサインアップしていただくことができません。また、お使いのデバイスと本サービスとの相性などの問題でご利用いただくことができない場合もございますので、ご容赦ください。',
       what_is_the_business_here: '{0}は何のご用でこちらに?',
       you_are_already_friend_of_dog: 'すでに{dog-name}のお友達です。',
       you_remove_it_we_remember_it: '落とし物はキレイに!思い出に!',
       valid_until: '{expiresAt}まで有効'
     },
     placeholder: {
-      display_name: 'ポチの友達',
+      display_name: 'あなたのお名前',
       dog_friend_name: 'ポチ',
       passkey: '@:{\'term.passkey\'}の選択',
       username: 'User0123'
@@ -56,7 +56,7 @@ export default {
       attention: 'ご注意',
       business_around_here: 'この辺りのご用件',
       business_in_the_last_n_hours: '直近{count}時間のご用件',
-      display_name: '表示する名前',
+      display_name: 'あなたのお名前',
       dog_friend_name: 'お友達(犬)のお名前',
       dogs_business: 'Dog\'s Business',
       feature: {
@@ -90,12 +90,12 @@ export default {
       your_dog_friend: 'お友達(犬)'
     },
     tooltip: {
-      display_name: '@:{\'term.passkey\'}に紐づけられる表示名です。お使いのデバイスによっては表示されないようです。',
+      display_name: '他の@:{\'term.human_friend\'}に表示される名前です。@:{\'term.passkey\'}にも紐づけられますが、お使いのデバイスによっては表示されません。',
       dog_friend_name: 'このアプリのメッセージをお友達(犬)に合わせてカスタマイズします。省略した場合は「お友達(犬)」と表示します。',
       passkey: '@:{\'term.passkey\'}を選択して@:{\'term.dogs_business\'}にサインインします。',
       this_user_is_you: 'このユーザーはあなたです。',
       this_user_is_a_guardian_of_the_dog: 'このユーザーは{dogName}の@:{\'term.guardian\'}です。',
-      username: '@:{\'term.passkey\'}を識別する名前としてお使いのデバイスに表示されます。'
+      username: '@:{\'term.passkey\'}を識別するIDとしてお使いのデバイスに表示されます。半角英数字で入力してください。'
     }
   },
   en: {
@@ -139,14 +139,14 @@ export default {
       tell_us_about_your_dog_friend: 'Tell us about your dog-friend!',
       too_far_from_your_detected_location: 'Too far from your detected location.',
       undone: 'Undone!',
-      we_wont_rely_on_passwords: '@:{\'term.dogs_business\'} won\'t rely on passwords but uses more secure {0} instead! {0} authenticate you with your fingerprints, face, or any other metrics provided by your device. You may not sign up for @:{\'term.dogs_business\'} if your device does not support {0}. And please be patient in case you might not be able to use this service due to incompatiblity between your device and the service, or any other problems.',
+      we_wont_rely_on_passwords: '@:{\'term.dogs_business\'} won\'t rely on passwords but uses more secure {passkeys} instead! Passkeys authenticate you with your fingerprints, face, or any other metrics securely managed by your device. You may not sign up for @:{\'term.dogs_business\'} if your device does not support passkeys. And please be patient in case you might not be able to use this service due to incompatiblity between your device and the service, or any other problems.',
       what_is_the_business_here: 'What is {0}\'s business here?',
       you_are_already_friend_of_dog: 'You are already a friend of {dog-name}.',
       you_remove_it_we_remember_it: 'You Remove It! We Remember It!',
       valid_until: 'Valid until {expiresAt}'
     },
     placeholder: {
-      display_name: 'Pooch\'s Friend',
+      display_name: 'Your display name',
       dog_friend_name: 'Pooch',
       passkey: 'Select a @:term.passkey',
       username: 'User0123',
@@ -155,7 +155,7 @@ export default {
       attention: 'attention',
       business_around_here: 'business around here',
       business_in_the_last_n_hours: 'business in the last {count} hours',
-      display_name: 'Display Name',
+      display_name: 'Your display Name',
       dog_friend_name: 'dog-friend\'s name',
       dogs_business: 'Dog\'s Business',
       feature: {
@@ -189,12 +189,12 @@ export default {
       your_dog_friend: 'your dog-friend'
     },
     tooltip: {
-      display_name: 'Display name associated with your @:term.passkey. But it seems that some devices do not show it.',
+      display_name: 'Your display name shown to other human friends. This is also associated with your @:{\'term.passkey\'}. But some devices may not show it.',
       dog_friend_name: 'Customize messages on this app for your dog-friend. If omitted, we will displayed "your dog-friend" instead.',
-      passkey: 'Select a passkey to sign in to @:term.dogs_business.',
+      passkey: 'Select a passkey to sign in to @:{\'term.dogs_business\'}.',
       this_user_is_you: 'This user is you.',
       this_user_is_a_guardian_of_the_dog: 'This user is a @:term.guardian of {dogName}.',
-      username: 'Shown on your device as the identifier of your @:term.passkey.'
+      username: 'Shown on your device as the identifier of your @:{\'term.passkey\'}. Please enter alphanumeric characters only.'
     }
   },
 }
