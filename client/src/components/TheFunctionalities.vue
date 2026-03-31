@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 
+import { capitalize } from '../utils/strings'
+
 import IconCheck from './icons/IconCheck.vue'
 import IconMinus from './icons/IconMinus.vue'
 
@@ -36,14 +38,14 @@ const functionalities = [
       <b-table :data="functionalities" bordered striped>
         <b-table-column
           field="name"
-          :label="t('term.functionality', 1)"
+          :label="capitalize(t('term.functionality', 1))"
           v-slot="props"
         >
           {{ props.row.name }}
         </b-table-column>
         <b-table-column
           field="signup"
-          :label="t('term.signup')"
+          :label="capitalize(t('term.signup'))"
           v-slot="props"
           centered
         >
@@ -52,7 +54,7 @@ const functionalities = [
         </b-table-column>
         <b-table-column
           field="woSignup"
-          :label="t('term.without_signup')"
+          :label="capitalize(t('term.without_signup'))"
           v-slot="props"
           centered
         >
