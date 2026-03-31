@@ -64,6 +64,10 @@ $danger: #C43F37;
       > .animation-content > .modal-card {
         width: 100%;
         min-height: 100vh;
+        /* 100vh ignores the address bar */
+        @supports (min-height: 100dvh) {
+          min-height: 100dvh;
+        }
         margin: 0;
       }
 
