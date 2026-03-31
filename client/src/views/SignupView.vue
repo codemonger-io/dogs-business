@@ -77,7 +77,7 @@ const onSubmit = async () => {
   }
 }
 
-const showWhatArePasskeys = () => {
+const showWhatIsPasskey = () => {
   if (self.proxy == null) {
     throw new Error('no instance proxy exists')
   }
@@ -97,9 +97,11 @@ const showWhatArePasskeys = () => {
         <div class="block">
           <b-notification type="is-warning" :closable="false">
             <i18n-t keypath="message.we_wont_rely_on_passwords">
-              <a href="#" @click.prevent="showWhatArePasskeys">
-                {{ t('term.passkey', 2) }}
-              </a>
+              <template #passkeys>
+                <a href="#" @click.prevent="showWhatIsPasskey">
+                  {{ t('term.passkey', 2) }}
+                </a>
+              </template>
             </i18n-t>
           </b-notification>
         </div>
@@ -170,7 +172,7 @@ const showWhatArePasskeys = () => {
         <div v-else>
           <b-notification type="is-danger" :closable="false">
             <i18n-t keypath="message.no_passkey_registration_supported">
-              <a href="#" @click.prevent="showWhatArePasskeys">
+              <a href="#" @click.prevent="showWhatIsPasskey">
                 {{ t('term.passkey', 2) }}
               </a>
             </i18n-t>

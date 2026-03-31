@@ -4,15 +4,15 @@ import { useI18n } from 'vue-i18n'
 
 const { locale } = useI18n()
 
-const WhatArePasskeys = computed(() => defineAsyncComponent(() =>
-  import(`../i18n/what-are-passkeys.${locale.value.toLowerCase()}.md`)
+const WhatIsPasskey = computed(() => defineAsyncComponent(() =>
+  import(`../i18n/what-is-passkey.${locale.value.toLowerCase()}.md`)
 ))
 </script>
 
 <template>
   <div class="card paper">
     <div class="card-content content">
-      <component :is="WhatArePasskeys" />
+      <component :is="WhatIsPasskey" />
     </div>
   </div>
 </template>
