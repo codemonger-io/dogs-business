@@ -517,6 +517,7 @@ async fn accept_invitation(
         .table_name(&shared_state.resource_table_name)
         .item("pk", AttributeValue::S(format!("friend-of#{user_id}")))
         .item("sk", AttributeValue::S(format!("dog#{dog_id}")))
+        .item("dogId", AttributeValue::S(dog_id.clone()))
         .item("isGuardian", AttributeValue::Bool(false))
         .item("createdAt", AttributeValue::N(format!("{now}")))
         .condition_expression("attribute_not_exists(pk)")
