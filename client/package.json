@@ -19,7 +19,7 @@
   "dependencies": {
     "@codemonger-io/maplibre-collision-boxes": "0.1.2-ab0b191",
     "@codemonger-io/maplibre-geo-circle-layer": "0.1.0-e0d4986",
-    "@codemonger-io/passquito-client-js": "0.0.4-9b90e5e",
+    "@codemonger-io/passquito-client-js": "0.0.5-162097c",
     "@vueuse/core": "^13.9.0",
     "buefy": "^3.0.3",
     "bulma": "^1.0.4",
