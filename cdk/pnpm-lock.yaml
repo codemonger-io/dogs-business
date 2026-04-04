@@ -21,8 +21,8 @@ importers:
         specifier: 0.2.0-aecf920
         version: 0.2.0-aecf920
       '@codemonger-io/passquito-cdk-construct':
-        specifier: 0.0.6-2f4476f
-        version: 0.0.6-2f4476f(aws-cdk-lib@2.235.0(constructs@10.4.4))(constructs@10.4.4)
+        specifier: 0.0.7-bfcc610
+        version: 0.0.7-bfcc610(aws-cdk-lib@2.235.0(constructs@10.4.4))(constructs@10.4.4)
       aws-cdk-lib:
         specifier: 2.235.0
         version: 2.235.0(constructs@10.4.4)
@@ -422,8 +422,8 @@ packages:
     resolution: {integrity: sha512-rOqsfeiM/VQDQqplY3Kxa0RoJV2TcUeTverUpfAHKMY2XXWBX69YO4zdIqrXnUbAC1DUKcH5aEfpeyn5e1Bjag==, tarball: https://npm.pkg.github.com/download/@codemonger-io/mapping-template-compose/0.2.1-b53e4bf/0688576b4e5030ee5200e83ef768b92d1760db69}
     engines: {node: '>=12.0.0'}
 
-  '@codemonger-io/passquito-cdk-construct@0.0.6-2f4476f':
-    resolution: {integrity: sha512-NbjX9/GkLJLN+fFhKDKS5lhVFzDDtTU8BXIHk9W9Phqsh1ZbIDI+vmp88Smc+vDGNSnmifkHm1/F61pMzorhhA==, tarball: https://npm.pkg.github.com/download/@codemonger-io/passquito-cdk-construct/0.0.6-2f4476f/6e2d125c70627852312b60ecfc4e008ae7d8d9b2}
+  '@codemonger-io/passquito-cdk-construct@0.0.7-bfcc610':
+    resolution: {integrity: sha512-A8u1uInMQzBbQfPsVh4I04Y06dNo8iEnrbt938vBwDxDzltil2DEC4IFkA/KMUigmvjRPbd2WBzDLFqKAS3v9A==, tarball: https://npm.pkg.github.com/download/@codemonger-io/passquito-cdk-construct/0.0.7-bfcc610/33ca69d3d54392fcdf708c1eeeef49cfa3edf8fb}
     peerDependencies:
       aws-cdk-lib: '>=2.231.0'
       constructs: '>=10.0.0'
@@ -2722,7 +2722,7 @@ snapshots:
 
   '@codemonger-io/mapping-template-compose@0.2.1-b53e4bf': {}
 
-  '@codemonger-io/passquito-cdk-construct@0.0.6-2f4476f(aws-cdk-lib@2.235.0(constructs@10.4.4))(constructs@10.4.4)':
+  '@codemonger-io/passquito-cdk-construct@0.0.7-bfcc610(aws-cdk-lib@2.235.0(constructs@10.4.4))(constructs@10.4.4)':
     dependencies:
       '@codemonger-io/cdk-cors-utils': 0.4.1-82ced53(aws-cdk-lib@2.235.0(constructs@10.4.4))
       '@codemonger-io/cdk-ghost-string-parameter': 0.2.1-7bda76a(aws-cdk-lib@2.235.0(constructs@10.4.4))(constructs@10.4.4)
