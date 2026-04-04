@@ -3,6 +3,7 @@ export default {
     action: {
       abandon_guest_account: '@:{\'term.guest_account\'}を放棄',
       cancel: 'キャンセル',
+      sign_in_with_passkey: '@:{\'term.passkey\'}でサインイン',
       sign_out: 'サインアウト'
     },
     message: {
@@ -102,6 +103,7 @@ export default {
     action: {
       abandon_guest_account: 'Abandon @:term.guest_account',
       cancel: 'Cancel',
+      sign_in_with_passkey: 'Sign in with @:term.passkey',
       sign_out: 'Sign out'
     },
     message: {

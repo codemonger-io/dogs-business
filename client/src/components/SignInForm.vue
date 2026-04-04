@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { BInput, BLoading, BNotification } from 'buefy'
+import { BButton, BLoading, BNotification } from 'buefy'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PublicKeyInfo } from '@codemonger-io/passquito-client-js'
 
-import IconInfo from '../components/icons/IconInfo.vue'
 import { useAuthenticatorState } from '../stores/authenticator-state'
 import { usePasskeyCapabilityStore } from '../stores/passkey-capability'
 import { usePassquitoClientStore } from '../stores/passquito-client'
@@ -33,7 +32,7 @@ const passquitoClientStore = usePassquitoClientStore()
 
 const authenticatorState = useAuthenticatorState()
 
-const isLoading = ref(true)
+const isLoading = ref(false)
 
 // reason for sign-in. `undefined` if no reason is specified.
 const reasonForSignIn = computed(() => {
@@ -52,9 +51,6 @@ const reasonForSignIn = computed(() => {
   }
 })
 
-// passkey input field which gets focused when mounted.
-const passkeyInput = ref<InstanceType<typeof BInput> | null>(null)
-
 // checks the passkey capabilities on mounted
 onMounted(() => {
   passkeyCapabilityStore.askForCapabilities()
@@ -62,41 +58,28 @@ onMounted(() => {
 
 // performs an authentication ceremony if passkeys are supported.
 const abortAuthentication = ref<(message: string) => void>(() => {})
-watch(
-  () => passkeyCapabilityStore.isAuthenticationSupported,
-  async (isSupported) => {
-    if (!isSupported) {
-      if (!passkeyCapabilityStore.isIndeterminate) {
-        console.error('SignInForm', 'passkeys are not supported on this device')
-      }
-      return
+const signIn = async () => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('SignInForm', 'signing in')
+  }
+  if (!passkeyCapabilityStore.isAuthenticationSupported) {
+    if (!passkeyCapabilityStore.isIndeterminate) {
+      console.error('SignInForm', 'passkeys are not supported on this device')
     }
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('SignInForm', 'starting authentication ceremony')
-    }
+    return
+  }
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('SignInForm', 'starting authentication ceremony')
+  }
+  try {
+    isLoading.value = true
     // aborts the authentication ceremony that might be running
     abortAuthentication.value('starting new authentication ceremony')
     const userId = props.publicKeyInfo?.userHandle
-    const { abort, credentials, eventEmitter } = userId != null
+    const { abort, credentials } = userId != null
       ? passquitoClientStore.client.doAuthenticationCeremonyForUser(userId)
       : passquitoClientStore.client.doAuthenticationCeremony()
     abortAuthentication.value = abort
-    eventEmitter.addListener((event) => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('SignInForm', 'authentication ceremony event', event)
-      }
-      switch (event) {
-        case 'credential-request-options-obtained':
-          isLoading.value = false
-          passkeyInput.value?.focus()
-          break
-        case 'credential-provided':
-          isLoading.value = true
-          break
-        default:
-          // ignores other events
-      }
-    })
     try {
       const { publicKeyInfo, tokens } = await credentials
       if (process.env.NODE_ENV !== 'production') {
@@ -110,6 +93,22 @@ watch(
     } catch (err) {
       // TODO: check error causes
       console.error('SignInForm', 'authentication failed', err)
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// automatically triggers an authentication ceremony when it turns out that
+// passkey authentication is supported
+watch(
+  () => passkeyCapabilityStore.isAuthenticationSupported,
+  (isSupported) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('SignInForm', 'watching passkey authentication support', isSupported)
+    }
+    if (isSupported) {
+      signIn()
     }
   },
   { immediate: true }
@@ -132,30 +131,12 @@ onBeforeUnmount(() => {
         </div>
         <div
           v-if="passkeyCapabilityStore.isAuthenticationSupported"
-          class="block"
+          class="block is-flex is-justify-content-center"
         >
           <b-field>
-            <template #label>
-              <b-tooltip
-                type="is-info"
-                :label="t('tooltip.passkey')"
-                position="is-top"
-                multilined
-                :triggers="['click']"
-                :auto-close="['inside', 'outside']"
-              >
-                <span class="icon-text tooltip-trigger-label">
-                  {{ capitalize(t('term.passkey')) }}
-                  <icon-info></icon-info>
-                </span>
-              </b-tooltip>
-            </template>
-            <b-input
-              ref="passkeyInput"
-              autocomplete="username webauthn"
-              :placeholder="t('placeholder.passkey')"
-            >
-            </b-input>
+            <b-button type="is-primary" @click="signIn">
+              {{ capitalize(t('action.sign_in_with_passkey'))}}
+            </b-button>
           </b-field>
         </div>
         <div v-else-if="passkeyCapabilityStore.isIndeterminate">
